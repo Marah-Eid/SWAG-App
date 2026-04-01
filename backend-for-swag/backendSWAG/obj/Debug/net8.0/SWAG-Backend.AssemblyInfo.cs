@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SWAG-Backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+131402dc7705dea9f62fee125b18c093f2d2a273")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c6e557b62da993848c216c0d0cfefc9e88002c9b")]
 [assembly: System.Reflection.AssemblyProductAttribute("SWAG-Backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SWAG-Backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

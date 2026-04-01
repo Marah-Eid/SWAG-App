@@ -351,3 +351,4 @@ C:\Users\user\OneDrive\Desktop\backend-for-swag\backend-for-swag\backendSWAG\obj
 C:\Users\user\OneDrive\Desktop\backend-for-swag\backend-for-swag\backendSWAG\obj\Debug\net8.0\SWAG-Backend.pdb
 C:\Users\user\OneDrive\Desktop\backend-for-swag\backend-for-swag\backendSWAG\obj\Debug\net8.0\SWAG-Backend.genruntimeconfig.cache
 C:\Users\user\OneDrive\Desktop\backend-for-swag\backend-for-swag\backendSWAG\obj\Debug\net8.0\ref\SWAG-Backend.dll
+C:\Users\user\OneDrive\Desktop\backend-for-swag\backend-for-swag\backendSWAG\obj\Debug\net8.0\SWAG-Backend.sourcelink.json
