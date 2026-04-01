@@ -13,7 +13,7 @@ import FollowingSection from '../common/FollowingSection';
 import SideMenu from '../common/SideMenu';
 import { fetchVendors } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
-import { fetchFollowing } from '../../store/slices/customerSlice';
+import { fetchFollowing, fetchCustomerProfile } from '../../store/slices/customerSlice';
 
 const defaultLogo = require('../../../assets/images/carshop-icon.png');
 const defaultBg = require('../../../assets/images/theshop-photo.png');
@@ -24,6 +24,7 @@ const HomeScreen = () => {
   const [isMenuVisible, setMenuVisible] = useState(false);
 
   const { user } = useSelector((state) => state.auth);
+  const { profile } = useSelector((state) => state.customer);
   const { vendors } = useSelector((state) => state.vendor);
   const { posts } = useSelector((state) => state.posts);
 
@@ -31,6 +32,7 @@ const HomeScreen = () => {
     dispatch(fetchVendors());
     dispatch(fetchPosts());
     dispatch(fetchFollowing());
+    dispatch(fetchCustomerProfile());
   }, [dispatch]);
 
   // Map vendors → NearbyShopsCarousel shape
@@ -72,9 +74,10 @@ const HomeScreen = () => {
         {/* UI Polish: Added a wrapper to create a clean gap below the card */}
         <View style={styles.cardWrapper}>
           <CustomerCard
-            name={user?.firstName || "George"}
-            phone={user?.email || "+962 7 8888 7777"}
-            city={user?.city || "Amman"}
+            name={profile?.fullName || user?.firstName || "George"}
+            phone={profile?.phone || profile?.email || user?.email || ''}
+            city={profile?.city || user?.city || "Amman"}
+            profileImage={profile?.profileImage ? { uri: profile.profileImage } : undefined}
             onProfilePress={() => router.push('/customer/ProfileCust')}
             onCarPress={() => router.push('/customer/ProfileCust')}
           />

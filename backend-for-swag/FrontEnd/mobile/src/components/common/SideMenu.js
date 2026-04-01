@@ -16,8 +16,11 @@ import {
     ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { logoutUser } from '../../store/slices/authSlice';
+import { clearCustomer } from '../../store/slices/customerSlice';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -27,6 +30,7 @@ const { width, height } = Dimensions.get('window');
 
 const SideMenu = ({ visible, onClose }) => {
     const router = useRouter();
+    const dispatch = useDispatch();
     const slideAnim = useRef(new Animated.Value(-width)).current;
 
     const [isActivityExpanded, setIsActivityExpanded] = useState(false);
@@ -88,12 +92,16 @@ const SideMenu = ({ visible, onClose }) => {
         }
     };
 
-    const performLogout = () => {
+    const performLogout = async () => {
         setIsLoggingOut(true);
-        setTimeout(() => {
-            onClose();
-            router.replace('/auth/Login');
-        }, 1500);
+        try {
+            await dispatch(logoutUser()).unwrap();
+            dispatch(clearCustomer());
+        } catch (e) {
+            // Even if the API call fails, we still want to log out locally
+        }
+        onClose();
+        router.replace('/auth/Login');
     };
 
     const openLink = (url) => {

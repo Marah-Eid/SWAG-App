@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient'; // Added LinearGradient
 
-const CustomerCard = ({ name, phone, city }) => {
+const CustomerCard = ({ name, phone, city, location, profileImage }) => {
   const router = useRouter();
 
   const handleNavigate = () => {
@@ -22,7 +22,7 @@ const CustomerCard = ({ name, phone, city }) => {
         <View style={styles.textContainer}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
           <Text style={styles.subText} numberOfLines={1}>{phone}</Text>
-          <Text style={styles.subText} numberOfLines={1}>{city}</Text>
+          <Text style={styles.subText} numberOfLines={1}>{city || location}</Text>
         </View>
 
         {/* Car Icon: Always navigates to ProfileCust */}
@@ -38,7 +38,7 @@ const CustomerCard = ({ name, phone, city }) => {
       {/* Profile Picture: Always navigates to ProfileCust */}
       <TouchableOpacity style={styles.pfpContainer} onPress={handleNavigate} activeOpacity={0.8}>
         <Image
-          source={require('../../../assets/images/gorg-icon.png')}
+          source={profileImage || require('../../../assets/images/gorg-icon.png')}
           style={styles.profilePic}
         />
       </TouchableOpacity>

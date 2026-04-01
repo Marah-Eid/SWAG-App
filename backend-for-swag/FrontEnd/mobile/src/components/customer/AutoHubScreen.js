@@ -56,7 +56,7 @@ const AutoHub = () => {
                 <View style={styles.cardWrapper}>
                     <CustomerCard
                         name={profile?.fullName || 'User'}
-                        phone={profile?.phone || ''}
+                        phone={profile?.phone || profile?.email || ''}
                         city={profile?.city || ''}
                         profileImage={profile?.profileImage ? { uri: profile.profileImage } : defaultPic}
                         onProfilePress={() => router.push('/customer/ProfileCust')}

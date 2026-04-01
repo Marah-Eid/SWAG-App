@@ -63,7 +63,7 @@ const NearByScreen = () => {
         <View style={styles.cardWrapper}>
           <CustomerCard
             name={profile?.fullName || 'User'}
-            phone={profile?.phone || ''}
+            phone={profile?.phone || profile?.email || ''}
             location={profile?.city || ''}
             profileImage={profile?.profileImage ? { uri: profile.profileImage } : require('../../../assets/images/gorg-icon.png')}
             onProfilePress={() => router.push('/customer/ProfileCust')}
