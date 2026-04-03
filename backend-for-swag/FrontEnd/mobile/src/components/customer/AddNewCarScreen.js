@@ -54,7 +54,8 @@ const AddNewCarCust = () => {
   // --- DATE PICKER STATE ---
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentPickerDate, setCurrentPickerDate] = useState(new Date());
-  const [activeDateField, setActiveDateField] = useState(null); // 'lastMaintenance', 'insurance', or 'registration'
+  const [activeDateField, setActiveDateField] = useState(null); // 'lastMaintenance', 'nextMaintenance', 'insurance', or 'registration'
+  const [rawDates, setRawDates] = useState({}); // THE FIX: Stores the actual Date object so Hermes doesn't panic
 
   // --- IMAGE PICKER FUNCTION ---
   const pickImage = async () => {
@@ -83,12 +84,19 @@ const AddNewCarCust = () => {
   const handleDateChange = (event, selectedDate) => {
     if (Platform.OS === 'android') setShowDatePicker(false);
     if (selectedDate && activeDateField) {
+
+      // THE FIX: We put your pretty formatting back for the UI! (e.g. "3 Apr 2032")
       const formattedDate = selectedDate.toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       });
+
       setForm({ ...form, [activeDateField]: formattedDate });
+
+      // THE FIX: Save the actual raw Date object safely behind the scenes
+      setRawDates({ ...rawDates, [activeDateField]: selectedDate });
+
       setCurrentPickerDate(selectedDate);
     }
   };
@@ -99,6 +107,14 @@ const AddNewCarCust = () => {
       return;
     }
     setSaving(true);
+
+    // THE SECRET TRANSLATION: 
+    // We grab the raw Date object directly. No string parsing required, which stops the crash!
+    let dbNextMaintenance = form.nextMaintenance;
+    if (rawDates.nextMaintenance) {
+      dbNextMaintenance = rawDates.nextMaintenance.toISOString().split('T')[0];
+    }
+
     const result = await dispatch(addCar({
       brand: form.brand,
       model: form.model,
@@ -107,13 +123,14 @@ const AddNewCarCust = () => {
       engineType: form.engineType,
       fuelType: form.fuelType || 'Petrol',
       currentMileage: form.currentMileage,
-      lastMaintenance: form.lastMaintenance,
-      nextMaintenance: form.nextMaintenance,
-      insuranceExpiry: form.insurance,
+      lastMaintenance: form.lastMaintenance, // Sends the pretty string (matches varchar)
+      nextMaintenance: dbNextMaintenance,    // Sends the strict ISO string (matches date)
+      insuranceExpiry: form.insurance,       // Sends the pretty string (matches varchar)
       color: form.color,
-      registrationDate: form.registration,
+      registrationDate: form.registration,   // Sends the pretty string (matches varchar)
       carImage: form.carImage,
     }));
+
     setSaving(false);
     if (result.meta.requestStatus === 'fulfilled') {
       router.back();
@@ -230,14 +247,15 @@ const AddNewCarCust = () => {
               </TouchableOpacity>
             </View>
 
+            {/* DATE PICKER FIELD: Next Maintenance */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Next Maintenance</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="km or Date"
-                placeholderTextColor="#A0AEC0"
-                onChangeText={(t) => setForm({ ...form, nextMaintenance: t })}
-              />
+              <TouchableOpacity style={styles.dateInput} onPress={() => openDatePopup('nextMaintenance')}>
+                <Text style={[styles.dateText, !form.nextMaintenance && { color: "#A0AEC0" }]}>
+                  {form.nextMaintenance || "Select Date"}
+                </Text>
+                <Ionicons name="calendar-outline" size={16} color="#8391A1" />
+              </TouchableOpacity>
             </View>
 
             {/* DATE PICKER FIELD: Insurance */}
@@ -416,7 +434,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0'
   },
-  // Added style for the Date Button to look like an Input
   dateInput: {
     backgroundColor: '#F1F4F9',
     borderRadius: 25,
@@ -460,7 +477,6 @@ const styles = StyleSheet.create({
   },
   addButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', letterSpacing: 1 },
 
-  // Date Modal Styling
   pickerModalContainer: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
   pickerModalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 25, borderTopRightRadius: 25, paddingBottom: 40 },
   pickerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#EEE' },
