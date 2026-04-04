@@ -92,6 +92,29 @@ public class VendorProfileDto
     public List<int> CategoryIds { get; set; } = new();
 }
 
+// ─── ADMIN VENDOR DTO (التي أضفناها لتعمل الصور) ──────────────────────────
+
+public class AdminDto
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string ShopName { get; set; } = string.Empty;
+    public string ShopType { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? City { get; set; }
+    public string? LocationUrl { get; set; }
+    public string? CommercialRegNumber { get; set; }
+    public string? ProfileImage { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+
+    // Uploaded Document Files for Admin
+    public string? LicenseFile { get; set; }
+    public string? IdFrontFile { get; set; }
+    public string? IdBackFile { get; set; }
+}
+
 public class UpdateVendorRequest
 {
     public string? FullName { get; set; }

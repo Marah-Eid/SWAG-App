@@ -17,7 +17,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPendingVendors, approveVendor, rejectVendor } from '../../store/slices/adminSlice';
-// import AsyncStorage from '@react-native-async-storage/async-storage'; // Uncomment if you need to clear storage!
+import { BASE_URL } from '../../api/client';
+
+// --- 1. IMPORT THE IN-APP VIEWER ---
+import * as WebBrowser from 'expo-web-browser';
 
 const AdminApprovalScreen = () => {
     const router = useRouter();
@@ -25,18 +28,15 @@ const AdminApprovalScreen = () => {
     const { pendingVendors, loading, actionLoading } = useSelector((state) => state.admin);
 
     const [selectedVendor, setSelectedVendor] = useState(null);
-    const [viewingImage, setViewingImage] = useState(null);
 
     useEffect(() => {
         dispatch(fetchPendingVendors());
     }, [dispatch]);
 
-    // --- NEW LOGOUT FUNCTION ---
     const handleLogout = () => {
         if (Platform.OS === 'web') {
             if (window.confirm("Are you sure you want to log out?")) {
-                // If you use AsyncStorage or Redux for auth, clear it here! e.g., AsyncStorage.removeItem('userToken');
-                router.replace('/auth/login'); // UPDATE THIS PATH if your login screen is somewhere else (like '/')
+                router.replace('/auth/Login');
             }
         } else {
             Alert.alert(
@@ -48,8 +48,7 @@ const AdminApprovalScreen = () => {
                         text: "Log Out",
                         style: "destructive",
                         onPress: () => {
-                            // If you use AsyncStorage or Redux for auth, clear it here! e.g., AsyncStorage.removeItem('userToken');
-                            router.replace('/auth/Login'); // UPDATE THIS PATH if your login screen is somewhere else (like '/')
+                            router.replace('/auth/Login');
                         }
                     }
                 ]
@@ -69,6 +68,30 @@ const AdminApprovalScreen = () => {
             window.open(url, '_blank');
         } else {
             Linking.openURL(url).catch(() => Alert.alert("Error", "Could not open map application."));
+        }
+    };
+
+    // --- 2. UPDATED SMART VIEWER (STAYS IN-APP) ---
+    const openDocument = async (url) => {
+        if (!url) return;
+
+        let fullUrl = url;
+
+        // Auto-attach backend IP if it's a relative path
+        if (!fullUrl.startsWith('http') && !fullUrl.startsWith('file://')) {
+            const serverRoot = BASE_URL.replace(/\/api$/, '');
+            fullUrl = fullUrl.startsWith('/') ? `${serverRoot}${fullUrl}` : `${serverRoot}/${fullUrl}`;
+        }
+
+        try {
+            // This opens the file safely INSIDE your app, not as an external link!
+            await WebBrowser.openBrowserAsync(encodeURI(fullUrl));
+        } catch (error) {
+            // Smart error so you know if the Vendor Registration failed to upload the file to the server
+            Alert.alert(
+                "File Not Found",
+                `Cannot open file. If the URL below starts with "file://", it means the Vendor Registration screen never actually uploaded the file to your server!\n\nURL: ${fullUrl}`
+            );
         }
     };
 
@@ -127,7 +150,6 @@ const AdminApprovalScreen = () => {
             <View style={styles.headerContainer}>
                 <View style={styles.titleRow}>
 
-                    {/* CHANGED THIS BUTTON TO LOGOUT */}
                     <TouchableOpacity onPress={handleLogout} style={styles.backButton} activeOpacity={0.7}>
                         <Ionicons name="log-out-outline" size={30} color="#E74C3C" />
                     </TouchableOpacity>
@@ -206,14 +228,14 @@ const AdminApprovalScreen = () => {
                                 <View style={styles.infoRow}><Text style={styles.infoLabel}>Service Type:</Text><Text style={styles.infoValue}>{selectedVendor.shopType}</Text></View>
                                 <View style={styles.infoRow}><Text style={styles.infoLabel}>User Name:</Text><Text style={styles.infoValue}>{selectedVendor.fullName}</Text></View>
                                 <View style={styles.infoRow}><Text style={styles.infoLabel}>Email / Phone:</Text><Text style={styles.infoValue}>{selectedVendor.email || selectedVendor.phone}</Text></View>
-                                <View style={styles.infoRow}><Text style={styles.infoLabel}>Commercial No:</Text><Text style={styles.infoValue}>{selectedVendor.document?.commercialRegNumber || 'N/A'}</Text></View>
+                                <View style={styles.infoRow}><Text style={styles.infoLabel}>Commercial No:</Text><Text style={styles.infoValue}>{selectedVendor.commercialRegNumber || 'N/A'}</Text></View>
                             </View>
 
                             <View style={styles.sectionCard}>
                                 <Text style={styles.sectionTitle}>Location Information</Text>
                                 <View style={styles.infoRow}><Text style={styles.infoLabel}>City:</Text><Text style={styles.infoValue}>{selectedVendor.city || 'N/A'}</Text></View>
-                                {selectedVendor.profileDetail?.address && (
-                                    <Text style={styles.addressText}>{selectedVendor.profileDetail.address}</Text>
+                                {selectedVendor.address && (
+                                    <Text style={styles.addressText}>{selectedVendor.address}</Text>
                                 )}
                                 {selectedVendor.locationUrl && (
                                     <TouchableOpacity style={styles.mapButton} onPress={() => openInMaps(selectedVendor.locationUrl)}>
@@ -223,33 +245,54 @@ const AdminApprovalScreen = () => {
                                 )}
                             </View>
 
-                            {selectedVendor.document && (
+                            {(selectedVendor.licenseFile || selectedVendor.idFrontFile || selectedVendor.idBackFile) && (
                                 <View style={styles.sectionCard}>
                                     <Text style={styles.sectionTitle}>Uploaded Documents</Text>
 
-                                    {selectedVendor.document.licenseFile && (
+                                    {/* VOCATIONAL LICENSE */}
+                                    {selectedVendor.licenseFile && (
                                         <>
                                             <Text style={styles.docLabel}>Vocational License</Text>
-                                            <TouchableOpacity onPress={() => setViewingImage({ uri: selectedVendor.document.licenseFile })} activeOpacity={0.8}>
-                                                <Image source={{ uri: selectedVendor.document.licenseFile }} style={styles.docThumbnail} />
+                                            <TouchableOpacity onPress={() => openDocument(selectedVendor.licenseFile)} activeOpacity={0.8}>
+                                                <View style={styles.docThumbnail}>
+                                                    <Image source={{ uri: selectedVendor.licenseFile }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                                                    <View style={styles.fileOverlay}>
+                                                        <Ionicons name="open-outline" size={20} color="#2C3E50" />
+                                                        <Text style={styles.fileOverlayText}>View File</Text>
+                                                    </View>
+                                                </View>
                                             </TouchableOpacity>
                                         </>
                                     )}
 
-                                    {selectedVendor.document.idFrontFile && (
+                                    {/* ID FRONT */}
+                                    {selectedVendor.idFrontFile && (
                                         <>
                                             <Text style={styles.docLabel}>User ID (Front)</Text>
-                                            <TouchableOpacity onPress={() => setViewingImage({ uri: selectedVendor.document.idFrontFile })} activeOpacity={0.8}>
-                                                <Image source={{ uri: selectedVendor.document.idFrontFile }} style={styles.docThumbnail} />
+                                            <TouchableOpacity onPress={() => openDocument(selectedVendor.idFrontFile)} activeOpacity={0.8}>
+                                                <View style={styles.docThumbnail}>
+                                                    <Image source={{ uri: selectedVendor.idFrontFile }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                                                    <View style={styles.fileOverlay}>
+                                                        <Ionicons name="open-outline" size={20} color="#2C3E50" />
+                                                        <Text style={styles.fileOverlayText}>View File</Text>
+                                                    </View>
+                                                </View>
                                             </TouchableOpacity>
                                         </>
                                     )}
 
-                                    {selectedVendor.document.idBackFile && (
+                                    {/* ID BACK */}
+                                    {selectedVendor.idBackFile && (
                                         <>
                                             <Text style={styles.docLabel}>User ID (Back)</Text>
-                                            <TouchableOpacity onPress={() => setViewingImage({ uri: selectedVendor.document.idBackFile })} activeOpacity={0.8}>
-                                                <Image source={{ uri: selectedVendor.document.idBackFile }} style={styles.docThumbnail} />
+                                            <TouchableOpacity onPress={() => openDocument(selectedVendor.idBackFile)} activeOpacity={0.8}>
+                                                <View style={styles.docThumbnail}>
+                                                    <Image source={{ uri: selectedVendor.idBackFile }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+                                                    <View style={styles.fileOverlay}>
+                                                        <Ionicons name="open-outline" size={20} color="#2C3E50" />
+                                                        <Text style={styles.fileOverlayText}>View File</Text>
+                                                    </View>
+                                                </View>
                                             </TouchableOpacity>
                                         </>
                                     )}
@@ -274,15 +317,6 @@ const AdminApprovalScreen = () => {
                                 )}
                             </TouchableOpacity>
                         </View>
-
-                        {viewingImage && (
-                            <View style={styles.imageViewerOverlay}>
-                                <TouchableOpacity style={styles.closeImageBtn} onPress={() => setViewingImage(null)}>
-                                    <Ionicons name="close" size={40} color="#FFFFFF" />
-                                </TouchableOpacity>
-                                <Image source={viewingImage} style={styles.fullscreenImage} resizeMode="contain" />
-                            </View>
-                        )}
                     </View>
                 )}
             </Modal>
@@ -337,7 +371,9 @@ const styles = StyleSheet.create({
     mapButtonText: { color: '#FFFFFF', fontWeight: '700', marginLeft: 8 },
 
     docLabel: { fontSize: 13, color: '#7F8C8D', fontWeight: '600', marginBottom: 5, marginTop: 10 },
-    docThumbnail: { width: '100%', height: 180, borderRadius: 12, backgroundColor: '#E2E8F0', borderWidth: 1, borderColor: '#CBD5E1', marginBottom: 10 },
+    docThumbnail: { width: '100%', height: 180, borderRadius: 12, backgroundColor: '#E2E8F0', borderWidth: 1, borderColor: '#CBD5E1', marginBottom: 10, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+    fileOverlay: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.9)', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 25, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+    fileOverlayText: { marginLeft: 8, fontWeight: 'bold', color: '#2C3E50', fontSize: 15 },
 
     modalFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', padding: 20, paddingBottom: Platform.OS === 'ios' ? 30 : 20, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0', elevation: 15, shadowColor: '#000', shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.1, shadowRadius: 5 },
 
@@ -345,14 +381,7 @@ const styles = StyleSheet.create({
     rejectButton: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E74C3C', marginRight: 8 },
     rejectButtonText: { color: '#E74C3C', fontWeight: '800', fontSize: 16, marginLeft: 8 },
     approveButton: { backgroundColor: '#22C55E', marginLeft: 8, shadowColor: '#22C55E', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-    approveButtonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 16, marginLeft: 8 },
-
-    imageViewerOverlay: {
-        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center', zIndex: 1000
-    },
-    closeImageBtn: { position: 'absolute', top: Platform.OS === 'ios' ? 50 : 30, right: 20, zIndex: 10, padding: 15 },
-    fullscreenImage: { width: '100%', height: '80%' }
+    approveButtonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 16, marginLeft: 8 }
 });
 
 export default AdminApprovalScreen;

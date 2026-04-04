@@ -161,7 +161,7 @@ public class AdminController : ControllerBase
         return Ok(stats);
     }
 
-    private static AdminVendorDto MapAdminVendor(Vendor v) => new()
+    private static AdminDto MapAdminVendor(Vendor v) => new()
     {
         Id = v.Id,
         FullName = v.FullName,

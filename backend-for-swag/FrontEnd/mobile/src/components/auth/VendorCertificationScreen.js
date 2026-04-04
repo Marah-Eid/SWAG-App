@@ -20,11 +20,16 @@ import { useDispatch } from 'react-redux';
 import authAPI from '../../api/authAPI';
 import { loginUser } from '../../store/slices/authSlice';
 
+// --- FIXED IMPORTS ---
+import { supabase } from '../../services/supabase';
+import * as FileSystem from 'expo-file-system/legacy';
+import { Buffer } from 'buffer';
+
 const VendorCertificationScreen = () => {
     const router = useRouter();
     const dispatch = useDispatch();
     const params = useLocalSearchParams();
-    const { emailOrPhone, fullName, shopName, shopType, password, categories, city, locationUrl } = params;
+    const { emailOrPhone, fullName, shopName, shopType, password, city, locationUrl } = params;
 
     const [regNumber, setRegNumber] = useState('');
     const [licenseFile, setLicenseFile] = useState(null);
@@ -42,6 +47,48 @@ const VendorCertificationScreen = () => {
         }
     };
 
+    // --- THE FIXED UPLOAD LOGIC (No more 0kb files) ---
+    const uploadToSupabase = async (fileObj) => {
+        if (!fileObj) return null;
+
+        try {
+            const ext = fileObj.name.split('.').pop();
+            const uniqueFileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
+            const filePath = `documents/${uniqueFileName}`;
+
+            // 1. Read the file. 
+            // We use 'base64' directly as a string to fix your VS Code error.
+            const base64 = await FileSystem.readAsStringAsync(fileObj.uri, {
+                encoding: 'base64',
+            });
+
+            // 2. Convert to Buffer
+            // This turns the string into "Real Data" so it's not 0 bytes.
+            const fileData = Buffer.from(base64, 'base64');
+
+            // 3. Upload to Supabase
+            const { error: uploadError } = await supabase.storage
+                .from('vendor_documents')
+                .upload(filePath, fileData, {
+                    contentType: fileObj.mimeType || 'application/octet-stream',
+                    upsert: false
+                });
+
+            if (uploadError) throw uploadError;
+
+            // 4. Get the URL
+            const { data } = supabase.storage
+                .from('vendor_documents')
+                .getPublicUrl(filePath);
+
+            return data.publicUrl;
+
+        } catch (error) {
+            console.error("Upload error:", error);
+            throw new Error(`Upload failed: ${error.message}`);
+        }
+    };
+
     const handleSubmit = async () => {
         if (!regNumber.trim()) {
             showAlert('Error', 'Please enter your Commercial Registration Number.');
@@ -54,34 +101,42 @@ const VendorCertificationScreen = () => {
 
         setSubmitting(true);
 
-        const selectedCategories = categories ? JSON.parse(categories) : [];
+        try {
+            // Upload files and get real URLs
+            const licenseUrl = await uploadToSupabase(licenseFile);
+            const idFrontUrl = await uploadToSupabase(idFrontFile);
+            const idBackUrl = await uploadToSupabase(idBackFile);
 
-        const result = await authAPI.register({
-            role: 'Vendor',
-            fullName,
-            emailOrPhone,
-            password,
-            shopName,
-            shopType,
-            city,
-            locationUrl,
-            licenseFile,
-            idFrontFile,
-            idBackFile,
-            commercialRegNumber: regNumber.trim(),
-        });
+            // Send real URLs to Backend
+            const result = await authAPI.register({
+                role: 'Vendor',
+                fullName,
+                emailOrPhone,
+                password,
+                shopName,
+                shopType,
+                city,
+                locationUrl,
+                licenseFile: licenseUrl,
+                idFrontFile: idFrontUrl,
+                idBackFile: idBackUrl,
+                commercialRegNumber: regNumber.trim(),
+            });
 
-        if (!result.success) {
+            if (!result.success) {
+                setSubmitting(false);
+                showAlert('Error', result.error);
+                return;
+            }
+
+            await dispatch(loginUser({ emailOrPhone, password, role: 'Vendor' }));
             setSubmitting(false);
-            showAlert('Error', result.error);
-            return;
+            router.replace('/vendor/HomeVen');
+
+        } catch (err) {
+            setSubmitting(false);
+            showAlert('Upload Error', err.message);
         }
-
-        // Dispatch login to update auth state
-        await dispatch(loginUser({ emailOrPhone, password, role: 'Vendor' }));
-        setSubmitting(false);
-
-        router.replace('/vendor/HomeVen');
     };
 
     const pickDocument = async (type) => {
@@ -93,9 +148,9 @@ const VendorCertificationScreen = () => {
 
             if (!result.canceled && result.assets && result.assets.length > 0) {
                 const file = result.assets[0];
-                if (type === 'License') setLicenseFile(file.name);
-                else if (type === 'IDFront') setIdFrontFile(file.name);
-                else if (type === 'IDBack') setIdBackFile(file.name);
+                if (type === 'License') setLicenseFile(file);
+                else if (type === 'IDFront') setIdFrontFile(file);
+                else if (type === 'IDBack') setIdBackFile(file);
             }
         } catch (error) {
             console.error("Error picking document:", error);
@@ -118,7 +173,7 @@ const VendorCertificationScreen = () => {
                 <View style={styles.headerTextContainer}>
                     <Text style={styles.headerTitle}>Certification</Text>
                     <Text style={styles.headerSubtitle}>
-                        Add your location{"\n"}informations
+                        Upload your business documents{"\n"}for verification
                     </Text>
                 </View>
             </View>
@@ -138,12 +193,8 @@ const VendorCertificationScreen = () => {
                             style={[styles.uploadIcon, licenseFile && { tintColor: '#8A1C27' }]}
                             resizeMode="contain"
                         />
-                        <Text
-                            style={[styles.uploadText, licenseFile && styles.uploadedFileText]}
-                            numberOfLines={1}
-                            ellipsizeMode="middle"
-                        >
-                            {licenseFile ? licenseFile : "Upload License here"}
+                        <Text style={[styles.uploadText, licenseFile && styles.uploadedFileText]} numberOfLines={1}>
+                            {licenseFile ? licenseFile.name : "Upload License here"}
                         </Text>
                         {licenseFile && <Ionicons name="checkmark-circle" size={22} color="#8A1C27" style={{ marginLeft: 'auto' }} />}
                     </TouchableOpacity>
@@ -158,12 +209,8 @@ const VendorCertificationScreen = () => {
                             style={[styles.uploadIcon, idFrontFile && { tintColor: '#8A1C27' }]}
                             resizeMode="contain"
                         />
-                        <Text
-                            style={[styles.uploadText, idFrontFile && styles.uploadedFileText]}
-                            numberOfLines={1}
-                            ellipsizeMode="middle"
-                        >
-                            {idFrontFile ? idFrontFile : "Upload your ID (Front) here"}
+                        <Text style={[styles.uploadText, idFrontFile && styles.uploadedFileText]} numberOfLines={1}>
+                            {idFrontFile ? idFrontFile.name : "Upload your ID (Front) here"}
                         </Text>
                         {idFrontFile && <Ionicons name="checkmark-circle" size={22} color="#8A1C27" style={{ marginLeft: 'auto' }} />}
                     </TouchableOpacity>
@@ -178,18 +225,13 @@ const VendorCertificationScreen = () => {
                             style={[styles.uploadIcon, idBackFile && { tintColor: '#8A1C27' }]}
                             resizeMode="contain"
                         />
-                        <Text
-                            style={[styles.uploadText, idBackFile && styles.uploadedFileText]}
-                            numberOfLines={1}
-                            ellipsizeMode="middle"
-                        >
-                            {idBackFile ? idBackFile : "Upload your ID (Back) here"}
+                        <Text style={[styles.uploadText, idBackFile && styles.uploadedFileText]} numberOfLines={1}>
+                            {idBackFile ? idBackFile.name : "Upload your ID (Back) here"}
                         </Text>
                         {idBackFile && <Ionicons name="checkmark-circle" size={22} color="#8A1C27" style={{ marginLeft: 'auto' }} />}
                     </TouchableOpacity>
 
                     <Text style={[styles.sectionTitle, { marginTop: 25 }]}>Shop information</Text>
-
                     <Text style={styles.label}>Commercial Registration Number</Text>
                     <View style={styles.inputContainer}>
                         <TextInput
@@ -217,72 +259,29 @@ const VendorCertificationScreen = () => {
                     )}
                 </TouchableOpacity>
             </View>
-
         </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#8EACC5' },
-    topSection: {
-        flex: 0.35,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingTop: 40,
-        position: 'relative'
-    },
+    topSection: { flex: 0.35, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
     backButton: { position: 'absolute', top: 50, left: 20, width: 44, height: 44, justifyContent: 'center', zIndex: 10 },
     headerTextContainer: { alignItems: 'center' },
     headerTitle: { fontSize: 34, fontWeight: '800', color: '#2D3E5E', marginBottom: 8 },
     headerSubtitle: { fontSize: 15, color: '#2D3E5E', textAlign: 'center', opacity: 0.8, lineHeight: 22, fontWeight: '500' },
-
-    whiteCard: {
-        flex: 0.65,
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 35,
-        borderTopRightRadius: 35,
-        paddingHorizontal: 25,
-        paddingTop: 40,
-        paddingBottom: 40,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 10,
-    },
+    whiteCard: { flex: 0.65, backgroundColor: '#FFFFFF', borderTopLeftRadius: 35, borderTopRightRadius: 35, paddingHorizontal: 25, paddingTop: 40, paddingBottom: 40, elevation: 10 },
     scrollContent: { paddingBottom: 20 },
-
     sectionTitle: { fontSize: 20, fontWeight: '800', color: '#8A1C27', marginBottom: 20, textAlign: 'center' },
-
-    uploadButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F8FAFC',
-        borderRadius: 30,
-        height: 60,
-        marginBottom: 15,
-        paddingHorizontal: 20,
-        borderWidth: 1.5,
-        borderColor: '#CBD5E1',
-        borderStyle: 'dashed',
-    },
+    uploadButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 30, height: 60, marginBottom: 15, paddingHorizontal: 20, borderWidth: 1.5, borderColor: '#CBD5E1', borderStyle: 'dashed' },
     uploadButtonSuccess: { borderColor: '#8A1C27', borderStyle: 'solid', backgroundColor: '#FDF2F3' },
     uploadIcon: { width: 24, height: 24, marginRight: 15, tintColor: '#8391A1' },
     uploadText: { fontSize: 14, color: '#8391A1', fontWeight: '500', flex: 1 },
     uploadedFileText: { color: '#8A1C27', fontWeight: '700' },
-
     label: { fontSize: 13, color: '#8391A1', marginBottom: 8, marginLeft: 5, fontWeight: '600' },
-    inputContainer: {
-        backgroundColor: '#F1F4F9', borderRadius: 30, height: 55,
-        justifyContent: 'center', paddingHorizontal: 20, marginBottom: 20,
-        borderWidth: 1, borderColor: '#E2E8F0',
-    },
+    inputContainer: { backgroundColor: '#F1F4F9', borderRadius: 30, height: 55, justifyContent: 'center', paddingHorizontal: 20, marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0' },
     input: { fontSize: 15, color: '#2D3E5E', fontWeight: '500' },
-
-    submitButton: {
-        backgroundColor: '#2D3E5E', borderRadius: 30, height: 60, justifyContent: 'center', alignItems: 'center',
-        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5,
-    },
+    submitButton: { backgroundColor: '#2D3E5E', borderRadius: 30, height: 60, justifyContent: 'center', alignItems: 'center', elevation: 5 },
     submitButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', letterSpacing: 0.5 },
 });
 
