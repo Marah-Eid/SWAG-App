@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPendingVendors, approveVendor, rejectVendor } from '../../store/slices/adminSlice';
+// import AsyncStorage from '@react-native-async-storage/async-storage'; // Uncomment if you need to clear storage!
 
 const AdminApprovalScreen = () => {
     const router = useRouter();
@@ -29,6 +30,32 @@ const AdminApprovalScreen = () => {
     useEffect(() => {
         dispatch(fetchPendingVendors());
     }, [dispatch]);
+
+    // --- NEW LOGOUT FUNCTION ---
+    const handleLogout = () => {
+        if (Platform.OS === 'web') {
+            if (window.confirm("Are you sure you want to log out?")) {
+                // If you use AsyncStorage or Redux for auth, clear it here! e.g., AsyncStorage.removeItem('userToken');
+                router.replace('/auth/login'); // UPDATE THIS PATH if your login screen is somewhere else (like '/')
+            }
+        } else {
+            Alert.alert(
+                "Log Out",
+                "Are you sure you want to log out?",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                        text: "Log Out",
+                        style: "destructive",
+                        onPress: () => {
+                            // If you use AsyncStorage or Redux for auth, clear it here! e.g., AsyncStorage.removeItem('userToken');
+                            router.replace('/auth/Login'); // UPDATE THIS PATH if your login screen is somewhere else (like '/')
+                        }
+                    }
+                ]
+            );
+        }
+    };
 
     const openInMaps = (address) => {
         const query = encodeURIComponent(address);
@@ -99,8 +126,10 @@ const AdminApprovalScreen = () => {
 
             <View style={styles.headerContainer}>
                 <View style={styles.titleRow}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={30} color="#2C3E50" />
+
+                    {/* CHANGED THIS BUTTON TO LOGOUT */}
+                    <TouchableOpacity onPress={handleLogout} style={styles.backButton} activeOpacity={0.7}>
+                        <Ionicons name="log-out-outline" size={30} color="#E74C3C" />
                     </TouchableOpacity>
 
                     <Text style={styles.headerTitle}>Approvals</Text>
