@@ -55,6 +55,15 @@ export const addMaintenanceRecord = createAsyncThunk(
   }
 );
 
+export const updateMaintenanceRecord = createAsyncThunk(
+  'cars/updateMaintenance',
+  async ({ carId, recordId, data }, { rejectWithValue }) => {
+    const result = await carsAPI.updateMaintenanceRecord(carId, recordId, data);
+    if (result.success) return { carId, record: result.data };
+    return rejectWithValue(result.error);
+  }
+);
+
 export const deleteMaintenanceRecord = createAsyncThunk(
   'cars/deleteMaintenance',
   async ({ carId, recordId }, { rejectWithValue }) => {
@@ -99,6 +108,13 @@ const carsSlice = createSlice({
         const { carId, record } = action.payload;
         if (!state.maintenance[carId]) state.maintenance[carId] = [];
         state.maintenance[carId].push(record);
+      })
+      .addCase(updateMaintenanceRecord.fulfilled, (state, action) => {
+        const { carId, record } = action.payload;
+        if (state.maintenance[carId]) {
+          const idx = state.maintenance[carId].findIndex(r => r.id === record.id);
+          if (idx !== -1) state.maintenance[carId][idx] = record;
+        }
       })
       .addCase(deleteMaintenanceRecord.fulfilled, (state, action) => {
         const { carId, recordId } = action.payload;

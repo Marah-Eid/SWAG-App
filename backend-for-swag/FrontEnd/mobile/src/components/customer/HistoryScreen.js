@@ -44,9 +44,9 @@ export default function HistoryCust() {
   const currentRecords = selectedCarId ? (maintenance[selectedCarId] || []) : [];
   const filteredLogs = currentRecords.map((r) => ({
     id: r.id,
-    type: r.title || r.type || 'Maintenance',
-    date: r.date || (r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'No Date'),
-    status: 'Completed',
+    type: r.title || 'Maintenance',
+    date: r.recordDate || (r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'No Date'),
+    status: r.status || 'Completed',
   }));
 
   return (
@@ -106,8 +106,14 @@ export default function HistoryCust() {
                   <Text style={styles.logDate}>{log.date}</Text>
                 </View>
               </View>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>{log.status}</Text>
+              <View style={[styles.statusBadge,
+                log.status === 'Pending' && { backgroundColor: '#FEF3C7' },
+                log.status === 'In Progress' && { backgroundColor: '#DBEAFE' },
+              ]}>
+                <Text style={[styles.statusText,
+                  log.status === 'Pending' && { color: '#D97706' },
+                  log.status === 'In Progress' && { color: '#2563EB' },
+                ]}>{log.status}</Text>
               </View>
             </View>
           ))

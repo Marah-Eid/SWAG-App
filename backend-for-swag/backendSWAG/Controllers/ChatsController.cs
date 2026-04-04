@@ -77,6 +77,46 @@ public class ChatsController : ControllerBase
         return Ok(result);
     }
 
+    // GET /api/chats/search-users?query=...
+    [HttpGet("search-users")]
+    public async Task<IActionResult> SearchUsers([FromQuery] string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
+            return Ok(Array.Empty<UserSearchResultDto>());
+
+        var pattern = $"%{query.Trim()}%";
+        var myId = _currentUser.UserId;
+
+        var customers = await _db.Customers
+            .Where(c => !c.IsDeleted && c.Id != myId &&
+                EF.Functions.ILike(c.FullName, pattern))
+            .Take(10)
+            .Select(c => new UserSearchResultDto
+            {
+                Id = c.Id,
+                Name = c.FullName,
+                ProfileImage = c.ProfileImage,
+                UserType = "Customer"
+            })
+            .ToListAsync();
+
+        var vendors = await _db.Vendors
+            .Where(v => !v.IsDeleted && v.Status == VendorStatus.Active && v.Id != myId &&
+                (EF.Functions.ILike(v.FullName, pattern) || EF.Functions.ILike(v.ShopName, pattern)))
+            .Take(10)
+            .Select(v => new UserSearchResultDto
+            {
+                Id = v.Id,
+                Name = v.ShopName,
+                ProfileImage = v.ProfileImage,
+                UserType = "Vendor"
+            })
+            .ToListAsync();
+
+        var results = customers.Concat(vendors).Take(15).ToList();
+        return Ok(results);
+    }
+
     // POST /api/chats  (start or get conversation)
     [HttpPost]
     public async Task<IActionResult> StartConversation([FromBody] StartConversationRequest req)
@@ -186,8 +226,15 @@ public class ChatsController : ControllerBase
         };
 
         _db.ChatMessages.Add(message);
+
+        // Update conversation metadata
+        conv.LastMessage = message.MessageText ?? (msgType == MessageType.Image ? "Sent an image" : "Sent a video");
+        conv.LastMessageTime = message.SentAt;
+        bool senderIsP1 = conv.ParticipantOneId == myId && conv.ParticipantOneType == myRole;
+        if (senderIsP1) conv.P2Unread += 1;
+        else conv.P1Unread += 1;
+
         await _db.SaveChangesAsync();
-        // Note: conversation unread counter is updated by DB trigger
 
         return Ok(new ChatMessageDto
         {
@@ -233,6 +280,34 @@ public class ChatsController : ControllerBase
 
         await _db.SaveChangesAsync();
         return Ok(new MessageResponse { Message = "Messages marked as read." });
+    }
+
+    // DELETE /api/chats/{conversationId}
+    [HttpDelete("{conversationId:guid}")]
+    public async Task<IActionResult> DeleteConversation(Guid conversationId)
+    {
+        var myId = _currentUser.UserId;
+        var myRole = ParseRole(_currentUser.Role);
+
+        var conv = await _db.Conversations.FindAsync(conversationId);
+        if (conv == null) return NotFound();
+
+        bool isParticipant =
+            (conv.ParticipantOneId == myId && conv.ParticipantOneType == myRole) ||
+            (conv.ParticipantTwoId == myId && conv.ParticipantTwoType == myRole);
+
+        if (!isParticipant) return Forbid();
+
+        // Delete all messages in the conversation
+        var messages = await _db.ChatMessages
+            .Where(m => m.ConversationId == conversationId)
+            .ToListAsync();
+
+        _db.ChatMessages.RemoveRange(messages);
+        _db.Conversations.Remove(conv);
+        await _db.SaveChangesAsync();
+
+        return Ok(new MessageResponse { Message = "Conversation deleted." });
     }
 
     private static UserRole ParseRole(string role) => role switch

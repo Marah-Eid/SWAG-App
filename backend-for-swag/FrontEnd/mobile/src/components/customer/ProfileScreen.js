@@ -16,6 +16,7 @@ import {
   updateCar as updateCarThunk,
   fetchMaintenanceRecords,
   addMaintenanceRecord as addMaintenanceThunk,
+  updateMaintenanceRecord as updateMaintenanceThunk,
   deleteMaintenanceRecord as deleteMaintenanceThunk,
 } from '../../store/slices/carsSlice';
 
@@ -92,6 +93,16 @@ export default function ProfileCust() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeDateTarget, setActiveDateTarget] = useState(null);
+
+  // --- MAINTENANCE STATUS FORM STATE ---
+  const [showStatusForm, setShowStatusForm] = useState(false);
+  const [statusFormCarId, setStatusFormCarId] = useState(null);
+  const [statusFormTitle, setStatusFormTitle] = useState('');
+  const [statusFormDate, setStatusFormDate] = useState(new Date());
+  const [statusFormDateText, setStatusFormDateText] = useState('');
+  const [showStatusDatePicker, setShowStatusDatePicker] = useState(false);
+  const [editingRecordId, setEditingRecordId] = useState(null);
+  const [statusFormStatus, setStatusFormStatus] = useState('Completed');
 
   // --- FETCH on mount ---
   useEffect(() => {
@@ -187,11 +198,51 @@ export default function ProfileCust() {
     setCars(prev => prev.map(car => car.id === id ? { ...car, [field]: value } : car));
   }, []);
 
-  const addMaintenanceRecord = (carId) => {
-    dispatch(addMaintenanceThunk({
-      carId,
-      data: { title: 'New Record', recordDate: formatDate(new Date()), status: 'Completed' },
-    }));
+  const openStatusForm = (carId, record = null) => {
+    setStatusFormCarId(carId);
+    if (record) {
+      setEditingRecordId(record.id);
+      setStatusFormTitle(record.title || '');
+      setStatusFormStatus(record.status || 'Completed');
+      const parsed = record.recordDate ? new Date(record.recordDate) : new Date();
+      setStatusFormDate(isNaN(parsed.getTime()) ? new Date() : parsed);
+      setStatusFormDateText(record.recordDate || formatDate(new Date()));
+    } else {
+      setEditingRecordId(null);
+      setStatusFormTitle('');
+      setStatusFormStatus('Completed');
+      setStatusFormDate(new Date());
+      setStatusFormDateText(formatDate(new Date()));
+    }
+    setShowStatusForm(true);
+  };
+
+  const handleStatusDateChange = (event, selectedDate) => {
+    if (Platform.OS === 'android') setShowStatusDatePicker(false);
+    if (selectedDate) {
+      setStatusFormDate(selectedDate);
+      setStatusFormDateText(formatDate(selectedDate));
+    }
+  };
+
+  const saveStatusForm = () => {
+    if (!statusFormTitle.trim()) {
+      Alert.alert('Validation', 'Please enter a status name.');
+      return;
+    }
+    if (editingRecordId) {
+      dispatch(updateMaintenanceThunk({
+        carId: statusFormCarId,
+        recordId: editingRecordId,
+        data: { title: statusFormTitle.trim(), recordDate: statusFormDateText, status: statusFormStatus },
+      }));
+    } else {
+      dispatch(addMaintenanceThunk({
+        carId: statusFormCarId,
+        data: { title: statusFormTitle.trim(), recordDate: statusFormDateText, status: statusFormStatus },
+      }));
+    }
+    setShowStatusForm(false);
   };
 
   const deleteMaintenanceRecord = (carId, recordId) => {
@@ -346,7 +397,7 @@ export default function ProfileCust() {
                 <View style={styles.sectionHeaderRow}>
                   <Text style={styles.sectionTitle}>MAINTENANCE & STATUS</Text>
                   {isThisCarEditing && (
-                    <TouchableOpacity onPress={() => addMaintenanceRecord(car.id)} style={styles.addRecordBtn} activeOpacity={0.7}>
+                    <TouchableOpacity onPress={() => openStatusForm(car.id)} style={styles.addRecordBtn} activeOpacity={0.7}>
                       <Ionicons name="add-circle" size={18} color="#8A1C27" />
                       <Text style={styles.addRecordText}>Add Status</Text>
                     </TouchableOpacity>
@@ -355,18 +406,32 @@ export default function ProfileCust() {
 
                 {(maintenance[car.id] || []).length > 0 ? (
                   (maintenance[car.id] || []).map((record) => (
-                    <View key={record.id} style={styles.maintenanceCard}>
+                    <TouchableOpacity
+                      key={record.id}
+                      style={styles.maintenanceCard}
+                      activeOpacity={isThisCarEditing ? 0.7 : 1}
+                      onPress={() => isThisCarEditing && openStatusForm(car.id, record)}
+                    >
                       <View style={styles.maintIconCircle}><Image source={require('../../../assets/images/oil-icon.png')} style={styles.maintIcon} /></View>
                       <View style={{ flex: 1, marginLeft: 15 }}>
                         <Text style={styles.maintTitle}>{record.title || "Status Title"}</Text>
-                        <Text style={styles.maintDate}>{record.recordDate || record.date || "Date"}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                          <Ionicons name="calendar-outline" size={13} color="#8391A1" />
+                          <Text style={[styles.maintDate, { marginLeft: 4, marginTop: 0 }]}>{record.recordDate || "Date"}</Text>
+                        </View>
+                        <Text style={{ fontSize: 11, color: '#8A1C27', fontWeight: '600', marginTop: 3 }}>{record.status || 'Completed'}</Text>
                       </View>
                       {isThisCarEditing && (
-                        <TouchableOpacity onPress={() => deleteMaintenanceRecord(car.id, record.id)} style={styles.trashBtn}>
-                          <Ionicons name="trash-outline" size={22} color="#E53E3E" />
-                        </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <TouchableOpacity onPress={() => openStatusForm(car.id, record)} style={styles.editRecordBtn}>
+                            <Ionicons name="create-outline" size={20} color="#2D3E5E" />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => deleteMaintenanceRecord(car.id, record.id)} style={styles.trashBtn}>
+                            <Ionicons name="trash-outline" size={22} color="#E53E3E" />
+                          </TouchableOpacity>
+                        </View>
                       )}
-                    </View>
+                    </TouchableOpacity>
                   ))
                 ) : <Text style={styles.emptyMaintText}>No records added.</Text>}
               </View>
@@ -382,6 +447,59 @@ export default function ProfileCust() {
         {/* FIXED: Changed <div> to <View> */}
         <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* --- STATUS FORM MODAL --- */}
+      <Modal visible={showStatusForm} transparent={true} animationType="slide">
+        <View style={styles.pickerModalContainer}>
+          <View style={[styles.pickerModalContent, { padding: 20 }]}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>{editingRecordId ? 'Edit Status' : 'Add New Status'}</Text>
+              <TouchableOpacity onPress={() => setShowStatusForm(false)}>
+                <Ionicons name="close-circle" size={28} color="#8391A1" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.statusFormLabel}>Status Name</Text>
+            <TextInput
+              style={styles.statusFormInput}
+              value={statusFormTitle}
+              onChangeText={setStatusFormTitle}
+              placeholder="e.g. Oil Change, Tire Rotation"
+              placeholderTextColor="#A0AEC0"
+            />
+
+            <Text style={styles.statusFormLabel}>Date</Text>
+            <TouchableOpacity style={styles.statusFormDateBtn} onPress={() => setShowStatusDatePicker(true)}>
+              <Ionicons name="calendar-outline" size={18} color="#8A1C27" />
+              <Text style={styles.statusFormDateText}>{statusFormDateText || 'Select date'}</Text>
+            </TouchableOpacity>
+
+            {showStatusDatePicker && Platform.OS === 'android' && (
+              <DateTimePicker value={statusFormDate} mode="date" display="default" onChange={handleStatusDateChange} />
+            )}
+            {showStatusDatePicker && Platform.OS === 'ios' && (
+              <DateTimePicker value={statusFormDate} mode="date" display="spinner" onChange={handleStatusDateChange} />
+            )}
+
+            <Text style={styles.statusFormLabel}>Status</Text>
+            <View style={styles.statusToggleRow}>
+              {['Completed', 'Pending', 'In Progress'].map((s) => (
+                <TouchableOpacity
+                  key={s}
+                  style={[styles.statusToggleBtn, statusFormStatus === s && styles.statusToggleBtnActive]}
+                  onPress={() => setStatusFormStatus(s)}
+                >
+                  <Text style={[styles.statusToggleText, statusFormStatus === s && styles.statusToggleTextActive]}>{s}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity style={styles.statusFormSaveBtn} onPress={saveStatusForm} activeOpacity={0.8}>
+              <Text style={styles.statusFormSaveBtnText}>{editingRecordId ? 'Save Changes' : 'Add Status'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* --- POPUP DATE PICKER --- */}
       {Platform.OS === 'ios' ? (
@@ -480,6 +598,19 @@ const styles = StyleSheet.create({
   pickerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#EEE' },
   pickerTitle: { fontSize: 17, fontWeight: 'bold', color: '#2D3E5E' },
   doneText: { fontSize: 17, fontWeight: 'bold', color: '#8A1C27' },
+
+  editRecordBtn: { padding: 4 },
+  statusFormLabel: { fontSize: 13, fontWeight: '700', color: '#2D3E5E', marginTop: 16, marginBottom: 6, textTransform: 'uppercase' },
+  statusFormInput: { backgroundColor: '#F1F4F9', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: '#2D3E5E', fontWeight: '600', borderWidth: 1, borderColor: '#E2E8F0' },
+  statusFormDateBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FDF2F3', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: '#8A1C27', gap: 10 },
+  statusFormDateText: { fontSize: 15, color: '#8A1C27', fontWeight: '700' },
+  statusToggleRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  statusToggleBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#F1F4F9' },
+  statusToggleBtnActive: { borderColor: '#8A1C27', backgroundColor: '#FDF2F3' },
+  statusToggleText: { fontSize: 12, fontWeight: '700', color: '#8391A1' },
+  statusToggleTextActive: { color: '#8A1C27' },
+  statusFormSaveBtn: { backgroundColor: '#8A1C27', borderRadius: 25, paddingVertical: 14, alignItems: 'center', marginTop: 24 },
+  statusFormSaveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
 
   footerContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, elevation: 20, zIndex: 100 },
   fullscreenContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },

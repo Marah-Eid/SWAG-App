@@ -70,3 +70,10 @@ public class AddMaintenanceRequest
     public string? RecordDate { get; set; }
     public string Status { get; set; } = "Completed";
 }
+
+public class UpdateMaintenanceRequest
+{
+    public string? Title { get; set; }
+    public string? RecordDate { get; set; }
+    public string? Status { get; set; }
+}

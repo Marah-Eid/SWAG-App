@@ -176,6 +176,35 @@ public class CarsController : ControllerBase
         });
     }
 
+    // PUT /api/cars/{carId}/maintenance/{recordId}
+    [HttpPut("{carId:guid}/maintenance/{recordId:guid}")]
+    public async Task<IActionResult> UpdateMaintenanceRecord(Guid carId, Guid recordId, [FromBody] UpdateMaintenanceRequest req)
+    {
+        var car = await _db.CustomerCars
+            .FirstOrDefaultAsync(c => c.Id == carId && c.CustomerId == _currentUser.UserId);
+        if (car == null) return NotFound();
+
+        var record = await _db.CarMaintenanceRecords
+            .FirstOrDefaultAsync(r => r.Id == recordId && r.CarId == carId);
+        if (record == null) return NotFound();
+
+        if (req.Title != null) record.Title = req.Title.Trim();
+        if (req.RecordDate != null) record.RecordDate = req.RecordDate;
+        if (req.Status != null) record.Status = req.Status;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new MaintenanceRecordDto
+        {
+            Id = record.Id,
+            CarId = record.CarId,
+            Title = record.Title,
+            RecordDate = record.RecordDate,
+            Status = record.Status,
+            CreatedAt = record.CreatedAt
+        });
+    }
+
     // DELETE /api/cars/{carId}/maintenance/{recordId}
     [HttpDelete("{carId:guid}/maintenance/{recordId:guid}")]
     public async Task<IActionResult> DeleteMaintenanceRecord(Guid carId, Guid recordId)

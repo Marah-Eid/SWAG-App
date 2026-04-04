@@ -64,6 +64,15 @@ const carsAPI = {
     }
   },
 
+  updateMaintenanceRecord: async (carId, recordId, data) => {
+    try {
+      const response = await apiClient.put(`/cars/${carId}/maintenance/${recordId}`, data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to update maintenance record' };
+    }
+  },
+
   deleteMaintenanceRecord: async (carId, recordId) => {
     try {
       const response = await apiClient.delete(`/cars/${carId}/maintenance/${recordId}`);

@@ -37,6 +37,24 @@ const chatsAPI = {
     }
   },
 
+  searchUsers: async (query) => {
+    try {
+      const response = await apiClient.get('/chats/search-users', { params: { query } });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Search failed' };
+    }
+  },
+
+  deleteConversation: async (conversationId) => {
+    try {
+      const response = await apiClient.delete(`/chats/${conversationId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to delete conversation' };
+    }
+  },
+
   markAsRead: async (conversationId) => {
     try {
       const response = await apiClient.put(`/chats/${conversationId}/read`);

@@ -37,6 +37,24 @@ export const sendMessage = createAsyncThunk(
   }
 );
 
+export const searchUsers = createAsyncThunk(
+  'chats/searchUsers',
+  async (query, { rejectWithValue }) => {
+    const result = await chatsAPI.searchUsers(query);
+    if (result.success) return result.data;
+    return rejectWithValue(result.error);
+  }
+);
+
+export const deleteConversation = createAsyncThunk(
+  'chats/deleteConversation',
+  async (conversationId, { rejectWithValue }) => {
+    const result = await chatsAPI.deleteConversation(conversationId);
+    if (result.success) return conversationId;
+    return rejectWithValue(result.error);
+  }
+);
+
 export const markConversationRead = createAsyncThunk(
   'chats/markRead',
   async (conversationId, { rejectWithValue }) => {
@@ -51,6 +69,8 @@ const chatsSlice = createSlice({
   initialState: {
     conversations: [],
     messages: {},   // { [conversationId]: message[] }
+    searchResults: [],
+    searching: false,
     loading: false,
     sending: false,
     error: null,
@@ -59,7 +79,11 @@ const chatsSlice = createSlice({
     clearChats: (state) => {
       state.conversations = [];
       state.messages = {};
+      state.searchResults = [];
       state.error = null;
+    },
+    clearSearchResults: (state) => {
+      state.searchResults = [];
     },
   },
   extraReducers: (builder) => {
@@ -91,6 +115,13 @@ const chatsSlice = createSlice({
         }
       })
       .addCase(sendMessage.rejected, (state, action) => { state.sending = false; state.error = action.payload; })
+      .addCase(searchUsers.pending, (state) => { state.searching = true; })
+      .addCase(searchUsers.fulfilled, (state, action) => { state.searching = false; state.searchResults = action.payload; })
+      .addCase(searchUsers.rejected, (state) => { state.searching = false; state.searchResults = []; })
+      .addCase(deleteConversation.fulfilled, (state, action) => {
+        state.conversations = state.conversations.filter(c => c.id !== action.payload);
+        delete state.messages[action.payload];
+      })
       .addCase(markConversationRead.fulfilled, (state, action) => {
         const conv = state.conversations.find(c => c.id === action.payload);
         if (conv) conv.unreadCount = 0;
@@ -98,5 +129,5 @@ const chatsSlice = createSlice({
   },
 });
 
-export const { clearChats } = chatsSlice.actions;
+export const { clearChats, clearSearchResults } = chatsSlice.actions;
 export default chatsSlice.reducer;

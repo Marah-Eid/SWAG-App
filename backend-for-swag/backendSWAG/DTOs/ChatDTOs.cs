@@ -39,3 +39,11 @@ public class SendMessageRequest
     public string MessageType { get; set; } = "text"; // text | image | video
     public string? MediaUrl { get; set; }
 }
+
+public class UserSearchResultDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? ProfileImage { get; set; }
+    public string UserType { get; set; } = string.Empty; // "Customer" or "Vendor"
+}
