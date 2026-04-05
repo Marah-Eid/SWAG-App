@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import BottomTabs from '../common/BottomTabs';
 import { fetchCustomerProfile, updateCustomerProfile } from '../../store/slices/customerSlice';
+import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 import {
   fetchMyCars,
   deleteCar as deleteCarThunk,
@@ -131,10 +132,13 @@ export default function ProfileCust() {
 
   // --- PROFILE SAVE ---
   const handleSaveProfile = async () => {
+    const finalProfileImage = isLocalUri(profileImage) ? await uploadMedia(profileImage) : profileImage;
+    const finalBannerImage  = isLocalUri(bannerImage)  ? await uploadMedia(bannerImage)  : bannerImage;
+
     await dispatch(updateCustomerProfile({
       fullName: profileData.name,
-      profileImage,
-      bannerImage,
+      profileImage: finalProfileImage,
+      bannerImage: finalBannerImage,
     }));
     setIsEditingProfile(false);
   };
@@ -147,11 +151,17 @@ export default function ProfileCust() {
     setEditingCarId(car.id);
   };
 
-  const saveCarModel = (id) => {
+  const saveCarModel = async (id) => {
     const car = cars.find((c) => c.id === id);
     if (!car) return;
     const updatedCar = { ...car, brand: editMake, model: editModel, year: editYear };
     setCars((prev) => prev.map((c) => (c.id === id ? updatedCar : c)));
+
+    let carImageUrl = car.carImage;
+    if (isLocalUri(car.carImage)) {
+      carImageUrl = await uploadMedia(car.carImage, 'image');
+    }
+
     dispatch(updateCarThunk({
       id,
       data: {
@@ -167,7 +177,7 @@ export default function ProfileCust() {
         nextMaintenance: car.nextMaintenance,
         insuranceExpiry: car.insurance,
         registrationDate: car.registration,
-        carImage: car.carImage,
+        carImage: carImageUrl,
       },
     }));
     setEditingCarId(null);

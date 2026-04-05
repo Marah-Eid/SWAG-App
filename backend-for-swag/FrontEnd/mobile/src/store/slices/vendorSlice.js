@@ -55,6 +55,24 @@ export const fetchVendorReviews = createAsyncThunk(
   }
 );
 
+export const followVendor = createAsyncThunk(
+  'vendor/followVendor',
+  async (vendorId, { rejectWithValue }) => {
+    const result = await vendorAPI.followVendor(vendorId);
+    if (result.success) return vendorId;
+    return rejectWithValue(result.error);
+  }
+);
+
+export const unfollowVendor = createAsyncThunk(
+  'vendor/unfollowVendor',
+  async (vendorId, { rejectWithValue }) => {
+    const result = await vendorAPI.unfollowVendor(vendorId);
+    if (result.success) return vendorId;
+    return rejectWithValue(result.error);
+  }
+);
+
 export const fetchMyFollowing = createAsyncThunk(
   'vendor/fetchMyFollowing',
   async (_, { rejectWithValue }) => {

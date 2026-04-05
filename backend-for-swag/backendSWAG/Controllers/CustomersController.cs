@@ -69,7 +69,27 @@ public class CustomersController : ControllerBase
         customer.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        return Ok(new MessageResponse { Message = "Profile updated." });
+
+        var updated = await _db.Customers
+            .Include(c => c.Interests)
+            .FirstOrDefaultAsync(c => c.Id == _currentUser.UserId);
+
+        return Ok(new CustomerProfileDto
+        {
+            Id = updated!.Id,
+            FullName = updated.FullName,
+            Email = updated.Email,
+            Phone = updated.Phone,
+            City = updated.City,
+            ProfileImage = updated.ProfileImage,
+            BannerImage = updated.BannerImage,
+            Language = updated.Language,
+            DarkMode = updated.DarkMode,
+            PushNotifications = updated.PushNotifications,
+            IsVerified = updated.IsVerified,
+            CreatedAt = updated.CreatedAt,
+            InterestIds = updated.Interests.Select(i => i.ItemId).ToList()
+        });
     }
 
     // GET /api/customers/me/interests
@@ -123,25 +143,37 @@ public class CustomersController : ControllerBase
     [HttpGet("me/following")]
     public async Task<IActionResult> GetFollowing()
     {
-        var vendors = await _db.CustomerFollows
-            .Where(cf => cf.CustomerId == _currentUser.UserId)
+        var myId = _currentUser.UserId;
+        var follows = await _db.CustomerFollows
+            .Where(cf => cf.CustomerId == myId && !cf.Vendor.IsDeleted)
             .Include(cf => cf.Vendor)
-            .Select(cf => new VendorSummaryDto
-            {
-                Id = cf.Vendor.Id,
-                FullName = cf.Vendor.FullName,
-                ShopName = cf.Vendor.ShopName,
-                ShopType = cf.Vendor.ShopType,
-                City = cf.Vendor.City,
-                ProfileImage = cf.Vendor.ProfileImage,
-                BannerImage = cf.Vendor.BannerImage,
-                Bio = cf.Vendor.Bio,
-                Status = cf.Vendor.Status.ToString().ToLower(),
-                IsFollowed = true
-            })
+                .ThenInclude(v => v.Reviews)
+            .Include(cf => cf.Vendor)
+                .ThenInclude(v => v.Followers)
+            .Include(cf => cf.Vendor)
+                .ThenInclude(v => v.VendorFollowers)
             .ToListAsync();
 
-        return Ok(vendors);
+        return Ok(follows.Select(cf =>
+        {
+            var v = cf.Vendor;
+            return new VendorSummaryDto
+            {
+                Id = v.Id,
+                FullName = v.FullName,
+                ShopName = v.ShopName,
+                ShopType = v.ShopType,
+                City = v.City,
+                ProfileImage = v.ProfileImage,
+                BannerImage = v.BannerImage,
+                Bio = v.Bio,
+                Status = v.Status.ToString().ToLower(),
+                AverageRating = v.Reviews.Count > 0 ? Math.Round(v.Reviews.Average(r => (double)r.Rating), 1) : 0,
+                ReviewCount = v.Reviews.Count,
+                FollowerCount = v.Followers.Count + v.VendorFollowers.Count,
+                IsFollowed = true
+            };
+        }));
     }
 
     // POST /api/customers/me/following/{vendorId}
@@ -162,9 +194,6 @@ public class CustomersController : ControllerBase
             VendorId = vendorId
         });
 
-        await _db.SaveChangesAsync();
-
-        // Notify vendor
         _db.Notifications.Add(new Notification
         {
             RecipientId = vendorId,
@@ -173,6 +202,7 @@ public class CustomersController : ControllerBase
             Title = "New Follower",
             Body = $"Someone started following your shop."
         });
+
         await _db.SaveChangesAsync();
 
         return Ok(new MessageResponse { Message = "Followed successfully." });

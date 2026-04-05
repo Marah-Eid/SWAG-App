@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
@@ -6,14 +6,18 @@ import { LinearGradient } from 'expo-linear-gradient'; // Added LinearGradient
 
 const defaultIcon = require('../../../assets/images/carshop-icon.png');
 
-const VendorPin = ({ icon, onPress }) => (
-  <TouchableOpacity style={styles.pinWrapper} onPress={onPress} activeOpacity={0.8}>
-    <View style={styles.pinShape} />
-    <View style={styles.iconContainer}>
-      <Image source={icon} style={styles.vendorIcon} />
-    </View>
-  </TouchableOpacity>
-);
+const VendorPin = ({ icon, onPress }) => {
+  const [imgError, setImgError] = useState(false);
+  const resolvedIcon = imgError ? defaultIcon : icon;
+  return (
+    <TouchableOpacity style={styles.pinWrapper} onPress={onPress} activeOpacity={0.8}>
+      <View style={styles.pinShape} />
+      <View style={styles.iconContainer}>
+        <Image source={resolvedIcon} style={styles.vendorIcon} onError={() => setImgError(true)} />
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const FollowingSection = () => {
   const router = useRouter();

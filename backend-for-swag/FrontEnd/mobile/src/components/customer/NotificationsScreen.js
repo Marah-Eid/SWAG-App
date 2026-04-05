@@ -15,7 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import NotificationCard from '../common/NotificationCard';
 import BottomTabs from '../common/BottomTabs';
-import { fetchNotifications, markNotificationRead } from '../../store/slices/notificationsSlice';
+import { fetchNotifications, deleteNotification, clearAllNotifications } from '../../store/slices/notificationsSlice';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -26,12 +26,23 @@ export default function NotificationsScreen() {
     dispatch(fetchNotifications());
   }, [dispatch]);
 
-  const handleMarkRead = (id) => {
-    dispatch(markNotificationRead(id));
+  const handleDelete = (id) => {
+    dispatch(deleteNotification(id));
   };
 
-  const handleNavigate = (path) => {
-    if (path) router.push(path);
+  const handleClearAll = () => {
+    dispatch(clearAllNotifications());
+  };
+
+  const handleNavigate = (deepLink) => {
+    if (!deepLink) return;
+    // deepLink format from backend: "post/{id}" or "vendor/{id}/reviews"
+    if (deepLink.startsWith('post/')) {
+      // no dedicated post detail screen yet — navigate to explore
+    } else if (deepLink.startsWith('vendor/')) {
+      const vendorId = deepLink.split('/')[1];
+      router.push({ pathname: '/customer/VendorProfCust', params: { vendorId } });
+    }
   };
 
   return (
@@ -56,8 +67,15 @@ export default function NotificationsScreen() {
         >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Timeline</Text>
-            <View style={styles.pillBadge}>
-              <Text style={styles.pillText}>LATEST</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={styles.pillBadge}>
+                <Text style={styles.pillText}>LATEST</Text>
+              </View>
+              {notifications.length > 0 && (
+                <TouchableOpacity onPress={handleClearAll} style={styles.clearBtn}>
+                  <Text style={styles.clearBtnText}>Clear all</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
@@ -69,10 +87,11 @@ export default function NotificationsScreen() {
             notifications.map((item) => (
               <NotificationCard
                 key={item.id}
-                title={item.type}
+                title={item.title}
                 message={item.body}
-                onDelete={() => handleMarkRead(item.id)}
-                onCardPress={() => { handleMarkRead(item.id); handleNavigate(item.link); }}
+                isRead={item.isRead}
+                onDelete={() => handleDelete(item.id)}
+                onCardPress={() => { handleDelete(item.id); handleNavigate(item.deepLink); }}
               />
             ))
           ) : (
@@ -146,5 +165,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 20, fontWeight: '800', color: '#2D3E5E' },
   emptySub: { fontSize: 14, color: '#8391A1', marginTop: 5, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20 },
 
-  tabsWrapper: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100 }
+  tabsWrapper: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100 },
+  clearBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: '#2D3E5E' },
+  clearBtnText: { color: '#FFF', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
 });

@@ -86,6 +86,39 @@ public class NotificationsController : ControllerBase
         return Ok(new MessageResponse { Message = $"Marked {unread.Count} notifications as read." });
     }
 
+    // DELETE /api/notifications/{id}
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteNotification(Guid id)
+    {
+        var myId   = _currentUser.UserId;
+        var myRole = ParseRole(_currentUser.Role);
+
+        var notif = await _db.Notifications
+            .FirstOrDefaultAsync(n => n.Id == id && n.RecipientId == myId && n.RecipientType == myRole);
+
+        if (notif == null) return NotFound();
+
+        _db.Notifications.Remove(notif);
+        await _db.SaveChangesAsync();
+        return Ok(new MessageResponse { Message = "Notification deleted." });
+    }
+
+    // DELETE /api/notifications/clear-all
+    [HttpDelete("clear-all")]
+    public async Task<IActionResult> ClearAll()
+    {
+        var myId   = _currentUser.UserId;
+        var myRole = ParseRole(_currentUser.Role);
+
+        var all = await _db.Notifications
+            .Where(n => n.RecipientId == myId && n.RecipientType == myRole)
+            .ToListAsync();
+
+        _db.Notifications.RemoveRange(all);
+        await _db.SaveChangesAsync();
+        return Ok(new MessageResponse { Message = $"Cleared {all.Count} notifications." });
+    }
+
     private static UserRole ParseRole(string role) => role switch
     {
         "Customer" => UserRole.Customer,

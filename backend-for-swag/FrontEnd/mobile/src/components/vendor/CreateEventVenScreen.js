@@ -10,6 +10,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import { createPost } from '../../store/slices/postsSlice';
+import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -115,11 +116,19 @@ const CreateEventScreen = () => {
     }
 
     setPublishing(true);
+
+    let mediaUrl = null;
+    if (media?.uri && isLocalUri(media.uri)) {
+      mediaUrl = await uploadMedia(media.uri, media.type === 'video' ? 'video' : 'image');
+    } else if (media?.uri) {
+      mediaUrl = media.uri;
+    }
+
     const result = await dispatch(createPost({
       type: 'event',
       eventTitle: eventTitle.trim(),
       description: description.trim(),
-      postImage: media?.uri || null,
+      postImage: mediaUrl,
       mediaType: media?.type || 'image',
       mediaWidth: media?.width || null,
       mediaHeight: media?.height || null,

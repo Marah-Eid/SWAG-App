@@ -1,12 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
+
+const defaultLogo = require('../../../assets/images/carshop-icon.png');
 
 // Get Screen Dimensions
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.88;
 const CARD_MARGIN = 15;
+
+const ShopLogo = ({ source, fallback, logoStyle }) => {
+  const [error, setError] = useState(false);
+  return (
+    <Image
+      source={error ? fallback : source}
+      style={logoStyle}
+      onError={() => setError(true)}
+    />
+  );
+};
 
 const NearbyShopsCarousel = ({ shopsData = [] }) => {
   const router = useRouter();
@@ -57,7 +70,7 @@ const NearbyShopsCarousel = ({ shopsData = [] }) => {
                       onPress={() => router.push('/customer/VendorProfCust')}
                       activeOpacity={0.8}
                     >
-                      <Image source={shop.logo} style={styles.logo} />
+                      <ShopLogo source={shop.logo} fallback={defaultLogo} logoStyle={styles.logo} />
                     </TouchableOpacity>
 
                     <TouchableOpacity

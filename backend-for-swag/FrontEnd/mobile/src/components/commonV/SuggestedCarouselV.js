@@ -9,9 +9,9 @@ const CARD_MARGIN = 15;
 
 // Internal Card Component
 // --- THE FIX: Changed { item } to { shop } ---
-const ShopCard = ({ shop }) => {
+const ShopCard = ({ shop, onFollow }) => {
   const router = useRouter();
-  const [isAdded, setIsAdded] = useState(false); // Controls the Add vs Check icon
+  const [isAdded, setIsAdded] = useState(shop.isFollowed || false);
 
   // Helper to go to the Vendor version of the profile
   const goToProfile = () => {
@@ -60,11 +60,9 @@ const ShopCard = ({ shop }) => {
               )}
             </TouchableOpacity>
 
-            {/* 2. ADD BUTTON -> Toggles Icon ONLY (No Navigation) */}
-            {/* --- THE FIX: Using Ionicons for a clean Plus/Check --- */}
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => setIsAdded(!isAdded)}
+              onPress={() => { const next = !isAdded; setIsAdded(next); if (onFollow) onFollow(shop.id, next); }}
               activeOpacity={0.8}
             >
               <Ionicons
@@ -85,7 +83,7 @@ const ShopCard = ({ shop }) => {
 };
 
 // Main Carousel Component
-const SuggestedCarouselV = ({ data }) => {
+const SuggestedCarouselV = ({ data, onFollow }) => {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -97,7 +95,7 @@ const SuggestedCarouselV = ({ data }) => {
         snapToAlignment="center"
       >
         {data.map((shopData) => (
-          <ShopCard key={shopData.id} shop={shopData} />
+          <ShopCard key={shopData.id} shop={shopData} onFollow={onFollow} />
         ))}
       </ScrollView>
     </View>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
 const COLORS = [
@@ -22,22 +22,25 @@ function getInitials(name) {
 }
 
 function isValidImageUri(uri) {
-  return typeof uri === 'string' && uri.length > 0 && uri !== 'undefined' && uri !== 'null' && (uri.startsWith('http') || uri.startsWith('file'));
+  return typeof uri === 'string' && uri.length > 0 && uri !== 'undefined' && uri !== 'null' && uri.startsWith('http');
 }
 
 export default function InitialsAvatar({ name, imageUri, size = 64, style }) {
-  if (isValidImageUri(imageUri)) {
-    return (
-      <Image
-        source={{ uri: imageUri }}
-        style={[{ width: size, height: size, borderRadius: size / 2 }, style]}
-      />
-    );
-  }
+  const [imgError, setImgError] = useState(false);
 
   const initials = getInitials(name);
   const bgColor = getColorFromName(name || '');
   const fontSize = size * 0.38;
+
+  if (isValidImageUri(imageUri) && !imgError) {
+    return (
+      <Image
+        source={{ uri: imageUri }}
+        style={[{ width: size, height: size, borderRadius: size / 2 }, style]}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
 
   return (
     <View style={[styles.container, { width: size, height: size, borderRadius: size / 2, backgroundColor: bgColor }, style]}>

@@ -14,6 +14,7 @@ import VendorPosts from '../commonV/VendorPosts';
 import CreatePostEventModal from '../commonV/CreatePostEventModal';
 import { fetchMyVendorProfile, updateMyVendorProfile } from '../../store/slices/vendorSlice';
 import { fetchPosts, deletePost } from '../../store/slices/postsSlice';
+import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,10 +56,17 @@ const VendorProfileScreen = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
 
-  // vendor posts from Redux filtered to this vendor
-  const posts = reduxPosts.filter(
+  // All posts belonging to this vendor
+  const myPosts = reduxPosts.filter(
     (p) => myProfile && String(p.vendorId) === String(myProfile.id)
   );
+
+  // Posts shown in the active tab
+  const posts = myPosts.filter((p) => {
+    if (activeTab === 'Events') return p.type === 'event';
+    if (activeTab === 'Part Posts') return p.type !== 'event';
+    return false; // Services and Reviews tabs have no posts feed
+  });
 
   const [vendorData, setVendorData] = useState({
     name: '', location: '', rating: 0, followers: 0, following: 0, bio: '',
@@ -97,14 +105,20 @@ const VendorProfileScreen = () => {
 
   // Save profile edits
   const handleSaveProfile = async () => {
+    const rawProfile = typeof vendorData.profileImage === 'object' && vendorData.profileImage?.uri
+      ? vendorData.profileImage.uri : null;
+    const rawBanner = typeof vendorData.bgImage === 'object' && vendorData.bgImage?.uri
+      ? vendorData.bgImage.uri : null;
+
+    const finalProfileImage = isLocalUri(rawProfile) ? await uploadMedia(rawProfile) : rawProfile;
+    const finalBannerImage  = isLocalUri(rawBanner)  ? await uploadMedia(rawBanner)  : rawBanner;
+
     await dispatch(updateMyVendorProfile({
       shopName: vendorData.name,
       city: vendorData.location,
       bio: vendorData.bio,
-      profileImage: typeof vendorData.profileImage === 'object' && vendorData.profileImage?.uri
-        ? vendorData.profileImage.uri : null,
-      bannerImage: typeof vendorData.bgImage === 'object' && vendorData.bgImage?.uri
-        ? vendorData.bgImage.uri : null,
+      profileImage: finalProfileImage,
+      bannerImage: finalBannerImage,
     }));
     setIsEditing(false);
   };

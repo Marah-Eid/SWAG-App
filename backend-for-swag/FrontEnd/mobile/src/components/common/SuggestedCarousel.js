@@ -8,9 +8,9 @@ const CARD_WIDTH = width * 0.75;
 const CARD_MARGIN = 15;
 
 // --- THE FIX: Changed { item } to { shop } to match your database naming ---
-const ShopCard = ({ shop }) => {
+const ShopCard = ({ shop, onFollow }) => {
   const router = useRouter();
-  const [isAdded, setIsAdded] = useState(false);
+  const [isAdded, setIsAdded] = useState(shop.isFollowed || false);
 
   const goToProfile = () => {
     router.push({ pathname: '/customer/VendorProfCust', params: { vendorId: shop.id } });
@@ -61,7 +61,7 @@ const ShopCard = ({ shop }) => {
             {/* 2. ADD BUTTON */}
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => setIsAdded(!isAdded)}
+              onPress={() => { const next = !isAdded; setIsAdded(next); if (onFollow) onFollow(shop.id, next); }}
               activeOpacity={0.8}
             >
               <Ionicons
@@ -81,7 +81,7 @@ const ShopCard = ({ shop }) => {
   );
 };
 
-const SuggestedCarousel = ({ data }) => {
+const SuggestedCarousel = ({ data, onFollow }) => {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -93,7 +93,7 @@ const SuggestedCarousel = ({ data }) => {
         snapToAlignment="center"
       >
         {data.map((shopData) => (
-          <ShopCard key={shopData.id} shop={shopData} />
+          <ShopCard key={shopData.id} shop={shopData} onFollow={onFollow} />
         ))}
       </ScrollView>
     </View>

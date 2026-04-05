@@ -10,6 +10,7 @@ import CustomerPosts from '../common/CustomerPosts';
 import TopCategoryBar from '../common/TopCategoryBar';
 import { fetchVendors } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
+import { followVendor, unfollowVendor } from '../../store/slices/customerSlice';
 
 const defaultLogo = require('../../../assets/images/nmk-icon.png');
 const defaultBg = require('../../../assets/images/theshop-photo.png');
@@ -33,7 +34,16 @@ const ExploreScreen = () => {
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
     bgImage: v.bannerImage ? { uri: v.bannerImage } : defaultBg,
+    isFollowed: v.isFollowed || false,
   }));
+
+  const handleFollow = (vendorId, shouldFollow) => {
+    if (shouldFollow) {
+      dispatch(followVendor(vendorId));
+    } else {
+      dispatch(unfollowVendor(vendorId));
+    }
+  };
 
   const explorePosts = posts.map((p) => ({
     id: p.id,
@@ -66,7 +76,7 @@ const ExploreScreen = () => {
         {/* SECTION 2: Trending Carousel */}
         <View style={styles.section}>
 
-          <SuggestedCarousel data={trendingShops} />
+          <SuggestedCarousel data={trendingShops} onFollow={handleFollow} />
         </View>
 
         {/* SECTION 3: Explore Feed */}

@@ -92,6 +92,9 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+// ── HTTP Client (used by UploadController for Supabase Storage) ───────────────
+builder.Services.AddHttpClient();
+
 // ── Controllers ───────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 

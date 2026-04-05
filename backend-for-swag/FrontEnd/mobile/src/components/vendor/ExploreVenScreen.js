@@ -9,7 +9,7 @@ import SuggestedCarouselV from '../commonV/SuggestedCarouselV';
 import VendorPosts from '../commonV/VendorPosts';
 import TopCategoryBarV from '../commonV/TopCategoryBarV';
 
-import { fetchVendors } from '../../store/slices/vendorSlice';
+import { fetchVendors, followVendor, unfollowVendor } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 
 const defaultLogo = require('../../../assets/images/nmk-icon.png');
@@ -34,7 +34,16 @@ const ExploreVenScreen = () => {
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
     bgImage: v.bannerImage ? { uri: v.bannerImage } : defaultBg,
+    isFollowed: v.isFollowed || false,
   }));
+
+  const handleFollow = (vendorId, shouldFollow) => {
+    if (shouldFollow) {
+      dispatch(followVendor(vendorId));
+    } else {
+      dispatch(unfollowVendor(vendorId));
+    }
+  };
 
   const explorePosts = posts.slice(0, 10).map((p) => ({
     id: p.id,
@@ -66,7 +75,7 @@ const ExploreVenScreen = () => {
 
         {/* SECTION 2: Trending Carousel */}
         <View style={styles.section}>
-          <SuggestedCarouselV data={trendingShops} />
+          <SuggestedCarouselV data={trendingShops} onFollow={handleFollow} />
         </View>
 
         {/* SECTION 3: Explore Feed */}

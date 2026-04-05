@@ -130,7 +130,13 @@ const VendorProfScreen = () => {
 
   const CATEGORIES = ['Part Posts', 'Events', 'Services', 'Reviews'];
 
-  const vendorPosts = posts.filter((p) => !vendorId || String(p.vendorId) === String(vendorId));
+  const allVendorPosts = posts.filter((p) => !vendorId || String(p.vendorId) === String(vendorId));
+
+  const vendorPosts = allVendorPosts.filter((p) => {
+    if (activeTab === 'Events')    return p.type === 'event';
+    if (activeTab === 'Part Posts') return p.type !== 'event';
+    return false; // Services / Reviews have no inline feed
+  });
 
   if (loading && !selectedVendor) {
     return (
@@ -261,7 +267,7 @@ const VendorProfScreen = () => {
                   style={[styles.pillTab, isTabActive && styles.pillTabActive]}
                   onPress={() => {
                     setActiveTab(cat);
-                    router.push({ pathname: '/commonScreens/otherVendorsCategoryCust', params: { category: cat } });
+                    router.push({ pathname: '/commonScreens/otherVendorsCategoryCust', params: { category: cat, vendorId } });
                   }}
                 >
                   <Text style={[styles.pillTabText, isTabActive && styles.pillTabTextActive]}>{cat}</Text>

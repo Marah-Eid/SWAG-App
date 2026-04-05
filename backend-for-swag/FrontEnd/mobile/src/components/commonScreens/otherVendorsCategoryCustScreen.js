@@ -37,6 +37,7 @@ const OtherVendorsCategoryCustScreen = () => {
 
   // Grab the parameters passed from the previous screen
   const params = useLocalSearchParams();
+  const vendorId = params.vendorId;
 
   // Determine initial tab: use the passed category if it exists, otherwise default to the first one
   const initialTab = params.category || CATEGORIES[0];
@@ -49,18 +50,22 @@ const OtherVendorsCategoryCustScreen = () => {
     dispatch(fetchPosts());
   }, [dispatch]);
 
-  // Filter posts by category keyword in description
-  const categoryKeywordMap = {
-    'Part Posts': ['car-parts', 'carparts', 'parts', 'exhaust', 'tires', 'wheels', 'glass'],
-    'Events': ['event', 'events'],
-    'Services': ['maintenance', 'service', 'carwash', 'car wash', 'gas station', 'tuning'],
-    'Reviews': ['review', 'reviews'],
-  };
+  // If coming from a vendor profile, scope to that vendor only
+  const scopedPosts = vendorId
+    ? posts.filter((p) => String(p.vendorId) === String(vendorId))
+    : posts;
 
-  const filteredPosts = posts.filter((p) => {
+  // Filter by tab using post type (not keyword guessing)
+  const filteredPosts = scopedPosts.filter((p) => {
+    if (activeTab === 'Events')     return p.type === 'event';
+    if (activeTab === 'Part Posts') return p.type !== 'event';
+    // Services / Reviews: fall back to keyword search in description
     const desc = (p.description || '').toLowerCase();
-    const keywords = categoryKeywordMap[activeTab] || [];
-    return keywords.some((k) => desc.includes(k)) || (activeTab === 'Events' && p.type === 'event');
+    const keywordMap = {
+      'Services': ['maintenance', 'service', 'carwash', 'car wash', 'gas station', 'tuning'],
+      'Reviews':  ['review', 'reviews'],
+    };
+    return (keywordMap[activeTab] || []).some((k) => desc.includes(k));
   });
 
   const currentPosts = filteredPosts.map((p) => ({

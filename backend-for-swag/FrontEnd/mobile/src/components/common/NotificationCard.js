@@ -2,14 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const NotificationCard = ({ title, message, onDelete, onCardPress }) => {
+const NotificationCard = ({ title, message, isRead = true, onDelete, onCardPress }) => {
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, !isRead && styles.cardUnread]}
       onPress={onCardPress}
       activeOpacity={0.8}
     >
       <View style={styles.headerRow}>
+        {!isRead && <View style={styles.unreadDot} />}
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
         <TouchableOpacity
           style={styles.closeButton}
@@ -39,15 +40,26 @@ const NotificationCard = ({ title, message, onDelete, onCardPress }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20, // UI Polish: Modern curves
+    borderRadius: 20,
     padding: 16,
     marginBottom: 15,
-    // UI Polish: Premium depth shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 4,
+  },
+  cardUnread: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#8A1C27',
+    backgroundColor: '#FDF8F8',
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#8A1C27',
+    marginRight: 8,
   },
   headerRow: {
     flexDirection: 'row',

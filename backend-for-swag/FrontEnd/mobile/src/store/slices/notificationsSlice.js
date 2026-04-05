@@ -28,6 +28,24 @@ export const markAllNotificationsRead = createAsyncThunk(
   }
 );
 
+export const deleteNotification = createAsyncThunk(
+  'notifications/delete',
+  async (id, { rejectWithValue }) => {
+    const result = await notificationsAPI.deleteNotification(id);
+    if (result.success) return id;
+    return rejectWithValue(result.error);
+  }
+);
+
+export const clearAllNotifications = createAsyncThunk(
+  'notifications/clearAll',
+  async (_, { rejectWithValue }) => {
+    const result = await notificationsAPI.clearAll();
+    if (result.success) return true;
+    return rejectWithValue(result.error);
+  }
+);
+
 const notificationsSlice = createSlice({
   name: 'notifications',
   initialState: {
@@ -61,6 +79,15 @@ const notificationsSlice = createSlice({
       })
       .addCase(markAllNotificationsRead.fulfilled, (state) => {
         state.notifications.forEach(n => { n.isRead = true; });
+        state.unreadCount = 0;
+      })
+      .addCase(deleteNotification.fulfilled, (state, action) => {
+        const notif = state.notifications.find(n => n.id === action.payload);
+        if (notif && !notif.isRead) state.unreadCount = Math.max(0, state.unreadCount - 1);
+        state.notifications = state.notifications.filter(n => n.id !== action.payload);
+      })
+      .addCase(clearAllNotifications.fulfilled, (state) => {
+        state.notifications = [];
         state.unreadCount = 0;
       });
   },

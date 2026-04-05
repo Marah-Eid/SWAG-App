@@ -9,6 +9,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import { createPost } from '../../store/slices/postsSlice';
+import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -73,12 +74,20 @@ const CreatePostVenScreen = () => {
       return;
     }
     setPublishing(true);
+
+    let mediaUrl = null;
+    if (media?.uri && isLocalUri(media.uri)) {
+      mediaUrl = await uploadMedia(media.uri, media.type === 'video' ? 'video' : 'image');
+    } else if (media?.uri) {
+      mediaUrl = media.uri;
+    }
+
     const hashtags = selectedCategories.length > 0
       ? `${selectedCategories.map(cat => `#${cat.replace(/\s+/g, '')}`).join(' ')}\n\n`
       : '';
     const result = await dispatch(createPost({
       description: `${hashtags}${postText}`,
-      postImage: media?.uri || null,
+      postImage: mediaUrl,
       mediaType: media?.type || 'text',
       type: 'regular',
     }));

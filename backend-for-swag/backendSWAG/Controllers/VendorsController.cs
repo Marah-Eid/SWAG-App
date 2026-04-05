@@ -129,7 +129,16 @@ public class VendorsController : ControllerBase
         vendor.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        return Ok(new MessageResponse { Message = "Profile updated." });
+
+        var updated = await _db.Vendors
+            .Include(v => v.ProfileDetail)
+            .Include(v => v.SelectedCategories)
+            .Include(v => v.Reviews)
+            .Include(v => v.Followers)
+            .Include(v => v.VendorFollowers)
+            .FirstOrDefaultAsync(v => v.Id == _currentUser.UserId);
+
+        return Ok(BuildVendorProfile(updated!, _currentUser.UserId, UserRole.Vendor));
     }
 
     // PUT /api/vendors/me/profile-details
@@ -258,23 +267,37 @@ public class VendorsController : ControllerBase
     [Authorize(Roles = "Vendor")]
     public async Task<IActionResult> GetVendorFollowing()
     {
-        var following = await _db.VendorFollows
-            .Where(vf => vf.FollowerId == _currentUser.UserId)
+        var myId = _currentUser.UserId;
+        var follows = await _db.VendorFollows
+            .Where(vf => vf.FollowerId == myId && !vf.Following.IsDeleted)
             .Include(vf => vf.Following)
-            .Select(vf => new VendorSummaryDto
-            {
-                Id = vf.Following.Id,
-                FullName = vf.Following.FullName,
-                ShopName = vf.Following.ShopName,
-                ShopType = vf.Following.ShopType,
-                City = vf.Following.City,
-                ProfileImage = vf.Following.ProfileImage,
-                Status = vf.Following.Status.ToString().ToLower(),
-                IsFollowed = true
-            })
+                .ThenInclude(v => v.Reviews)
+            .Include(vf => vf.Following)
+                .ThenInclude(v => v.Followers)
+            .Include(vf => vf.Following)
+                .ThenInclude(v => v.VendorFollowers)
             .ToListAsync();
 
-        return Ok(following);
+        return Ok(follows.Select(vf =>
+        {
+            var v = vf.Following;
+            return new VendorSummaryDto
+            {
+                Id = v.Id,
+                FullName = v.FullName,
+                ShopName = v.ShopName,
+                ShopType = v.ShopType,
+                City = v.City,
+                ProfileImage = v.ProfileImage,
+                BannerImage = v.BannerImage,
+                Bio = v.Bio,
+                Status = v.Status.ToString().ToLower(),
+                AverageRating = v.Reviews.Count > 0 ? Math.Round(v.Reviews.Average(r => (double)r.Rating), 1) : 0,
+                ReviewCount = v.Reviews.Count,
+                FollowerCount = v.Followers.Count + v.VendorFollowers.Count,
+                IsFollowed = true
+            };
+        }));
     }
 
     // POST /api/vendors/me/following/{vendorId}

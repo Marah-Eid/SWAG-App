@@ -27,6 +27,24 @@ const notificationsAPI = {
       return { success: false, error: error.response?.data?.message || 'Failed to mark all as read' };
     }
   },
+
+  deleteNotification: async (id) => {
+    try {
+      await apiClient.delete(`/notifications/${id}`);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to delete notification' };
+    }
+  },
+
+  clearAll: async () => {
+    try {
+      await apiClient.delete('/notifications/clear-all');
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to clear notifications' };
+    }
+  },
 };
 
 export default notificationsAPI;

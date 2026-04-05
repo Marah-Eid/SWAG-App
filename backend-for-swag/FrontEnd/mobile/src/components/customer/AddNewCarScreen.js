@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import { addCar } from '../../store/slices/carsSlice';
 import * as ImagePicker from 'expo-image-picker';
+import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import BottomTabs from '../common/BottomTabs';
 
@@ -108,7 +109,15 @@ const AddNewCarCust = () => {
     }
     setSaving(true);
 
-    // THE SECRET TRANSLATION: 
+    // Upload car image to Supabase Storage if it's a local file URI
+    let carImageUrl = null;
+    if (form.carImage && isLocalUri(form.carImage)) {
+      carImageUrl = await uploadMedia(form.carImage, 'image');
+    } else if (form.carImage) {
+      carImageUrl = form.carImage;
+    }
+
+    // THE SECRET TRANSLATION:
     // We grab the raw Date object directly. No string parsing required, which stops the crash!
     let dbNextMaintenance = form.nextMaintenance;
     if (rawDates.nextMaintenance) {
@@ -128,7 +137,7 @@ const AddNewCarCust = () => {
       insuranceExpiry: form.insurance,       // Sends the pretty string (matches varchar)
       color: form.color,
       registrationDate: form.registration,   // Sends the pretty string (matches varchar)
-      carImage: form.carImage,
+      carImage: carImageUrl,
     }));
 
     setSaving(false);
