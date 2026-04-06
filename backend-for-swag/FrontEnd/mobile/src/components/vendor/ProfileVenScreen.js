@@ -272,6 +272,7 @@ const VendorProfileScreen = () => {
     { id: 5, label: 'Confirmed link', iconImage: require('../../../assets/images/insta-icon.png'), action: () => openLink(shopDetailsText[5]) },
     { id: 6, label: 'Work hours', textColor: workHoursStatus.color, text: workHoursStatus.text, iconName: 'time' },
     { id: 7, label: 'Rate', textColor: '#D32F2F', iconImage: require('../../../assets/images/rate-icon.png'), action: () => router.push('/vendor/Rating&RevVen') },
+    { id: 8, label: 'My Categories', iconName: 'grid-outline', action: () => router.push('/vendor/ManageCategoriesVen') },
   ];
 
   const pickImage = async (target) => {
@@ -387,7 +388,7 @@ const VendorProfileScreen = () => {
                 </View>
                 <View style={styles.detailTextCol}>
 
-                  {isEditingDetails && item.id !== 7 ? (
+                  {isEditingDetails && item.id !== 7 && item.id !== 8 ? (
                     item.id === 6 ? (
                       <View style={styles.timeEditRow}>
                         <TouchableOpacity style={styles.timePickBtn} onPress={() => { setTimePickerMode('open'); setShowTimePicker(true); }}>

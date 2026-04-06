@@ -52,6 +52,8 @@ public class RegisterRequest
     public string? LicenseFile { get; set; }
     public string? IdFrontFile { get; set; }
     public string? IdBackFile { get; set; }
+    // Category names selected during registration (e.g. ["Car-Parts","Tuning (Mechanical/Cosmetic)"])
+    public List<string>? CategoryNames { get; set; }
 }
 
 public class SendOtpRequest

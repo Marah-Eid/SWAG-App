@@ -113,6 +113,58 @@ public class AuthController : ControllerBase
                 await _db.SaveChangesAsync();
             }
 
+            // Link selected category names to vendor
+            // The frontend sends human-readable strings (e.g. "Car-Parts", "Tuning (Mechanical/Cosmetic)").
+            // We match each string against section names using a case-insensitive "contains" check,
+            // then link the vendor to all items in every matched section.
+            if (req.CategoryNames != null && req.CategoryNames.Count > 0)
+            {
+                var allSections = await _db.VendorCategorySections
+                    .Include(s => s.Items)
+                    .ToListAsync();
+
+                var seenItemIds = new HashSet<int>();
+
+                foreach (var rawName in req.CategoryNames.Distinct())
+                {
+                    var cleaned = rawName.Trim().ToLower();
+
+                    // Find sections whose name appears inside the selected string
+                    // (e.g. "Gas Station" is inside "Gas Station (Fuel & Energy)")
+                    var matchedSections = allSections
+                        .Where(s => cleaned.Contains(s.Name.ToLower()))
+                        .ToList();
+
+                    // Fallback: the selected string appears inside the section name
+                    // (e.g. "Car-Parts" → "Car Parts" after normalisation)
+                    if (matchedSections.Count == 0)
+                    {
+                        var normalised = cleaned.Replace("-", " ");
+                        matchedSections = allSections
+                            .Where(s => s.Name.ToLower().Contains(normalised))
+                            .ToList();
+                    }
+
+                    foreach (var section in matchedSections)
+                    {
+                        foreach (var item in section.Items)
+                        {
+                            if (seenItemIds.Add(item.Id))
+                            {
+                                _db.VendorSelectedCategories.Add(new VendorSelectedCategory
+                                {
+                                    VendorId = vendor.Id,
+                                    ItemId = item.Id
+                                });
+                            }
+                        }
+                    }
+                }
+
+                if (seenItemIds.Count > 0)
+                    await _db.SaveChangesAsync();
+            }
+
             var token = _tokenService.GenerateToken(vendor.Id, "Vendor", email);
             return Ok(new AuthResponse
             {

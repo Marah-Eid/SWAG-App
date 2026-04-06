@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\backenddddddd\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj": {}
+    "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj": {}
   },
   "projects": {
-    "D:\\backenddddddd\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj": {
+    "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\backenddddddd\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
+        "projectUniqueName": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
         "projectName": "SWAG-Backend",
-        "projectPath": "D:\\backenddddddd\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
+        "projectPath": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
         "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "D:\\backenddddddd\\Otp\\backend-for-swag\\backendSWAG\\obj\\",
+        "outputPath": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",

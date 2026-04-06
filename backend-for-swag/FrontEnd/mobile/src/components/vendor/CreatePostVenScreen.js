@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, View, Text, TextInput, ScrollView,
   TouchableOpacity, Image, LayoutAnimation, Platform, UIManager, Alert, KeyboardAvoidingView, StatusBar, ActivityIndicator
@@ -10,27 +10,35 @@ import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import { createPost } from '../../store/slices/postsSlice';
 import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
+import categoriesAPI from '../../api/categoriesAPI';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const CATEGORIES = [
-  { id: 'parts', title: 'Parts', subCategories: ['Car-Parts', 'Exhaust System', 'Glass Services', 'Wheels & Tires'] },
-  { id: 'autohub', title: 'Auto Hub', subCategories: ['Car Rental', 'Agencies', 'Dealerships'] },
-  { id: 'customization', title: 'Customization', subCategories: ['Tuning', 'Accessories', 'Paint & Body', 'Interior'] },
-  { id: 'services', title: 'Services', subCategories: ['Maintenance', 'Car Washes', 'Gas Station'] }
-];
-
 const CreatePostVenScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [publishing, setPublishing] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  // selectedItems: array of { id: number, name: string } — real DB items
+  const [selectedItems, setSelectedItems] = useState([]);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
   const [postText, setPostText] = useState('');
   const [media, setMedia] = useState(null);
+  // sections fetched from the DB: [{ id, name, items: [{ id, name }] }]
+  const [sections, setSections] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      const result = await categoriesAPI.getCategories();
+      if (result.success) setSections(result.data);
+      setLoadingCategories(false);
+    };
+    fetchCategories();
+  }, []);
 
   const pickMedia = async () => {
     try {
@@ -48,12 +56,13 @@ const CreatePostVenScreen = () => {
 
   const removeMedia = () => setMedia(null);
 
-  const toggleCategorySelection = (sub) => {
-    if (selectedCategories.includes(sub)) {
-      setSelectedCategories(selectedCategories.filter(item => item !== sub));
-    } else {
-      setSelectedCategories([...selectedCategories, sub]);
-    }
+  const toggleCategorySelection = (item) => {
+    setSelectedItems((prev) => {
+      if (prev.some((i) => i.id === item.id)) {
+        return prev.filter((i) => i.id !== item.id);
+      }
+      return [...prev, { id: item.id, name: item.name }];
+    });
   };
 
   const toggleCategoryMenu = () => {
@@ -82,14 +91,15 @@ const CreatePostVenScreen = () => {
       mediaUrl = media.uri;
     }
 
-    const hashtags = selectedCategories.length > 0
-      ? `${selectedCategories.map(cat => `#${cat.replace(/\s+/g, '')}`).join(' ')}\n\n`
+    const hashtags = selectedItems.length > 0
+      ? `${selectedItems.map(i => `#${i.name.replace(/\s+/g, '')}`).join(' ')}\n\n`
       : '';
     const result = await dispatch(createPost({
       description: `${hashtags}${postText}`,
       postImage: mediaUrl,
       mediaType: media?.type || 'text',
       type: 'regular',
+      categoryIds: selectedItems.map((i) => i.id),
     }));
     setPublishing(false);
     if (result.meta.requestStatus === 'fulfilled') {
@@ -139,7 +149,7 @@ const CreatePostVenScreen = () => {
           </View>
 
           <TextInput
-            style={[styles.descInput, selectedCategories.length > 0 && { marginBottom: 5 }]}
+            style={[styles.descInput, selectedItems.length > 0 && { marginBottom: 5 }]}
             placeholder="Share an update, product, or service..."
             placeholderTextColor="#A0AEC0"
             multiline
@@ -148,10 +158,10 @@ const CreatePostVenScreen = () => {
             autoFocus={true}
           />
 
-          {selectedCategories.length > 0 && (
+          {selectedItems.length > 0 && (
             <View style={styles.previewTagsContainer}>
-              {selectedCategories.map((tag, index) => (
-                <Text key={index} style={styles.previewTagText}>#{tag.replace(/\s+/g, '')}</Text>
+              {selectedItems.map((item) => (
+                <Text key={item.id} style={styles.previewTagText}>#{item.name.replace(/\s+/g, '')}</Text>
               ))}
             </View>
           )}
@@ -180,45 +190,52 @@ const CreatePostVenScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.addonPill, selectedCategories.length > 0 && styles.categoryActivePill]}
+              style={[styles.addonPill, selectedItems.length > 0 && styles.categoryActivePill]}
               onPress={toggleCategoryMenu}
               activeOpacity={0.8}
             >
-              <Ionicons name="pricetag" size={18} color={selectedCategories.length > 0 ? "#FFF" : "#8A1C27"} style={styles.pillIcon} />
-              <Text style={[styles.pillText, selectedCategories.length > 0 && { color: '#FFF' }]}>
-                {selectedCategories.length > 0 ? `${selectedCategories.length} Categories` : "Categories"}
+              <Ionicons name="pricetag" size={18} color={selectedItems.length > 0 ? "#FFF" : "#8A1C27"} style={styles.pillIcon} />
+              <Text style={[styles.pillText, selectedItems.length > 0 && { color: '#FFF' }]}>
+                {selectedItems.length > 0 ? `${selectedItems.length} Categories` : "Categories"}
               </Text>
             </TouchableOpacity>
           </ScrollView>
 
           {isCategoryMenuOpen && (
             <View style={styles.dropdownMenuWrapper}>
-              {CATEGORIES.map((cat) => (
-                <View key={cat.id} style={styles.accordionItem}>
-                  <TouchableOpacity
-                    style={[styles.mainCatBtn, expandedSection === cat.id && styles.mainCatBtnActive]}
-                    onPress={() => toggleAccordion(cat.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.mainCatText, expandedSection === cat.id && { color: '#FFFFFF' }]}>{cat.title}</Text>
-                    <MaterialCommunityIcons
-                      name={expandedSection === cat.id ? "chevron-up" : "chevron-down"}
-                      size={20}
-                      color={expandedSection === cat.id ? "#FFF" : "#8391A1"}
-                    />
-                  </TouchableOpacity>
-                  {expandedSection === cat.id && (
-                    <View style={styles.subList}>
-                      {cat.subCategories.map((sub, index) => (
-                        <TouchableOpacity key={index} style={styles.subItem} onPress={() => toggleCategorySelection(sub)} activeOpacity={0.7}>
-                          <Text style={[styles.subItemText, selectedCategories.includes(sub) && styles.selectedSubText]}>{sub}</Text>
-                          {selectedCategories.includes(sub) && <Ionicons name="checkmark-circle" size={20} color="#8A1C27" />}
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              ))}
+              {loadingCategories ? (
+                <ActivityIndicator color="#2D3E5E" style={{ marginVertical: 16 }} />
+              ) : (
+                sections.map((section) => (
+                  <View key={section.id} style={styles.accordionItem}>
+                    <TouchableOpacity
+                      style={[styles.mainCatBtn, expandedSection === section.id && styles.mainCatBtnActive]}
+                      onPress={() => toggleAccordion(section.id)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.mainCatText, expandedSection === section.id && { color: '#FFFFFF' }]}>{section.name}</Text>
+                      <MaterialCommunityIcons
+                        name={expandedSection === section.id ? "chevron-up" : "chevron-down"}
+                        size={20}
+                        color={expandedSection === section.id ? "#FFF" : "#8391A1"}
+                      />
+                    </TouchableOpacity>
+                    {expandedSection === section.id && (
+                      <View style={styles.subList}>
+                        {section.items.map((item) => {
+                          const isSelected = selectedItems.some((i) => i.id === item.id);
+                          return (
+                            <TouchableOpacity key={item.id} style={styles.subItem} onPress={() => toggleCategorySelection(item)} activeOpacity={0.7}>
+                              <Text style={[styles.subItemText, isSelected && styles.selectedSubText]}>{item.name}</Text>
+                              {isSelected && <Ionicons name="checkmark-circle" size={20} color="#8A1C27" />}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </View>
+                ))
+              )}
             </View>
           )}
         </View>

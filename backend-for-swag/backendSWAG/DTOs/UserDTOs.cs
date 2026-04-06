@@ -166,3 +166,11 @@ public class CreateCollectionRequest
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
 }
+
+public class SearchResultDto
+{
+    public List<VendorSummaryDto> Vendors { get; set; } = new();
+    public List<PostDto> Posts { get; set; } = new();
+    public int TotalVendors { get; set; }
+    public int TotalPosts { get; set; }
+}
