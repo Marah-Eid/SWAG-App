@@ -1,122 +1,164 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Text, SafeAreaView, StatusBar } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View, StyleSheet, ScrollView, Text, SafeAreaView, StatusBar,
+  ActivityIndicator
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { useDispatch, useSelector } from 'react-redux';
 
-// 1. IMPORT VENDOR COMPONENTS
 import VendorSearchBar from '../commonV/VendorSearchBar';
 import TopCategoryBarV from '../commonV/TopCategoryBarV';
 import SuggestedCarouselV from '../commonV/SuggestedCarouselV';
 import VendorPosts from '../commonV/VendorPosts';
 import BottomTabsVen from '../commonV/BottomTabsVen';
-import { fetchVendors } from '../../store/slices/vendorSlice';
-import { fetchPosts } from '../../store/slices/postsSlice';
+import categoriesAPI from '../../api/categoriesAPI';
+import vendorAPI from '../../api/vendorAPI';
+import postsAPI from '../../api/postsAPI';
 
 const defaultLogo = require('../../../assets/images/carshop-icon.png');
 const defaultBg = require('../../../assets/images/Euleback-photo.png');
 
-// Maps category prop key → keywords to match in post description
-const CATEGORY_KEYWORDS = {
-  CarParts: ['car-parts', 'carparts', 'parts'],
-  Exhaust: ['exhaust'],
-  Glass: ['glass', 'tint', 'windshield'],
-  WheelsTires: ['wheels', 'tires', 'tyre', 'rims'],
-  Tuning: ['tuning', 'tune', 'ecu'],
-  Accessories: ['accessories', 'accessory'],
-  PaintBody: ['paint', 'body', 'dent'],
-  Upholstery: ['interior', 'upholstery', 'leather'],
-  Maintenance: ['maintenance', 'service', 'oil'],
-  CarWash: ['car wash', 'carwash', 'detailing'],
-  GasStation: ['gas', 'fuel', 'station'],
-  Rental: ['rental', 'rent'],
-  Agencies: ['agency', 'agencies', 'official dealer'],
-  Dealerships: ['dealership', 'used cars', 'new cars'],
-};
+// Normalize a string for fuzzy matching: lowercase, strip non-letters
+const norm = (s) => s.toLowerCase().replace(/[^a-z]/g, '');
 
-// ====================================================
-// 2. THE REUSABLE SCREEN COMPONENT
-// ====================================================
 const CategoryFeedScreenV = ({ category }) => {
   const router = useRouter();
-  const dispatch = useDispatch();
 
-  const { vendors } = useSelector((state) => state.vendor);
-  const { posts } = useSelector((state) => state.posts);
+  const [sectionItems, setSectionItems] = useState([]);
+  const [selectedItemId, setSelectedItemId] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [loadingInit, setLoadingInit] = useState(true);
+  const [loadingFeed, setLoadingFeed] = useState(false);
+
+  // ── Step 1: fetch all sections, find the matching one, set default item ────
+  useEffect(() => {
+    const init = async () => {
+      setLoadingInit(true);
+      const result = await categoriesAPI.getCategories();
+      if (!result.success) { setLoadingInit(false); return; }
+
+      const catNorm = norm(category);
+      let matchedSection = null;
+      let defaultItemId = null;
+
+      for (const section of result.data) {
+        for (const item of section.items) {
+          const itemNorm = norm(item.name);
+          if (itemNorm === catNorm || itemNorm.includes(catNorm) || catNorm.includes(itemNorm)) {
+            matchedSection = section;
+            defaultItemId = item.id;
+            break;
+          }
+        }
+        if (matchedSection) break;
+      }
+
+      if (matchedSection) {
+        setSectionItems(matchedSection.items);
+        setSelectedItemId(defaultItemId);
+      }
+      setLoadingInit(false);
+    };
+    init();
+  }, [category]);
+
+  // ── Step 2: fetch vendors + posts whenever the selected chip changes ────────
+  const fetchFeed = useCallback(async (itemId) => {
+    setLoadingFeed(true);
+    const [vendorResult, postResult] = await Promise.all([
+      vendorAPI.getVendors({ categoryId: itemId }),
+      postsAPI.getPosts({ categoryId: itemId }),
+    ]);
+    setVendors(vendorResult.success ? vendorResult.data : []);
+    setPosts(postResult.success ? postResult.data : []);
+    setLoadingFeed(false);
+  }, []);
 
   useEffect(() => {
-    dispatch(fetchVendors());
-    dispatch(fetchPosts());
-  }, [dispatch]);
+    if (selectedItemId != null) fetchFeed(selectedItemId);
+  }, [selectedItemId, fetchFeed]);
 
-  const keywords = CATEGORY_KEYWORDS[category] || [];
-
-  const filteredPosts = posts.filter((p) => {
-    const desc = (p.description || '').toLowerCase();
-    return keywords.some((k) => desc.includes(k));
-  });
-
-  const suggestions = vendors.slice(0, 6).map((v) => ({
+  const suggestions = vendors.map((v) => ({
     id: v.id,
     name: v.shopName || '',
     sub: v.city || '',
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
     bgImage: v.bannerImage ? { uri: v.bannerImage } : defaultBg,
-  }));
-
-  const screenPosts = filteredPosts.map((p) => ({
-    id: p.id,
-    vendorId: p.vendorId,
-    vendorName: p.vendorShopName || '',
-    location: p.location || '',
-    description: p.description || '',
-    vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-    postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    isFollowed: v.isFollowed,
   }));
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Floating Search Bar */}
       <View style={styles.searchWrapper}>
         <VendorSearchBar />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* Top Category Nav */}
-        <TopCategoryBarV activeCategory={category} />
-
-        {/* Dynamic Category Suggestions */}
-        <SuggestedCarouselV data={suggestions} />
-
-        {/* Dynamic Category Posts */}
-        <View style={styles.feedContainer}>
-          {screenPosts.map((post) => (
-            <VendorPosts
-              key={post.id}
-              vendorName={post.vendorName}
-              vendorLogo={post.vendorLogo}
-              location={post.location}
-              description={post.description}
-              postImage={post.postImage}
-              onVendorPress={() => router.push({ pathname: '/vendor/otherVendorProfileScreen', params: { vendorId: post.vendorId } })}
-            />
-          ))}
-
-          {/* Fallback if no posts exist */}
-          {screenPosts.length === 0 && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No posts yet for {category}.</Text>
-              <Text style={styles.emptySubText}>Check back soon!</Text>
-            </View>
-          )}
+      {loadingInit ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#2D3E5E" />
         </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
 
-      </ScrollView>
+          {/* Top Category Nav */}
+          <TopCategoryBarV />
 
-      {/* Footer Navigation */}
+          {/* ── Feed content (vendors + posts) ─────────────────────────── */}
+          {loadingFeed ? (
+            <View style={styles.centered}>
+              <ActivityIndicator size="large" color="#2D3E5E" />
+            </View>
+          ) : (
+            <>
+              {/* Suggested Vendors */}
+              {suggestions.length > 0 ? (
+                <SuggestedCarouselV data={suggestions} />
+              ) : (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>No vendors for this category yet.</Text>
+                  <Text style={styles.emptySubText}>Check back soon!</Text>
+                </View>
+              )}
+
+              {/* Posts */}
+              <View style={styles.feedContainer}>
+                {posts.map((p) => (
+                  <VendorPosts
+                    key={p.id}
+                    vendorName={p.vendorShopName || ''}
+                    vendorLogo={p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo}
+                    location={p.location || ''}
+                    description={p.description || ''}
+                    postImage={p.postImage ? { uri: p.postImage } : defaultBg}
+                    mediaType={p.mediaType}
+                    mediaWidth={p.mediaWidth}
+                    mediaHeight={p.mediaHeight}
+                    initialLiked={p.isLiked}
+                    initialSaved={p.isSaved}
+                    isEvent={p.type === 'event'}
+                    date={p.eventDate}
+                    time={p.eventTime}
+                  />
+                ))}
+
+                {posts.length === 0 && !loadingFeed && (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyText}>No posts for this category yet.</Text>
+                    <Text style={styles.emptySubText}>Check back soon!</Text>
+                  </View>
+                )}
+              </View>
+            </>
+          )}
+        </ScrollView>
+      )}
+
       <View style={styles.bottomTabsWrapper}>
         <BottomTabsVen />
       </View>
@@ -127,37 +169,48 @@ const CategoryFeedScreenV = ({ category }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f1f1' // UI Polish: Premium off-white
+    backgroundColor: '#f9f1f1',
   },
   searchWrapper: {
     paddingTop: 10,
     zIndex: 10,
   },
   scroll: {
-    paddingBottom: 120, // UI Polish: Prevents last post from hiding under tabs
+    paddingBottom: 120,
     paddingTop: 5,
   },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+
+  // ── Feed ──────────────────────────────────────────────────────────────────
   feedContainer: {
-    paddingHorizontal: 20, // UI Polish: Prevents cards from touching edges
+    paddingHorizontal: 20,
     marginTop: 5,
   },
   emptyState: {
     padding: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 10,
   },
   emptyText: {
     color: '#8391A1',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     marginBottom: 5,
+    textAlign: 'center',
   },
   emptySubText: {
     color: '#A0AEC0',
-    fontSize: 14,
+    fontSize: 13,
     fontStyle: 'italic',
   },
+
+  // ── Bottom tabs ───────────────────────────────────────────────────────────
   bottomTabsWrapper: {
     position: 'absolute',
     bottom: 0,
@@ -165,7 +218,7 @@ const styles = StyleSheet.create({
     right: 0,
     elevation: 15,
     zIndex: 100,
-  }
+  },
 });
 
 export default CategoryFeedScreenV;

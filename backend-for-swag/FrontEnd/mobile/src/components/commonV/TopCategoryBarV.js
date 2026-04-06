@@ -23,7 +23,7 @@ const TopCategoryBarV = () => {
   return (
     <View style={styles.wrapper}>
       <LinearGradient
-        colors={['#3A4E63', '#1B2A38']} // Rich Brand Navy Gradient
+        colors={['#3A4E63', '#1B2A38']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.container}
@@ -34,19 +34,16 @@ const TopCategoryBarV = () => {
             iconName="settings-sharp"
             onPress={() => router.push('/vendor/PartsVen')}
           />
-
           <CategoryItem
             title="Auto Hub"
             iconName="business-sharp"
             onPress={() => router.push('/vendor/AutoHubVen')}
           />
-
           <CategoryItem
             title="Customs"
             iconName="color-palette-sharp"
             onPress={() => router.push('/vendor/CustomizationVen')}
           />
-
           <CategoryItem
             title="Services"
             iconName="construct-sharp"
@@ -99,7 +96,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footer: {
-    backgroundColor: '#8A1C27', // Brand Red
+    backgroundColor: '#8A1C27',
     height: 22,
     justifyContent: 'center',
     alignItems: 'center',
