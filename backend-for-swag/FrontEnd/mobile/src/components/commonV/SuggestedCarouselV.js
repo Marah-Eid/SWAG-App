@@ -4,26 +4,27 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.75; // UI Polish: Slightly wider for a better reading aspect ratio
+const CARD_WIDTH = width * 0.75;
 const CARD_MARGIN = 15;
 
-// Internal Card Component
-// --- THE FIX: Changed { item } to { shop } ---
+const defaultBanner = require('../../../assets/images/theshop-photo.png');
+
 const ShopCard = ({ shop, onFollow }) => {
   const router = useRouter();
   const [isAdded, setIsAdded] = useState(shop.isFollowed || false);
+  const [bgSrc, setBgSrc] = useState(shop.bgImage || defaultBanner);
 
-  // Helper to go to the Vendor version of the profile
   const goToProfile = () => {
-    router.push('/vendor/otherVendorProfile');
+    router.push({ pathname: '/vendor/otherVendorProfile', params: { vendorId: shop.id } });
   };
 
   return (
     <View style={styles.cardWrapper}>
       <ImageBackground
-        source={shop.bgImage}
+        source={bgSrc}
+        onError={() => setBgSrc(defaultBanner)}
         style={styles.card}
-        imageStyle={{ borderRadius: 16 }} // UI Polish: Modern 16px curve
+        imageStyle={{ borderRadius: 16 }}
       >
         <View style={styles.darkOverlay}>
 

@@ -4,8 +4,8 @@ import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 
 const defaultLogo = require('../../../assets/images/carshop-icon.png');
+const defaultBanner = require('../../../assets/images/theshop-photo.png');
 
-// Get Screen Dimensions
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.88;
 const CARD_MARGIN = 15;
@@ -21,14 +21,67 @@ const ShopLogo = ({ source, fallback, logoStyle }) => {
   );
 };
 
+const NearbyShopCard = ({ shop, isVendor, router }) => {
+  const [bgSrc, setBgSrc] = useState(shop.bgImage || defaultBanner);
+
+  const goToProfile = () => router.push(
+    isVendor
+      ? { pathname: '/vendor/otherVendorProfile', params: { vendorId: shop.id } }
+      : { pathname: '/customer/VendorProfCust', params: { vendorId: shop.id } }
+  );
+
+  return (
+    <View style={styles.cardWrapper}>
+      <ImageBackground
+        source={bgSrc}
+        onError={() => setBgSrc(defaultBanner)}
+        style={styles.card}
+        imageStyle={{ borderRadius: 16 }}
+      >
+        <View style={styles.darkOverlay}>
+
+          <TouchableOpacity
+            onPress={() => router.push(isVendor ? '/vendor/NearByVen' : '/customer/NearByCust')}
+            style={styles.badgeContainer}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cardHeader}>Nearby Shops</Text>
+          </TouchableOpacity>
+
+          <View style={styles.contentRow}>
+            <TouchableOpacity onPress={goToProfile} activeOpacity={0.8}>
+              <ShopLogo source={shop.logo} fallback={defaultLogo} logoStyle={styles.logo} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.textContainer} onPress={goToProfile} activeOpacity={0.8}>
+              <Text style={styles.shopName} numberOfLines={1}>{shop.name}</Text>
+              {shop.sub ? (
+                <Text style={styles.shopSub} numberOfLines={1}>{shop.sub}</Text>
+              ) : (
+                <View style={styles.infoRow}>
+                  <Text style={styles.shopSub} numberOfLines={1}>{shop.phone}</Text>
+                  <Text style={styles.shopSub}> / </Text>
+                  <Text style={styles.shopSub} numberOfLines={1}>{shop.city}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.bioText} numberOfLines={2}>{shop.bio}</Text>
+
+        </View>
+      </ImageBackground>
+    </View>
+  );
+};
+
 const NearbyShopsCarousel = ({ shopsData = [] }) => {
   const router = useRouter();
 
-  // Get user location context from Redux
   const { user } = useSelector((state) => state.auth);
   const userCity = user?.city || 'Amman';
+  const isVendor = user?.role === 'vendor';
 
-  // Filter shops by city or location string
   const nearbyShops = shopsData.filter(shop => {
     if (shop.city) return shop.city === userCity;
     if (shop.sub) return shop.sub.includes(userCity);
@@ -47,61 +100,9 @@ const NearbyShopsCarousel = ({ shopsData = [] }) => {
         snapToInterval={CARD_WIDTH + CARD_MARGIN}
         snapToAlignment="center"
       >
-        {nearbyShops.map((shop) => {
-          return (
-            <View key={shop.id} style={styles.cardWrapper}>
-              <ImageBackground
-                source={shop.bgImage}
-                style={styles.card}
-                imageStyle={{ borderRadius: 16 }}
-              >
-                <View style={styles.darkOverlay}>
-
-                  <TouchableOpacity
-                    onPress={() => router.push('/customer/NearByCust')}
-                    style={styles.badgeContainer}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.cardHeader}>Nearby Shop</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.contentRow}>
-                    <TouchableOpacity
-                      onPress={() => router.push('/customer/VendorProfCust')}
-                      activeOpacity={0.8}
-                    >
-                      <ShopLogo source={shop.logo} fallback={defaultLogo} logoStyle={styles.logo} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.textContainer}
-                      onPress={() => router.push('/customer/VendorProfCust')}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.shopName} numberOfLines={1}>{shop.name}</Text>
-
-                      {/* --- THE FIX: Separated Phone and City --- */}
-                      {shop.sub ? (
-                        <Text style={styles.shopSub} numberOfLines={1}>{shop.sub}</Text>
-                      ) : (
-                        <View style={styles.infoRow}>
-                          <Text style={styles.shopSub} numberOfLines={1}>{shop.phone}</Text>
-                          <Text style={styles.shopSub}> / </Text>
-                          <Text style={styles.shopSub} numberOfLines={1}>{shop.city}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-
-                    {/* FOLLOW BUTTON REMOVED FROM HERE */}
-                  </View>
-
-                  <Text style={styles.bioText} numberOfLines={2}>{shop.bio}</Text>
-
-                </View>
-              </ImageBackground>
-            </View>
-          );
-        })}
+        {nearbyShops.map((shop) => (
+          <NearbyShopCard key={shop.id} shop={shop} isVendor={isVendor} router={router} />
+        ))}
       </ScrollView>
     </View>
   );

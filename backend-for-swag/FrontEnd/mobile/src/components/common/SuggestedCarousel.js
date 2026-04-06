@@ -7,10 +7,12 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.75;
 const CARD_MARGIN = 15;
 
-// --- THE FIX: Changed { item } to { shop } to match your database naming ---
+const defaultBanner = require('../../../assets/images/theshop-photo.png');
+
 const ShopCard = ({ shop, onFollow }) => {
   const router = useRouter();
   const [isAdded, setIsAdded] = useState(shop.isFollowed || false);
+  const [bgSrc, setBgSrc] = useState(shop.bgImage || defaultBanner);
 
   const goToProfile = () => {
     router.push({ pathname: '/customer/VendorProfCust', params: { vendorId: shop.id } });
@@ -19,7 +21,8 @@ const ShopCard = ({ shop, onFollow }) => {
   return (
     <View style={styles.cardWrapper}>
       <ImageBackground
-        source={shop.bgImage}
+        source={bgSrc}
+        onError={() => setBgSrc(defaultBanner)}
         style={styles.card}
         imageStyle={{ borderRadius: 16 }}
       >

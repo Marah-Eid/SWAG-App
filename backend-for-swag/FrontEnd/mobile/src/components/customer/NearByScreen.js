@@ -23,13 +23,15 @@ const NearByScreen = () => {
   const { vendors } = useSelector((state) => state.vendor);
   const { posts } = useSelector((state) => state.posts);
   const { profile } = useSelector((state) => state.customer);
+  const { user } = useSelector((state) => state.auth);
+  const userCity = user?.city || '';
 
   useEffect(() => {
     dispatch(fetchVendors());
     dispatch(fetchPosts());
   }, [dispatch]);
 
-  const nearbyShops = vendors.slice(0, 6).map((v) => ({
+  const nearbyShops = vendors.map((v) => ({
     id: v.id,
     name: v.shopName || '',
     sub: v.city || '',
@@ -38,15 +40,23 @@ const NearByScreen = () => {
     bgImage: v.bannerImage ? { uri: v.bannerImage } : defaultBg,
   }));
 
-  const feedPosts = posts.slice(0, 6).map((p) => ({
-    id: p.id,
-    vendorId: p.vendorId,
-    vendorName: p.vendorShopName || '',
-    location: p.location || '',
-    description: p.description || '',
-    vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-    postImage: p.postImage ? { uri: p.postImage } : defaultBg,
-  }));
+  const nearbyVendorIds = new Set(
+    vendors
+      .filter((v) => !userCity || (v.city || '').toLowerCase() === userCity.toLowerCase())
+      .map((v) => v.id)
+  );
+
+  const feedPosts = posts
+    .filter((p) => nearbyVendorIds.has(p.vendorId))
+    .map((p) => ({
+      id: p.id,
+      vendorId: p.vendorId,
+      vendorName: p.vendorShopName || '',
+      location: p.location || '',
+      description: p.description || '',
+      vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
+      postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    }));
 
   return (
     <SafeAreaView style={styles.container}>
