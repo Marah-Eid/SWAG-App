@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPendingVendors, approveVendor, rejectVendor } from '../../store/slices/adminSlice';
+import { logoutUser } from '../../store/slices/authSlice';
 import { BASE_URL } from '../../api/client';
 
 // --- 1. IMPORT THE IN-APP VIEWER ---
@@ -34,9 +35,14 @@ const AdminApprovalScreen = () => {
     }, [dispatch]);
 
     const handleLogout = () => {
+        const doLogout = async () => {
+            await dispatch(logoutUser());
+            router.replace('/auth/Login');
+        };
+
         if (Platform.OS === 'web') {
             if (window.confirm("Are you sure you want to log out?")) {
-                router.replace('/auth/Login');
+                doLogout();
             }
         } else {
             Alert.alert(
@@ -44,13 +50,7 @@ const AdminApprovalScreen = () => {
                 "Are you sure you want to log out?",
                 [
                     { text: "Cancel", style: "cancel" },
-                    {
-                        text: "Log Out",
-                        style: "destructive",
-                        onPress: () => {
-                            router.replace('/auth/Login');
-                        }
-                    }
+                    { text: "Log Out", style: "destructive", onPress: doLogout }
                 ]
             );
         }
