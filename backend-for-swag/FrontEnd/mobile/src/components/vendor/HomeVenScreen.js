@@ -48,9 +48,9 @@ const HomeVenScreen = () => {
     .filter((p) => p.type === 'event')
     .map((p) => ({
       id: p.id,
+      vendorId: p.vendorId,
       title: p.eventTitle || p.vendorShopName || '',
       location: p.location || '',
-      phone: '',
       date: p.eventDate || '',
       description: p.description || '',
       bgImage: p.postImage ? { uri: p.postImage } : defaultBg,

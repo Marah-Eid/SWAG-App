@@ -102,6 +102,38 @@ public class VendorsController : ControllerBase
         return Ok(BuildVendorProfile(vendor, myId, myRole));
     }
 
+    // GET /api/vendors/event-coordinators  (public)
+    [HttpGet("event-coordinators")]
+    public async Task<IActionResult> GetEventCoordinators([FromQuery] int limit = 10)
+    {
+        var myId = _currentUser.UserId;
+        var myRole = _currentUser.Role == "Customer" ? UserRole.Customer :
+                     _currentUser.Role == "Vendor" ? UserRole.Vendor : UserRole.Admin;
+
+        var vendorIds = await _db.VendorPosts
+            .Where(p => p.Type == PostType.Event && !p.Vendor.IsDeleted && p.Vendor.Status == VendorStatus.Active)
+            .GroupBy(p => p.VendorId)
+            .OrderByDescending(g => g.Count())
+            .Take(limit)
+            .Select(g => g.Key)
+            .ToListAsync();
+
+        var vendors = await _db.Vendors
+            .Include(v => v.Reviews)
+            .Include(v => v.Followers)
+            .Include(v => v.VendorFollowers)
+            .Where(v => vendorIds.Contains(v.Id) && !v.IsDeleted)
+            .ToListAsync();
+
+        // Preserve event-count ordering
+        var ordered = vendorIds
+            .Select(id => vendors.FirstOrDefault(v => v.Id == id))
+            .Where(v => v != null)
+            .Select(v => BuildVendorSummary(v!, myId, myRole));
+
+        return Ok(ordered);
+    }
+
     // PUT /api/vendors/me
     [HttpPut("me")]
     [Authorize(Roles = "Vendor")]

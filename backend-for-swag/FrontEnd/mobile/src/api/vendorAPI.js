@@ -10,6 +10,15 @@ const vendorAPI = {
     }
   },
 
+  getEventCoordinators: async (limit = 10) => {
+    try {
+      const response = await apiClient.get('/vendors/event-coordinators', { params: { limit } });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to load event coordinators' };
+    }
+  },
+
   getVendorById: async (id) => {
     try {
       const response = await apiClient.get(`/vendors/${id}`);

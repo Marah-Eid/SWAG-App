@@ -1,10 +1,66 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.88; // UI Polish: Slightly tweaked width for better peeking of the next card
+const CARD_WIDTH = width * 0.88;
 const CARD_MARGIN = 15;
+
+const defaultBanner = require('../../../assets/images/theshop-photo.png');
+
+const EventCardV = ({ event, router }) => {
+  const [bgSrc, setBgSrc] = useState(event.bgImage || defaultBanner);
+
+  const goToVendor = () => {
+    if (event.vendorId) {
+      router.push({ pathname: '/vendor/otherVendorProfile', params: { vendorId: event.vendorId } });
+    }
+  };
+
+  return (
+    <View style={styles.cardWrapper}>
+      <ImageBackground
+        source={bgSrc}
+        onError={() => setBgSrc(defaultBanner)}
+        style={styles.card}
+        imageStyle={{ borderRadius: 16 }}
+      >
+        <View style={styles.darkOverlay}>
+
+          <TouchableOpacity onPress={() => router.push('/vendor/EventsVen')} style={styles.badgeContainer} activeOpacity={0.8}>
+            <Text style={styles.cardHeader}>Upcoming Event</Text>
+          </TouchableOpacity>
+
+          <View style={styles.contentRow}>
+
+            <TouchableOpacity onPress={goToVendor} activeOpacity={0.8}>
+              <Image source={event.logo} style={styles.logo} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.textColumn} onPress={goToVendor} activeOpacity={0.8}>
+              <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
+
+              {event.location ? (
+                <Text style={styles.eventSub} numberOfLines={1}>{event.location}</Text>
+              ) : null}
+
+              <View style={styles.dateRow}>
+                <Text style={styles.eventDate}>Date: </Text>
+                <Text style={styles.eventDate}>{event.date}</Text>
+              </View>
+            </TouchableOpacity>
+
+          </View>
+
+          <Text style={styles.footerText} numberOfLines={2}>
+            {event.description}
+          </Text>
+
+        </View>
+      </ImageBackground>
+    </View>
+  );
+};
 
 const EventsCarouselV = ({ events = [] }) => {
   const router = useRouter();
@@ -20,57 +76,7 @@ const EventsCarouselV = ({ events = [] }) => {
         snapToAlignment="center"
       >
         {events.map((event) => (
-          // UI Polish: Wrapper added to enable crisp drop shadows on iOS/Android
-          <View key={event.id} style={styles.cardWrapper}>
-            <ImageBackground
-              source={event.bgImage}
-              style={styles.card}
-              imageStyle={{ borderRadius: 16 }}
-            >
-              <View style={styles.darkOverlay}>
-
-                {/* Navigates to Vendor's Event Screen */}
-                <TouchableOpacity onPress={() => router.push('/vendor/EventsVen')} style={styles.badgeContainer} activeOpacity={0.8}>
-                  <Text style={styles.cardHeader}>Upcoming Event</Text>
-                </TouchableOpacity>
-
-                <View style={styles.contentRow}>
-
-                  {/* Navigates to Vendor Profile */}
-                  <TouchableOpacity onPress={() => router.push('/vendor/otherVendorProfileScreen')} activeOpacity={0.8}>
-                    <Image source={event.logo} style={styles.logo} />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.textColumn}
-                    onPress={() => router.push('/vendor/otherVendorProfileScreen')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
-
-                    {/* --- THE FIX: Separated Phone and City --- */}
-                    <View style={styles.infoRow}>
-                      <Text style={styles.eventSub} numberOfLines={1}>{event.phone}</Text>
-                      <Text style={styles.eventSub}> / </Text>
-                      <Text style={styles.eventSub} numberOfLines={1}>{event.city}</Text>
-                    </View>
-
-                    {/* --- THE FIX: Separated Date Label and Date Value --- */}
-                    <View style={styles.dateRow}>
-                      <Text style={styles.eventDate}>Date: </Text>
-                      <Text style={styles.eventDate}>{event.date}</Text>
-                    </View>
-                  </TouchableOpacity>
-
-                </View>
-
-                <Text style={styles.footerText} numberOfLines={2}>
-                  {event.description}
-                </Text>
-
-              </View>
-            </ImageBackground>
-          </View>
+          <EventCardV key={event.id} event={event} router={router} />
         ))}
       </ScrollView>
     </View>

@@ -282,11 +282,20 @@ const VendorProfScreen = () => {
           {vendorPosts.map((post) => (
             <CustomerPosts
               key={post.id}
+              postId={post.id}
               vendorName={post.vendorShopName || v.shopName}
               location={post.location || v.city || ''}
               description={post.description}
               vendorLogo={post.vendorProfileImage ? { uri: post.vendorProfileImage } : logoSource}
               postImage={post.postImage ? { uri: post.postImage } : null}
+              mediaType={post.mediaType}
+              mediaWidth={post.mediaWidth}
+              mediaHeight={post.mediaHeight}
+              initialLiked={post.isLiked}
+              initialSaved={post.isSaved}
+              isEvent={post.type === 'event'}
+              date={post.eventDate}
+              time={post.eventTime}
               onVendorPress={() => {}}
             />
           ))}

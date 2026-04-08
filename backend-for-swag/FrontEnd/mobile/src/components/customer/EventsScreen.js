@@ -7,7 +7,7 @@ import CustomSearchBar from '../common/CustomSearchBar';
 import CustomerCard from '../common/CustomerCard';
 import BottomTabs from '../common/BottomTabs';
 import CustomerPosts from '../common/CustomerPosts';
-import EventsCarousel from '../common/EventsCarousel';
+import TopCoordinatorsCarousel from '../common/TopCoordinatorsCarousel';
 import SideMenu from '../common/SideMenu';
 import { fetchPosts } from '../../store/slices/postsSlice';
 
@@ -27,16 +27,6 @@ const EventsScreen = () => {
   }, [dispatch]);
 
   const eventPosts = posts.filter((p) => p.type === 'event');
-
-  const carouselEvents = eventPosts.slice(0, 6).map((p) => ({
-    id: p.id,
-    title: p.vendorShopName || p.eventTitle || '',
-    location: p.location || '',
-    date: p.eventDate || '',
-    description: p.description || '',
-    logo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-    bgImage: p.postImage ? { uri: p.postImage } : defaultBg,
-  }));
 
   const feedEvents = eventPosts.map((p) => ({
     id: p.id,
@@ -73,8 +63,10 @@ const EventsScreen = () => {
           />
         </View>
 
-        {/* FEATURED EVENTS CAROUSEL */}
-        <EventsCarousel events={carouselEvents} />
+        {/* TOP COORDINATORS */}
+        <TopCoordinatorsCarousel
+          onVendorPress={(vendorId) => router.push({ pathname: '/customer/VendorProfCust', params: { vendorId } })}
+        />
 
         {/* EVENT FEED */}
         <View style={styles.feedContainer}>

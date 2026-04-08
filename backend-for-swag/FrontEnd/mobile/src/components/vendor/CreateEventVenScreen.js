@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet, View, Text, TextInput, ScrollView, Modal,
   TouchableOpacity, Image, Platform, Alert, KeyboardAvoidingView, LayoutAnimation, UIManager, StatusBar, ActivityIndicator
@@ -8,32 +8,35 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { useRouter } from 'expo-router';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { createPost } from '../../store/slices/postsSlice';
+import { fetchMyVendorProfile } from '../../store/slices/vendorSlice';
 import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
+import categoriesAPI from '../../api/categoriesAPI';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const eventTypes = [
-  { label: 'Drift Event', value: 'DriftEvent' },
-  { label: 'Car Meet', value: 'CarMeet' },
-  { label: 'Track Day', value: 'TrackDay' },
-  { label: 'Tuning Workshop', value: 'Workshop' },
-  { label: 'Others', value: 'Others' },
-];
+const defaultAvatar = require('../../../assets/images/carag-icon.png');
 
 const CreateEventScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [publishing, setPublishing] = useState(false);
 
+  // Real vendor data from Redux
+  const { myProfile } = useSelector((state) => state.vendor);
+
+  // Event types fetched from backend
+  const [eventTypesDB, setEventTypesDB] = useState([]);
+
   // --- Form States ---
   const [media, setMedia] = useState(null);
   const [eventTitle, setEventTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [location, setLocation] = useState('');
+  const [selectedTypes, setSelectedTypes] = useState([]); // [{id, name}]
   const [date, setDate] = useState(new Date());
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
@@ -46,6 +49,16 @@ const CreateEventScreen = () => {
   const webDateRef = useRef(null);
   const webStartRef = useRef(null);
   const webEndRef = useRef(null);
+
+  // Fetch vendor profile and event types on mount
+  useEffect(() => {
+    if (!myProfile) dispatch(fetchMyVendorProfile());
+    const loadEventTypes = async () => {
+      const result = await categoriesAPI.getEventTypes();
+      if (result.success) setEventTypesDB(result.data);
+    };
+    loadEventTypes();
+  }, []);
 
   const pickMedia = async () => {
     try {
@@ -100,12 +113,12 @@ const CreateEventScreen = () => {
     return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const toggleEventType = (val) => {
+  const toggleEventType = (type) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    if (selectedTypes.includes(val)) {
-      setSelectedTypes(selectedTypes.filter(t => t !== val));
+    if (selectedTypes.find((t) => t.id === type.id)) {
+      setSelectedTypes(selectedTypes.filter((t) => t.id !== type.id));
     } else {
-      setSelectedTypes([...selectedTypes, val]);
+      setSelectedTypes([...selectedTypes, type]);
     }
   };
 
@@ -135,7 +148,8 @@ const CreateEventScreen = () => {
       eventDate: date.toISOString().split('T')[0],
       eventTime: formatTime(startTime),
       eventEndTime: formatTime(endTime),
-      eventTypeIds: [],
+      location: location.trim(),
+      eventTypeIds: selectedTypes.map((t) => t.id),
     }));
     setPublishing(false);
 
@@ -154,6 +168,10 @@ const CreateEventScreen = () => {
     if (activeTarget === 'end') return endTime || new Date();
     return new Date();
   };
+
+  const vendorName = myProfile?.shopName || '';
+  const vendorCity = myProfile?.city || '';
+  const vendorAvatar = myProfile?.profileImage ? { uri: myProfile.profileImage } : defaultAvatar;
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
@@ -192,14 +210,16 @@ const CreateEventScreen = () => {
         <View style={styles.postCard}>
           <View style={styles.postHeader}>
             <View style={styles.avatarWrapper}>
-              <Image source={require('../../../assets/images/carag-icon.png')} style={styles.vendorAvatar} />
+              <Image source={vendorAvatar} style={styles.vendorAvatar} />
             </View>
             <View>
-              <Text style={styles.vendorName}>Automotive</Text>
-              <View style={styles.locationRow}>
-                <Ionicons name="location" size={12} color="#8391A1" />
-                <Text style={styles.vendorLocation}>Amman, Jordan</Text>
-              </View>
+              <Text style={styles.vendorName}>{vendorName}</Text>
+              {vendorCity ? (
+                <View style={styles.locationRow}>
+                  <Ionicons name="location" size={12} color="#8391A1" />
+                  <Text style={styles.vendorLocation}>{vendorCity}</Text>
+                </View>
+              ) : null}
             </View>
           </View>
 
@@ -223,7 +243,7 @@ const CreateEventScreen = () => {
 
           {selectedTypes.length > 0 && (
             <View style={styles.previewTagsContainer}>
-              {selectedTypes.map((tag, index) => (<Text key={index} style={styles.previewTagText}>#{tag}</Text>))}
+              {selectedTypes.map((tag) => (<Text key={tag.id} style={styles.previewTagText}>#{tag.name}</Text>))}
             </View>
           )}
 
@@ -290,6 +310,20 @@ const CreateEventScreen = () => {
               </View>
             </TouchableOpacity>
           </View>
+
+          <View style={styles.divider} />
+
+          {/* LOCATION */}
+          <View style={styles.dateTimeRow}>
+            <View style={styles.iconBox}><Ionicons name="location" size={20} color="#8A1C27" /></View>
+            <TextInput
+              style={styles.locationInput}
+              placeholder="Add event location..."
+              placeholderTextColor="#A0AEC0"
+              value={location}
+              onChangeText={setLocation}
+            />
+          </View>
         </View>
 
         {/* CATEGORY SECTION */}
@@ -299,16 +333,16 @@ const CreateEventScreen = () => {
             <Text style={styles.sectionSubLabel}>Select all that apply</Text>
           </View>
           <View style={styles.chipsContainer}>
-            {eventTypes.map((type) => {
-              const isSelected = selectedTypes.includes(type.value);
+            {eventTypesDB.map((type) => {
+              const isSelected = selectedTypes.some((t) => t.id === type.id);
               return (
                 <TouchableOpacity
-                  key={type.value}
+                  key={type.id}
                   style={[styles.chip, isSelected && styles.chipSelected]}
-                  onPress={() => toggleEventType(type.value)}
+                  onPress={() => toggleEventType(type)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{type.label}</Text>
+                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{type.name}</Text>
                   {isSelected && <Ionicons name="checkmark-circle" size={16} color="#FFF" style={{ marginLeft: 6 }} />}
                 </TouchableOpacity>
               );
@@ -425,7 +459,7 @@ const styles = StyleSheet.create({
     elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5
   },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  cardSectionTitle: { fontSize: 16, fontWeight: '800', color: '#2D3E5E' },
+  cardSectionTitle: { fontSize: 16, fontWeight: '800', color: '#2D3E5E', marginBottom: 15 },
   sectionSubLabel: { fontSize: 12, color: '#8391A1', fontWeight: '600' },
 
   dateTimeRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 5 },
@@ -433,6 +467,7 @@ const styles = StyleSheet.create({
   dateTimeTextContainer: { flex: 1 },
   dateTimeLabel: { fontSize: 11, color: '#8391A1', fontWeight: '700', textTransform: 'uppercase', marginBottom: 2 },
   dateTimeValue: { fontSize: 16, fontWeight: '700', color: '#2D3E5E' },
+  locationInput: { flex: 1, fontSize: 15, fontWeight: '600', color: '#2D3E5E' },
 
   divider: { height: 1, backgroundColor: '#F1F4F9', marginVertical: 15, marginLeft: 59 },
 
