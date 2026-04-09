@@ -22,7 +22,7 @@ const FollowerListScreen = () => {
   const [isPopupVisible, setPopupVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
-  const { vendorFollowers } = useSelector((state) => state.vendor);
+  const vendorFollowers = useSelector((state) => state.vendor.vendorFollowers) || [];
 
   useEffect(() => {
     if (vendorId) dispatch(fetchVendorFollowers(vendorId));
@@ -34,6 +34,7 @@ const FollowerListScreen = () => {
     type: f.userType || f.type || 'customer',
     pfp: f.profileImage ? { uri: f.profileImage } : defaultPfp,
     logo: f.profileImage ? { uri: f.profileImage } : defaultLogo,
+    banner: f.bannerImage ? { uri: f.bannerImage } : null,
   }));
 
   const filteredFollowers = followersData.filter(follower =>
@@ -121,7 +122,7 @@ const FollowerListScreen = () => {
           onClose={() => setPopupVisible(false)}
           userName={selectedCustomer.name}
           profileImage={selectedCustomer.pfp}
-          bannerImage={require('../../../assets/images/nmk-pic.png')}
+          customerId={selectedCustomer.id}
         />
       )}
 

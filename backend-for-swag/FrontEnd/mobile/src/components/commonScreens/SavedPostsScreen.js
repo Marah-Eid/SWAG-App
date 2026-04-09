@@ -15,13 +15,13 @@ const defaultBg = require('../../../assets/images/nmk-pic.png');
 const SavedPostsScreen = () => {
     const router = useRouter();
     const dispatch = useDispatch();
-    const { savedPosts: rawSaved } = useSelector((state) => state.customer);
+    const rawSaved = useSelector((state) => state.customer.savedPosts) || [];
 
     useEffect(() => {
         dispatch(fetchSavedPosts());
     }, [dispatch]);
 
-    const savedPosts = rawSaved.map((p) => ({
+    const savedPosts = (Array.isArray(rawSaved) ? rawSaved : []).map((p) => ({
         id: p.id,
         vendorId: p.vendorId,
         vendorName: p.vendorShopName || '',
@@ -29,6 +29,9 @@ const SavedPostsScreen = () => {
         location: p.location || '',
         description: p.description || '',
         postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+        isLiked: p.isLiked,
+        likeCount: p.likeCount,
+        commentCount: p.commentCount,
     }));
 
     return (
@@ -71,7 +74,10 @@ const SavedPostsScreen = () => {
                                 location={item.location}
                                 description={item.description}
                                 postImage={item.postImage}
+                                initialLiked={item.isLiked}
                                 initialSaved={true}
+                                likeCount={item.likeCount}
+                                commentCount={item.commentCount}
                                 onVendorPress={() => router.push({
                                     pathname: '/customer/VendorProfCust',
                                     params: { vendorId: item.vendorId }

@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, Image, StyleSheet, SafeAreaView,
   TouchableOpacity, Dimensions, Linking, TextInput, Platform, Alert, Share, Modal
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Entypo } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
@@ -338,8 +338,12 @@ const VendorProfileScreen = () => {
             </View>
 
             <TouchableOpacity style={styles.miniRating} onPress={() => router.push('/vendor/Rating&RevVen')} activeOpacity={0.7}>
-              <Text style={styles.miniRatingVal}>{vendorData.rating}</Text>
-              <Image source={require('../../../assets/images/Stars-icon.png')} style={styles.starsImg} />
+              <Text style={styles.miniRatingVal}>{(vendorData.rating || 0).toFixed(1)}</Text>
+              <View style={{ flexDirection: 'row' }}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Entypo key={i} name={(vendorData.rating || 0) >= i ? "star" : "star-outlined"} size={14} color={(vendorData.rating || 0) >= i ? "#8A1C27" : "#CBD5E1"} />
+                ))}
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -348,6 +352,11 @@ const VendorProfileScreen = () => {
               <Text style={styles.statNumber}>{vendorData.followers}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </TouchableOpacity>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{myProfile?.postCount || myPosts.length}</Text>
+              <Text style={styles.statLabel}>Posts</Text>
+            </View>
             <View style={styles.statDivider} />
             <TouchableOpacity onPress={() => router.push('/commonScreensV/FollowingListV')} style={styles.statItem} activeOpacity={0.7}>
               <Text style={styles.statNumber}>{vendorData.following}</Text>
@@ -463,6 +472,7 @@ const VendorProfileScreen = () => {
           {posts.map((post) => (
             <View key={post.id} style={styles.postWrapper}>
               <VendorPosts
+                postId={post.id}
                 vendorName={post.vendorShopName || post.vendorName || vendorData.name}
                 location={post.location || vendorData.location}
                 description={post.description}
@@ -472,6 +482,10 @@ const VendorProfileScreen = () => {
                 isEvent={post.type === 'event'}
                 date={post.eventDate || post.date}
                 time={post.eventTime || post.time}
+                initialLiked={post.isLiked}
+                initialSaved={post.isSaved}
+                likeCount={post.likeCount}
+                commentCount={post.commentCount}
               />
               <TouchableOpacity style={styles.deleteIconButton} onPress={() => handleDeletePost(post.id)} activeOpacity={0.7}>
                 <Ionicons name="trash" size={18} color="#E53E3E" />

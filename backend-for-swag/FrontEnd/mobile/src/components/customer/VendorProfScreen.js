@@ -14,7 +14,7 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Entypo } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -71,7 +71,12 @@ const VendorProfScreen = () => {
   const handleMessagePress = () => {
     router.push({
       pathname: '/commonScreens/Chatting',
-      params: { userName: selectedVendor?.shopName || '', userType: 'vendor', vendorId }
+      params: {
+        userName: selectedVendor?.shopName || '',
+        userType: 'vendor',
+        otherUserId: vendorId,
+        userImage: selectedVendor?.profileImage || '',
+      }
     });
   };
 
@@ -203,7 +208,11 @@ const VendorProfScreen = () => {
 
             <TouchableOpacity style={styles.miniRating} onPress={() => router.push({ pathname: '/customer/Rating&RevCust', params: { vendorId } })}>
               <Text style={styles.miniRatingVal}>{v.averageRating?.toFixed(1) || '0.0'}</Text>
-              <Image source={require('../../../assets/images/Stars-icon.png')} style={styles.starsImg} />
+              <View style={{ flexDirection: 'row' }}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Entypo key={i} name={(v.averageRating || 0) >= i ? "star" : "star-outlined"} size={14} color={(v.averageRating || 0) >= i ? "#8A1C27" : "#CBD5E1"} />
+                ))}
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -293,6 +302,8 @@ const VendorProfScreen = () => {
               mediaHeight={post.mediaHeight}
               initialLiked={post.isLiked}
               initialSaved={post.isSaved}
+              likeCount={post.likeCount}
+              commentCount={post.commentCount}
               isEvent={post.type === 'event'}
               date={post.eventDate}
               time={post.eventTime}

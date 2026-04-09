@@ -81,6 +81,7 @@ export default function ChatsScreen() {
         userName: item.otherParticipantName,
         userType: item.otherParticipantType,
         userImage: item.otherParticipantImage || '',
+        otherUserId: item.otherParticipantId,
         chatId: item.id,
         conversationId: item.id,
       }
@@ -103,6 +104,7 @@ export default function ChatsScreen() {
         userName: user.name,
         userType: user.userType.toLowerCase(),
         userImage: user.profileImage || '',
+        otherUserId: user.id,
         conversationId: result.conversationId,
         chatId: result.conversationId,
       }

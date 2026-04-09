@@ -62,6 +62,10 @@ const FollowingVenScreen = () => {
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
       postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      isLiked: p.isLiked,
+      isSaved: p.isSaved,
+      likeCount: p.likeCount,
+      commentCount: p.commentCount,
     }));
 
   return (
@@ -94,11 +98,16 @@ const FollowingVenScreen = () => {
           {visiblePosts.map(post => (
             <VendorPosts
               key={post.id}
+              postId={post.id}
               vendorName={post.vendorName}
               location={post.location}
               description={post.description}
               vendorLogo={post.vendorLogo}
               postImage={post.postImage}
+              initialLiked={post.isLiked}
+              initialSaved={post.isSaved}
+              likeCount={post.likeCount}
+              commentCount={post.commentCount}
               onVendorPress={() => router.push({
                 pathname: '/commonScreensV/otherVendorProfile',
                 params: { vendorId: post.vendorId }

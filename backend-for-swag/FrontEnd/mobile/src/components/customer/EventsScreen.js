@@ -38,6 +38,10 @@ const EventsScreen = () => {
     postImage: p.postImage ? { uri: p.postImage } : defaultBg,
     date: p.eventDate || '',
     time: p.eventTime || '',
+    isLiked: p.isLiked,
+    isSaved: p.isSaved,
+    likeCount: p.likeCount,
+    commentCount: p.commentCount,
   }));
 
   return (
@@ -82,6 +86,10 @@ const EventsScreen = () => {
               isEvent={true}
               date={item.date}
               time={item.time}
+              initialLiked={item.isLiked}
+              initialSaved={item.isSaved}
+              likeCount={item.likeCount}
+              commentCount={item.commentCount}
               onVendorPress={() => router.push({ pathname: '/customer/VendorProfCust', params: { vendorId: item.vendorId } })}
             />
           ))}

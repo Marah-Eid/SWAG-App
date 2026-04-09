@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Entypo } from '@expo/vector-icons';
 
 const RevCard = ({ profilePic, firstName, lastName, rating, feedback }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -50,12 +50,17 @@ const RevCard = ({ profilePic, firstName, lastName, rating, feedback }) => {
             <View style={styles.divider} />
 
             <View style={styles.ratingCol}>
-              <Image
-                source={require('../../../assets/images/Stars-icon.png')}
-                style={styles.stars}
-                resizeMode="contain"
-              />
-              <Text style={styles.reviewLabel}>Review</Text>
+              <View style={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Entypo
+                    key={i}
+                    name={rating >= i ? "star" : "star-outlined"}
+                    size={12}
+                    color={rating >= i ? "#8A1C27" : "#CBD5E1"}
+                  />
+                ))}
+              </View>
+              <Text style={styles.reviewLabel}>{rating || 0}/5</Text>
             </View>
 
           </View>
@@ -179,9 +184,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 65, // Fixes jumping width issues
   },
-  stars: {
-    width: 55,
-    height: 10,
+  starsRow: {
+    flexDirection: 'row',
     marginBottom: 4,
   },
   reviewLabel: {

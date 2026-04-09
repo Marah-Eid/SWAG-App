@@ -75,6 +75,7 @@ public class VendorsController : ControllerBase
             .Include(v => v.Reviews)
             .Include(v => v.Followers)
             .Include(v => v.VendorFollowers)
+            .Include(v => v.Posts)
             .FirstOrDefaultAsync(v => v.Id == _currentUser.UserId && !v.IsDeleted);
 
         if (vendor == null) return NotFound();
@@ -92,6 +93,7 @@ public class VendorsController : ControllerBase
             .Include(v => v.Reviews)
             .Include(v => v.Followers)
             .Include(v => v.VendorFollowers)
+            .Include(v => v.Posts)
             .FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted);
 
         if (vendor == null) return NotFound();
@@ -168,6 +170,7 @@ public class VendorsController : ControllerBase
             .Include(v => v.Reviews)
             .Include(v => v.Followers)
             .Include(v => v.VendorFollowers)
+            .Include(v => v.Posts)
             .FirstOrDefaultAsync(v => v.Id == _currentUser.UserId);
 
         return Ok(BuildVendorProfile(updated!, _currentUser.UserId, UserRole.Vendor));
@@ -263,9 +266,38 @@ public class VendorsController : ControllerBase
     [HttpGet("{id:guid}/followers")]
     public async Task<IActionResult> GetFollowers(Guid id)
     {
-        int count = await _db.CustomerFollows.CountAsync(cf => cf.VendorId == id);
-        int vendorCount = await _db.VendorFollows.CountAsync(vf => vf.FollowingId == id);
-        return Ok(new { customerFollowers = count, vendorFollowers = vendorCount, total = count + vendorCount });
+        var customerFollowers = await _db.CustomerFollows
+            .Where(cf => cf.VendorId == id)
+            .Include(cf => cf.Customer)
+            .Select(cf => new {
+                id = cf.Customer.Id,
+                fullName = cf.Customer.FullName,
+                profileImage = cf.Customer.ProfileImage,
+                bannerImage = cf.Customer.BannerImage,
+                userType = "customer"
+            })
+            .ToListAsync();
+
+        var vendorFollowers = await _db.VendorFollows
+            .Where(vf => vf.FollowingId == id)
+            .Include(vf => vf.Follower)
+            .Where(vf => !vf.Follower.IsDeleted)
+            .Select(vf => new {
+                id = vf.Follower.Id,
+                fullName = vf.Follower.FullName,
+                shopName = (string?)vf.Follower.ShopName,
+                profileImage = vf.Follower.ProfileImage,
+                bannerImage = vf.Follower.BannerImage,
+                userType = "vendor"
+            })
+            .ToListAsync();
+
+        var allFollowers = customerFollowers
+            .Select(c => new { c.id, c.fullName, shopName = (string?)null, c.profileImage, c.bannerImage, c.userType })
+            .Concat(vendorFollowers.Select(v => new { v.id, v.fullName, v.shopName, v.profileImage, v.bannerImage, v.userType }))
+            .ToList();
+
+        return Ok(allFollowers);
     }
 
     // GET /api/vendors/{id}/reviews
@@ -541,6 +573,7 @@ public class VendorsController : ControllerBase
             AverageRating = v.Reviews.Count > 0 ? Math.Round(v.Reviews.Average(r => (double)r.Rating), 1) : 0,
             ReviewCount = v.Reviews.Count,
             FollowerCount = v.Followers.Count + v.VendorFollowers.Count,
+            PostCount = v.Posts.Count,
             IsFollowed = isFollowed,
             CategoryIds = v.SelectedCategories.Select(sc => sc.ItemId).ToList()
         };

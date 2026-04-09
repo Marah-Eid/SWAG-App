@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    View, Text, StyleSheet, Modal, TouchableOpacity,
+    View, Text, StyleSheet, Modal, TouchableOpacity, Image,
     FlatList, TextInput, KeyboardAvoidingView, Platform, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,14 +34,20 @@ const CommentsModal = ({ visible, onClose, postId }) => {
     };
 
     const handleUserPress = (item) => {
-        if (item.userType === 'vendor' || item.type === 'vendor') {
+        const type = item.commenterType || item.userType || item.type || 'customer';
+        const id = item.commenterId || item.userId;
+        if (type === 'vendor') {
             onClose();
             router.push({
                 pathname: '/customer/VendorProfCust',
-                params: { vendorId: item.vendorId || item.userId }
+                params: { vendorId: id }
             });
         } else {
-            setSelectedUser(item.userName || item.user);
+            setSelectedUser({
+                name: item.commenterName || item.userName || item.user,
+                id: id,
+                image: item.commenterImage,
+            });
             setProfileVisible(true);
         }
     };
@@ -93,7 +99,11 @@ const CommentsModal = ({ visible, onClose, postId }) => {
                                             onPress={() => handleUserPress(item)}
                                             activeOpacity={0.8}
                                         >
-                                            <Text style={styles.avatarText}>{displayName.charAt(0)}</Text>
+                                            {item.commenterImage ? (
+                                                <Image source={{ uri: item.commenterImage }} style={styles.avatarImage} />
+                                            ) : (
+                                                <Text style={styles.avatarText}>{displayName.charAt(0)}</Text>
+                                            )}
                                         </TouchableOpacity>
 
                                         <View style={styles.textBubbleWrapper}>
@@ -152,10 +162,9 @@ const CommentsModal = ({ visible, onClose, postId }) => {
             <ProfilePopup
                 visible={isProfileVisible}
                 onClose={() => setProfileVisible(false)}
-                userName={selectedUser}
-                carName="Customer Profile"
-                profileImage={require('../../../assets/images/user-icon.png')}
-                bannerImage={require('../../../assets/images/swag-pattern.png')}
+                userName={selectedUser?.name}
+                profileImage={selectedUser?.image ? { uri: selectedUser.image } : require('../../../assets/images/user-icon.png')}
+                customerId={selectedUser?.id}
             />
         </View>
     );
@@ -207,6 +216,7 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 2,
     },
+    avatarImage: { width: 40, height: 40, borderRadius: 20, resizeMode: 'cover' },
     avatarText: { fontWeight: '800', color: '#FFFFFF', fontSize: 16 },
 
     textBubbleWrapper: { flex: 1 },

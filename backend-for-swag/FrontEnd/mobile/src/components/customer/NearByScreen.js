@@ -56,6 +56,10 @@ const NearByScreen = () => {
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
       postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      isLiked: p.isLiked,
+      isSaved: p.isSaved,
+      likeCount: p.likeCount,
+      commentCount: p.commentCount,
     }));
 
   return (
@@ -95,6 +99,10 @@ const NearByScreen = () => {
               description={post.description}
               vendorLogo={post.vendorLogo}
               postImage={post.postImage}
+              initialLiked={post.isLiked}
+              initialSaved={post.isSaved}
+              likeCount={post.likeCount}
+              commentCount={post.commentCount}
               onVendorPress={() => router.push({ pathname: '/customer/VendorProfCust', params: { vendorId: post.vendorId } })}
             />
           ))}

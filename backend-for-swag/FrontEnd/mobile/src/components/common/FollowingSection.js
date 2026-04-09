@@ -122,14 +122,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    width: 60,
-    height: 60,
-    top: 0,
+    width: 55,
+    height: 55,
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -27.5 }, { translateY: -30 }],
   },
   vendorIcon: {
-    width: 50, // UI Polish: Shrunk slightly so it doesn't bleed out of the teardrop edges
-    height: 50,
-    resizeMode: 'contain',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    resizeMode: 'cover',
+    overflow: 'hidden',
   }
 });
 

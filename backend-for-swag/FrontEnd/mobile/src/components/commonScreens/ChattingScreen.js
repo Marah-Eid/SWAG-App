@@ -12,15 +12,15 @@ import { Video } from 'expo-av';
 import ProfilePopup from '../common/ProfilePopup';
 import InitialsAvatar from '../common/InitialsAvatar';
 import { supabase } from '../../services/supabase';
-import { fetchMessages, sendMessage, markConversationRead } from '../../store/slices/chatsSlice';
+import { fetchMessages, sendMessage, markConversationRead, startConversation } from '../../store/slices/chatsSlice';
 
 const { width, height } = Dimensions.get('window');
 
 const ChattingScreenContent = ({ userName }) => {
     const router = useRouter();
     const dispatch = useDispatch();
-    const { userType, chatId, conversationId, vendorId, userImage } = useLocalSearchParams();
-    const convId = conversationId || chatId;
+    const { userType, chatId, conversationId, vendorId, userImage, otherUserId } = useLocalSearchParams();
+    const [convId, setConvId] = useState(conversationId || chatId || null);
     const flatListRef = useRef();
 
     const { user } = useSelector((state) => state.auth);
@@ -36,6 +36,18 @@ const ChattingScreenContent = ({ userName }) => {
 
     // Clean userImage — expo-router can pass "undefined" as a literal string
     const cleanUserImage = (userImage && userImage !== 'undefined' && userImage !== 'null' && userImage !== '') ? userImage : null;
+
+    // Create conversation if we don't have one yet
+    useEffect(() => {
+        if (!convId && otherUserId) {
+            dispatch(startConversation({ otherUserId, otherUserType: userType || 'customer' }))
+                .unwrap()
+                .then((data) => {
+                    if (data?.conversationId) setConvId(data.conversationId);
+                })
+                .catch(() => {});
+        }
+    }, [otherUserId, userType, dispatch]);
 
     useEffect(() => {
         if (convId) {
@@ -278,7 +290,7 @@ const ChattingScreenContent = ({ userName }) => {
                 </View>
             </Modal>
 
-            <ProfilePopup visible={isProfileVisible} onClose={() => setProfileVisible(false)} userName={userName} carName="" profileImage={cleanUserImage ? { uri: cleanUserImage } : require('../../../assets/images/prof-icon.png')} bannerImage={require('../../../assets/images/toyotaback-photo.png')} />
+            <ProfilePopup visible={isProfileVisible} onClose={() => setProfileVisible(false)} userName={userName} profileImage={cleanUserImage ? { uri: cleanUserImage } : require('../../../assets/images/prof-icon.png')} customerId={userType === 'customer' ? otherUserId : undefined} />
         </View>
     );
 };

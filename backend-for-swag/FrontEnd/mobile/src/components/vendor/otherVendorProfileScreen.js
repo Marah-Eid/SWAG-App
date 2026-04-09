@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
   Platform
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Entypo } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -70,7 +70,12 @@ const OtherVendorProfileScreen = () => {
   const handleMessagePress = () => {
     router.push({
       pathname: '/commonScreensV/ChattingV',
-      params: { userName: vendor.shopName || '', userType: 'vendor', vendorId }
+      params: {
+        userName: vendor.shopName || '',
+        userType: 'vendor',
+        otherUserId: vendorId,
+        userImage: vendor.profileImage || '',
+      }
     });
   };
 
@@ -136,6 +141,10 @@ const OtherVendorProfileScreen = () => {
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
       postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      isLiked: p.isLiked,
+      isSaved: p.isSaved,
+      likeCount: p.likeCount,
+      commentCount: p.commentCount,
     }));
 
   const bgImage = vendor.bannerImage ? { uri: vendor.bannerImage } : defaultBg;
@@ -202,7 +211,11 @@ const OtherVendorProfileScreen = () => {
 
             <TouchableOpacity style={styles.miniRating} onPress={() => router.push('/vendor/Rating&RevVen')}>
               <Text style={styles.miniRatingVal}>{vendor.averageRating?.toFixed(1) || '0.0'}</Text>
-              <Image source={require('../../../assets/images/Stars-icon.png')} style={styles.starsImg} />
+              <View style={{ flexDirection: 'row' }}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Entypo key={i} name={(vendor.averageRating || 0) >= i ? "star" : "star-outlined"} size={14} color={(vendor.averageRating || 0) >= i ? "#8A1C27" : "#CBD5E1"} />
+                ))}
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -211,6 +224,11 @@ const OtherVendorProfileScreen = () => {
               <Text style={styles.statNumber}>{followersCount}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </TouchableOpacity>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{vendor.postCount || 0}</Text>
+              <Text style={styles.statLabel}>Posts</Text>
+            </View>
             <View style={styles.statDivider} />
             <TouchableOpacity onPress={() => router.push('/commonScreensV/FollowingListV')} style={styles.statItem}>
               <Text style={styles.statNumber}>{vendor.followingCount || 0}</Text>
@@ -281,11 +299,16 @@ const OtherVendorProfileScreen = () => {
           {vendorPosts.map((post) => (
             <VendorPosts
               key={post.id}
+              postId={post.id}
               vendorName={post.vendorName}
               location={post.location}
               description={post.description}
               vendorLogo={post.vendorLogo}
               postImage={post.postImage}
+              initialLiked={post.isLiked}
+              initialSaved={post.isSaved}
+              likeCount={post.likeCount}
+              commentCount={post.commentCount}
               onVendorPress={() => { }}
             />
           ))}

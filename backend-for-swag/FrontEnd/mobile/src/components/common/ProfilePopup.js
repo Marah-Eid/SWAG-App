@@ -1,15 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import customerAPI from '../../api/customerAPI';
 
 const { width, height } = Dimensions.get('window');
 
-const ProfilePopup = ({ visible, onClose, userName, carName, profileImage, bannerImage }) => {
+const defaultBanner = require('../../../assets/images/nmk-pic.png');
+
+const ProfilePopup = ({ visible, onClose, userName, carName, profileImage, bannerImage, customerId }) => {
     const router = useRouter();
 
-    // State for full-screen image preview
     const [previewImage, setPreviewImage] = useState(null);
+    const [fetchedBanner, setFetchedBanner] = useState(null);
+    const [cars, setCars] = useState([]);
+
+    useEffect(() => {
+        if (visible && customerId) {
+            customerAPI.getCustomerPublic(customerId).then((result) => {
+                if (result.success) {
+                    setFetchedBanner(result.data.bannerImage ? { uri: result.data.bannerImage } : null);
+                    setCars(result.data.cars || []);
+                }
+            });
+        }
+        if (!visible) {
+            setFetchedBanner(null);
+            setCars([]);
+        }
+    }, [visible, customerId]);
+
+    const resolvedBanner = fetchedBanner || bannerImage || defaultBanner;
 
     const handleFollowingPress = () => {
         onClose();
@@ -23,12 +44,16 @@ const ProfilePopup = ({ visible, onClose, userName, carName, profileImage, banne
         onClose();
         router.push({
             pathname: '/commonScreens/Chatting',
-            params: { userName: userName }
+            params: {
+                userName: userName,
+                otherUserId: customerId,
+                userType: 'customer',
+            }
         });
     };
 
     const handleClose = () => {
-        setPreviewImage(null); // Clear preview state if closed
+        setPreviewImage(null);
         onClose();
     };
 
@@ -47,10 +72,10 @@ const ProfilePopup = ({ visible, onClose, userName, carName, profileImage, banne
                     {/* 1. Banner Image (Now Touchable) */}
                     <TouchableOpacity
                         activeOpacity={0.9}
-                        onPress={() => setPreviewImage(bannerImage)}
+                        onPress={() => setPreviewImage(resolvedBanner)}
                         style={{ width: '100%' }}
                     >
-                        <Image source={bannerImage} style={styles.banner} />
+                        <Image source={resolvedBanner} style={styles.banner} />
                     </TouchableOpacity>
 
                     {/* 2. Profile Image (Now Touchable) */}
@@ -63,7 +88,15 @@ const ProfilePopup = ({ visible, onClose, userName, carName, profileImage, banne
                     {/* 3. Names Section */}
                     <View style={styles.infoSection}>
                         <Text style={styles.userName} numberOfLines={1}>{userName}</Text>
-                        <Text style={styles.carName} numberOfLines={1}>{carName}</Text>
+                        {cars.length > 0 ? (
+                            cars.map((car, index) => (
+                                <Text key={index} style={styles.carInfo} numberOfLines={1}>
+                                    {[car.brand, car.model].filter(Boolean).join(' ')}
+                                </Text>
+                            ))
+                        ) : (
+                            carName ? <Text style={styles.carName} numberOfLines={1}>{carName}</Text> : null
+                        )}
                     </View>
 
                     {/* 4. Action Buttons */}
@@ -98,7 +131,7 @@ const ProfilePopup = ({ visible, onClose, userName, carName, profileImage, banne
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.65)', // UI Polish: Slightly darker for premium contrast
+        backgroundColor: 'rgba(0,0,0,0.65)',
         justifyContent: 'center',
         alignItems: 'center'
     },
@@ -106,12 +139,11 @@ const styles = StyleSheet.create({
 
     popupContainer: {
         width: width * 0.85,
-        backgroundColor: '#FFFFFF', // UI Polish: Crisp white background
-        borderRadius: 30, // UI Polish: Modern curves
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
         overflow: 'hidden',
         alignItems: 'center',
         paddingBottom: 30,
-        // UI Polish: Premium depth shadow
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
@@ -124,7 +156,6 @@ const styles = StyleSheet.create({
         top: 15,
         right: 15,
         zIndex: 10,
-        // UI Polish: Add drop shadow so white X shows up on light banners
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.4,
@@ -135,10 +166,10 @@ const styles = StyleSheet.create({
     banner: { width: '100%', height: 140, resizeMode: 'cover' },
 
     profileImageContainer: {
-        marginTop: -45, // Pulls avatar up into the banner
+        marginTop: -45,
         backgroundColor: '#FFFFFF',
         borderRadius: 45,
-        padding: 4, // Creates the white ring effect
+        padding: 4,
     },
     profilePic: {
         width: 82,
@@ -153,26 +184,26 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         paddingHorizontal: 20
     },
-    userName: { fontSize: 22, fontWeight: '800', color: '#2D3E5E' }, // Brand Navy
+    userName: { fontSize: 22, fontWeight: '800', color: '#2D3E5E' },
     carName: { fontSize: 13, color: '#8391A1', marginTop: 4, fontWeight: '500', letterSpacing: 0.5 },
+    carInfo: { fontSize: 13, color: '#8391A1', marginTop: 3, fontWeight: '600', letterSpacing: 0.3 },
 
     buttonRow: { flexDirection: 'row', gap: 15, paddingHorizontal: 20 },
     actionButton: {
-        flex: 1, // UI Polish: Makes buttons equal width
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F1F4F9', // UI Polish: Clean, clickable pill
+        backgroundColor: '#F1F4F9',
         paddingVertical: 12,
         borderRadius: 25,
     },
     btnIcon: { width: 18, height: 18, marginRight: 8, tintColor: '#2D3E5E' },
     btnText: { color: '#2D3E5E', fontWeight: '700', fontSize: 13 },
 
-    // Styles for the Image Preview
     fullscreenContainer: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.95)', // UI Polish: Darker theater mode
+        backgroundColor: 'rgba(0,0,0,0.95)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 100

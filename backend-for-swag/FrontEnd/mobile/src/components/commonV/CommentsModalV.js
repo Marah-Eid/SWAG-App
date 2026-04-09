@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    View, Text, StyleSheet, Modal, TouchableOpacity,
+    View, Text, StyleSheet, Modal, TouchableOpacity, Image,
     FlatList, TextInput, KeyboardAvoidingView, Platform, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,18 +36,19 @@ const CommentsModalV = ({ visible, onClose, postId }) => {
 
     // --- LOGIC: Handle User Profile Click ---
     const handleUserPress = (item) => {
-        const isMe = item.isOwn || (user && String(item.senderId) === String(user.id));
+        const isMe = item.isOwn || (user && String(item.commenterId) === String(user.id));
         if (isMe) return;
 
-        const userType = item.userType || item.type || 'customer';
-        if (userType === 'vendor') {
+        const type = item.commenterType || item.userType || item.type || 'customer';
+        const id = item.commenterId || item.userId;
+        if (type === 'vendor') {
             onClose();
             router.push({
                 pathname: '/commonScreensV/otherVendorProfile',
-                params: { vendorId: item.vendorId || item.userId }
+                params: { vendorId: id }
             });
         } else {
-            setSelectedUserData(item);
+            setSelectedUserData({ ...item, id });
             setProfileVisible(true);
         }
     };
@@ -99,7 +100,11 @@ const CommentsModalV = ({ visible, onClose, postId }) => {
                                             onPress={() => handleUserPress(item)}
                                             activeOpacity={isMe ? 1 : 0.8}
                                         >
-                                            <Text style={styles.avatarText}>{displayName.charAt(0)}</Text>
+                                            {item.commenterImage ? (
+                                                <Image source={{ uri: item.commenterImage }} style={styles.avatarImage} />
+                                            ) : (
+                                                <Text style={styles.avatarText}>{displayName.charAt(0)}</Text>
+                                            )}
                                         </TouchableOpacity>
 
                                         <View style={styles.textBubbleWrapper}>
@@ -158,10 +163,9 @@ const CommentsModalV = ({ visible, onClose, postId }) => {
             <ProfilePopupV
                 visible={isProfileVisible}
                 onClose={() => setProfileVisible(false)}
-                userName={selectedUserData?.userName || selectedUserData?.user}
-                carName="Customer Profile"
-                profileImage={require('../../../assets/images/user-icon.png')}
-                bannerImage={require('../../../assets/images/swag-pattern.png')}
+                userName={selectedUserData?.commenterName || selectedUserData?.userName || selectedUserData?.user}
+                profileImage={selectedUserData?.commenterImage ? { uri: selectedUserData.commenterImage } : require('../../../assets/images/user-icon.png')}
+                customerId={selectedUserData?.id}
             />
         </View>
     );
@@ -209,6 +213,7 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 2,
     },
+    avatarImage: { width: 40, height: 40, borderRadius: 20, resizeMode: 'cover' },
     avatarText: { fontWeight: '800', color: '#FFFFFF', fontSize: 16 },
 
     textBubbleWrapper: { flex: 1 },

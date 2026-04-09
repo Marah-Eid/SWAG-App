@@ -86,6 +86,10 @@ const VendorsCategoryVen = () => {
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
     postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    isLiked: p.isLiked,
+    isSaved: p.isSaved,
+    likeCount: p.likeCount,
+    commentCount: p.commentCount,
   }));
 
   const currentDescription = CATEGORY_DESCRIPTIONS[activeTab]
@@ -148,11 +152,16 @@ const VendorsCategoryVen = () => {
             currentPosts.map((post) => (
               <VendorPosts
                 key={post.id}
+                postId={post.id}
                 vendorName={post.vendorName}
                 location={post.location}
                 description={post.description}
                 vendorLogo={post.vendorLogo}
                 postImage={post.postImage}
+                initialLiked={post.isLiked}
+                initialSaved={post.isSaved}
+                likeCount={post.likeCount}
+                commentCount={post.commentCount}
                 onVendorPress={() => { }}
               />
             ))

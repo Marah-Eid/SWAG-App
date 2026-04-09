@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Dimensions, Share, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
+import { toggleLike as toggleLikeAction, toggleSave as toggleSaveAction } from '../../store/slices/postsSlice';
 import CommentsModalV from './CommentsModalV';
 
 const { width, height } = Dimensions.get('window');
@@ -14,13 +16,16 @@ const saveIcon = require('../../../assets/images/saved-icon.png');
 const savedIcon = require('../../../assets/images/save-icon.png');
 
 const VendorPosts = ({
-  vendorName, vendorLogo, location, description, postImage,
+  postId, vendorName, vendorLogo, location, description, postImage,
   initialLiked = false, initialSaved = false, isEvent = false,
+  likeCount: initialLikeCount = 0, commentCount = 0,
   date, time, mediaType = 'image',
   mediaWidth, mediaHeight
 }) => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [isLiked, setIsLiked] = useState(initialLiked);
+  const [currentLikeCount, setCurrentLikeCount] = useState(initialLikeCount || 0);
   const [showComments, setShowComments] = useState(false);
   const [isSaved, setIsSaved] = useState(initialSaved);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -28,8 +33,15 @@ const VendorPosts = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const CHARACTER_LIMIT = 100;
 
-  const toggleLike = () => setIsLiked(!isLiked);
-  const toggleSave = () => setIsSaved(!isSaved);
+  const toggleLike = () => {
+    if (postId) dispatch(toggleLikeAction(postId));
+    setCurrentLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    setIsLiked(!isLiked);
+  };
+  const toggleSave = () => {
+    if (postId) dispatch(toggleSaveAction(postId));
+    setIsSaved(!isSaved);
+  };
 
   // --- NEW: Share Logic ---
   const onShare = async () => {
@@ -157,11 +169,12 @@ const VendorPosts = ({
       <View style={styles.footer}>
         <TouchableOpacity onPress={toggleLike} style={styles.actionBtn}>
           <Image source={isLiked ? likedIcon : likeIcon} style={styles.icon} />
+          {currentLikeCount > 0 ? <Text style={styles.countText}>{currentLikeCount}</Text> : null}
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setShowComments(true)} style={styles.actionBtn}>
           <Image source={commentIcon} style={styles.icon} />
+          {commentCount > 0 ? <Text style={styles.countText}>{commentCount}</Text> : null}
         </TouchableOpacity>
-        {/* UPDATED: Share button now triggers onShare */}
         <TouchableOpacity onPress={onShare} style={styles.actionBtn}>
           <Image source={shareIcon} style={styles.icon} />
         </TouchableOpacity>
@@ -186,7 +199,7 @@ const VendorPosts = ({
           )}
         </View>
       </Modal>
-      <CommentsModalV visible={showComments} onClose={() => setShowComments(false)} />
+      <CommentsModalV visible={showComments} onClose={() => setShowComments(false)} postId={postId} />
     </View>
   );
 };
@@ -215,7 +228,8 @@ const styles = StyleSheet.create({
   overlayText: { color: '#2C3E50', fontWeight: 'bold', fontSize: 13, marginLeft: 6 },
   footer: { flexDirection: 'row', justifyContent: 'space-around', borderTopWidth: 1, borderTopColor: '#F0F4F8', paddingTop: 12, marginTop: 15 },
   icon: { width: 24, height: 24, resizeMode: 'contain' },
-  actionBtn: { paddingHorizontal: 20, paddingVertical: 5 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 5 },
+  countText: { fontSize: 12, fontWeight: '700', color: '#8391A1', marginLeft: 5 },
   fullscreenContainer: { flex: 1, backgroundColor: 'black', justifyContent: 'center', alignItems: 'center' },
   closeFullscreen: { position: 'absolute', top: 50, right: 20, zIndex: 10 },
   fullscreenMedia: { width: width, height: height * 0.8 },

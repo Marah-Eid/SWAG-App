@@ -15,13 +15,13 @@ const SavedPostsScreenV = () => {
     const router = useRouter();
     const dispatch = useDispatch();
 
-    const { savedPosts } = useSelector((state) => state.customer);
+    const rawSaved = useSelector((state) => state.customer.savedPosts) || [];
 
     useEffect(() => {
         dispatch(fetchSavedPosts());
     }, [dispatch]);
 
-    const posts = savedPosts.map((p) => ({
+    const posts = (Array.isArray(rawSaved) ? rawSaved : []).map((p) => ({
         id: p.id,
         vendorId: p.vendorId,
         vendorName: p.vendorShopName || '',
@@ -29,6 +29,9 @@ const SavedPostsScreenV = () => {
         location: p.location || '',
         description: p.description || '',
         postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+        isLiked: p.isLiked,
+        likeCount: p.likeCount,
+        commentCount: p.commentCount,
     }));
 
     return (
@@ -65,12 +68,16 @@ const SavedPostsScreenV = () => {
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => (
                             <VendorPosts
+                                postId={item.id}
                                 vendorName={item.vendorName}
                                 vendorLogo={item.vendorLogo}
                                 location={item.location}
                                 description={item.description}
                                 postImage={item.postImage}
+                                initialLiked={item.isLiked}
                                 initialSaved={true}
+                                likeCount={item.likeCount}
+                                commentCount={item.commentCount}
                                 onVendorPress={() => router.push({
                                     pathname: '/commonScreensV/otherVendorProfile',
                                     params: { vendorId: item.vendorId }

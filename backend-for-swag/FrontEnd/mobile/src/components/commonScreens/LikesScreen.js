@@ -32,8 +32,8 @@ const LikedPostItem = ({ item }) => {
                 <View style={cardStyles.vendorInfo}>
                     <Image source={vendorLogo} style={cardStyles.logo} />
                     <View>
-                        <Text style={cardStyles.vendorName}>{item.vendorShopName}</Text>
-                        {item.location ? <Text style={cardStyles.location}>Location: {item.location}</Text> : null}
+                        <Text style={cardStyles.vendorName}>{item.vendorShopName || ''}</Text>
+                        {item.location ? <Text style={cardStyles.location}>{'Location: ' + item.location}</Text> : null}
                     </View>
                 </View>
 
@@ -47,10 +47,10 @@ const LikedPostItem = ({ item }) => {
             </View>
 
             <View style={cardStyles.content}>
-                {item.type === 'event' && <Text style={cardStyles.eventLabel}>Event</Text>}
+                {item.type === 'event' ? <Text style={cardStyles.eventLabel}>Event</Text> : null}
                 {item.description ? (
                     <Text style={cardStyles.desc}>
-                        {item.description} <Text style={cardStyles.readMore}>Read more...</Text>
+                        {item.description}{' '}<Text style={cardStyles.readMore}>Read more...</Text>
                     </Text>
                 ) : null}
                 {postImage && <Image source={postImage} style={cardStyles.postImg} resizeMode="cover" />}
@@ -85,7 +85,8 @@ const LikedPostItem = ({ item }) => {
 const LikesScreen = () => {
     const router = useRouter();
     const dispatch = useDispatch();
-    const { likedPosts, loading } = useSelector((state) => state.posts);
+    const { likedPosts: rawLikedPosts, loading } = useSelector((state) => state.posts);
+    const likedPosts = Array.isArray(rawLikedPosts) ? rawLikedPosts : [];
 
     useEffect(() => {
         dispatch(fetchMyLikes());

@@ -456,34 +456,23 @@ public class PostsController : ControllerBase
 
         var myId = _currentUser.UserId;
 
-        var existing = await _db.Reviews
-            .FirstOrDefaultAsync(r => r.VendorId == req.VendorId && r.CustomerId == myId);
-
-        if (existing != null)
+        _db.Reviews.Add(new Review
         {
-            existing.Rating = (short)req.Rating;
-            existing.Feedback = req.Feedback.Trim();
-        }
-        else
-        {
-            _db.Reviews.Add(new Review
-            {
-                VendorId = req.VendorId,
-                CustomerId = myId,
-                Rating = (short)req.Rating,
-                Feedback = req.Feedback.Trim()
-            });
+            VendorId = req.VendorId,
+            CustomerId = myId,
+            Rating = (short)req.Rating,
+            Feedback = req.Feedback.Trim()
+        });
 
-            _db.Notifications.Add(new Notification
-            {
-                RecipientId = req.VendorId,
-                RecipientType = UserRole.Vendor,
-                Type = NotificationType.NewReview,
-                Title = "New Review",
-                Body = $"You received a {req.Rating}-star review.",
-                DeepLink = $"vendor/{req.VendorId}/reviews"
-            });
-        }
+        _db.Notifications.Add(new Notification
+        {
+            RecipientId = req.VendorId,
+            RecipientType = UserRole.Vendor,
+            Type = NotificationType.NewReview,
+            Title = "New Review",
+            Body = $"You received a {req.Rating}-star review.",
+            DeepLink = $"vendor/{req.VendorId}/reviews"
+        });
 
         await _db.SaveChangesAsync();
         return Ok(new MessageResponse { Message = "Review submitted." });

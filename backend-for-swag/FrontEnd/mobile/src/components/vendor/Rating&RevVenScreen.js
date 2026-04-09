@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, SafeAreaView, StatusBar } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Entypo } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -14,7 +14,8 @@ const RatingRevVenScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const { myProfile, reviews } = useSelector((state) => state.vendor);
+  const myProfile = useSelector((state) => state.vendor.myProfile);
+  const reviews = useSelector((state) => state.vendor.reviews) || [];
 
   useEffect(() => {
     if (myProfile?.id) {
@@ -22,11 +23,11 @@ const RatingRevVenScreen = () => {
     }
   }, [dispatch, myProfile?.id]);
 
-  const reviewsList = reviews.map((r) => ({
+  const reviewsList = (Array.isArray(reviews) ? reviews : []).map((r) => ({
     id: r.id,
-    firstName: (r.userName || r.fullName || 'User').split(' ')[0],
-    lastName: (r.userName || r.fullName || '').split(' ').slice(1).join(' '),
-    profilePic: r.profileImage ? { uri: r.profileImage } : defaultPic,
+    firstName: (r.customerName || r.userName || r.fullName || 'User').split(' ')[0],
+    lastName: (r.customerName || r.userName || r.fullName || '').split(' ').slice(1).join(' '),
+    profilePic: (r.customerImage || r.profileImage) ? { uri: r.customerImage || r.profileImage } : defaultPic,
     rating: r.rating,
     feedback: r.feedback || r.content || '',
   }));
@@ -55,11 +56,11 @@ const RatingRevVenScreen = () => {
             <Text style={styles.avgScore}>{avgRating}<Text style={styles.maxScore}>/5</Text></Text>
           </View>
           <View style={styles.starsContainer}>
-            <Image
-              source={require('../../../assets/images/Stars-icon.png')}
-              style={styles.avgStars}
-              resizeMode="contain"
-            />
+            <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Entypo key={i} name={parseFloat(avgRating) >= i ? "star" : "star-outlined"} size={22} color={parseFloat(avgRating) >= i ? "#8A1C27" : "#CBD5E1"} />
+              ))}
+            </View>
             <Text style={styles.ratingsCount}>Based on {reviewsList.length} customers</Text>
           </View>
         </View>

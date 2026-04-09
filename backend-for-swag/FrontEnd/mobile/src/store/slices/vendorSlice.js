@@ -50,7 +50,7 @@ export const fetchVendorReviews = createAsyncThunk(
   'vendor/fetchReviews',
   async (id, { rejectWithValue }) => {
     const result = await vendorAPI.getVendorReviews(id);
-    if (result.success) return result.data;
+    if (result.success) return result.data.reviews || result.data;
     return rejectWithValue(result.error);
   }
 );
@@ -127,9 +127,9 @@ const vendorSlice = createSlice({
       .addCase(fetchMyVendorProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
       .addCase(updateMyVendorProfile.fulfilled, (state, action) => { state.myProfile = action.payload; })
       .addCase(fetchMyVendorCategories.fulfilled, (state, action) => { state.myCategories = action.payload; })
-      .addCase(fetchVendorReviews.fulfilled, (state, action) => { state.reviews = action.payload; })
+      .addCase(fetchVendorReviews.fulfilled, (state, action) => { state.reviews = Array.isArray(action.payload) ? action.payload : []; })
       .addCase(fetchMyFollowing.fulfilled, (state, action) => { state.myFollowing = action.payload; })
-      .addCase(fetchVendorFollowers.fulfilled, (state, action) => { state.vendorFollowers = action.payload; });
+      .addCase(fetchVendorFollowers.fulfilled, (state, action) => { state.vendorFollowers = Array.isArray(action.payload) ? action.payload : []; });
   },
 });
 

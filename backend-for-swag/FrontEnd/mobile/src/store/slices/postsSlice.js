@@ -161,9 +161,15 @@ const postsSlice = createSlice({
       .addCase(toggleSave.fulfilled, (state, action) => {
         const { postId } = action.payload;
         const post = state.posts.find(p => p.id === postId);
-        if (post) post.isSaved = !post.isSaved;
+        if (post) {
+          post.isSaved = !post.isSaved;
+          post.saveCount = post.isSaved ? (post.saveCount || 0) + 1 : (post.saveCount || 1) - 1;
+        }
         const liked = state.likedPosts.find(p => p.id === postId);
-        if (liked) liked.isSaved = !liked.isSaved;
+        if (liked) {
+          liked.isSaved = !liked.isSaved;
+          liked.saveCount = liked.isSaved ? (liked.saveCount || 0) + 1 : (liked.saveCount || 1) - 1;
+        }
       })
       .addCase(fetchComments.fulfilled, (state, action) => {
         state.comments[action.payload.postId] = action.payload.comments;

@@ -39,6 +39,10 @@ const EventsVenScreen = () => {
     postImage: p.postImage ? { uri: p.postImage } : defaultBg,
     date: p.eventDate || '',
     time: p.eventTime || '',
+    isLiked: p.isLiked,
+    isSaved: p.isSaved,
+    likeCount: p.likeCount,
+    commentCount: p.commentCount,
   }));
 
   return (
@@ -71,6 +75,7 @@ const EventsVenScreen = () => {
           {feedEvents.map((item) => (
             <VendorPosts
               key={item.id}
+              postId={item.id}
               vendorName={item.vendorName}
               location={item.location}
               description={item.description}
@@ -79,6 +84,10 @@ const EventsVenScreen = () => {
               isEvent={true}
               date={item.date}
               time={item.time}
+              initialLiked={item.isLiked}
+              initialSaved={item.isSaved}
+              likeCount={item.likeCount}
+              commentCount={item.commentCount}
               onVendorPress={() => router.push({
                 pathname: '/commonScreensV/otherVendorProfile',
                 params: { vendorId: item.vendorId }

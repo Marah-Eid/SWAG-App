@@ -78,6 +78,7 @@ export default function ChatsVenScreen() {
         userName: item.otherParticipantName,
         userType: item.otherParticipantType,
         userImage: item.otherParticipantImage || '',
+        otherUserId: item.otherParticipantId,
         chatId: item.id,
         conversationId: item.id,
       }
@@ -100,6 +101,7 @@ export default function ChatsVenScreen() {
         userName: user.name,
         userType: user.userType.toLowerCase(),
         userImage: user.profileImage || '',
+        otherUserId: user.id,
         conversationId: result.conversationId,
         chatId: result.conversationId,
       }

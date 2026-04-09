@@ -92,6 +92,30 @@ public class CustomersController : ControllerBase
         });
     }
 
+    // GET /api/customers/{id}/public  (any authenticated user)
+    [HttpGet("{id:guid}/public")]
+    public async Task<IActionResult> GetCustomerPublic(Guid id)
+    {
+        var customer = await _db.Customers
+            .Include(c => c.Cars)
+            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+
+        if (customer == null) return NotFound();
+
+        return Ok(new
+        {
+            id = customer.Id,
+            fullName = customer.FullName,
+            profileImage = customer.ProfileImage,
+            bannerImage = customer.BannerImage,
+            cars = customer.Cars.Select(c => new
+            {
+                brand = c.Brand,
+                model = c.Model
+            }).ToList()
+        });
+    }
+
     // GET /api/customers/me/interests
     [HttpGet("me/interests")]
     public async Task<IActionResult> GetInterests()

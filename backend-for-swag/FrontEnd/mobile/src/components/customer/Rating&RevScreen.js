@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Image, Modal, StatusBar, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Modal, StatusBar, Platform } from 'react-native';
+import { Ionicons, Entypo } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -18,7 +18,8 @@ const RatingRevScreen = () => {
   const { success, vendorId } = useLocalSearchParams();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const { reviews, selectedVendor } = useSelector((state) => state.vendor);
+  const reviews = useSelector((state) => state.vendor.reviews) || [];
+  const selectedVendor = useSelector((state) => state.vendor.selectedVendor);
 
   useEffect(() => {
     if (vendorId) {
@@ -40,9 +41,9 @@ const RatingRevScreen = () => {
 
   const reviewsList = reviews.map((r) => ({
     id: r.id,
-    firstName: (r.userName || r.fullName || 'User').split(' ')[0],
-    lastName: (r.userName || r.fullName || '').split(' ').slice(1).join(' '),
-    profilePic: r.profileImage ? { uri: r.profileImage } : defaultPic,
+    firstName: (r.customerName || r.userName || r.fullName || 'User').split(' ')[0],
+    lastName: (r.customerName || r.userName || r.fullName || '').split(' ').slice(1).join(' '),
+    profilePic: (r.customerImage || r.profileImage) ? { uri: r.customerImage || r.profileImage } : defaultPic,
     rating: r.rating,
     feedback: r.feedback || r.content || '',
   }));
@@ -71,11 +72,16 @@ const RatingRevScreen = () => {
             <Text style={styles.avgScore}>{avgRating}<Text style={styles.maxScore}>/5</Text></Text>
           </View>
           <View style={styles.starsContainer}>
-            <Image
-              source={require('../../../assets/images/Stars-icon.png')}
-              style={styles.avgStars}
-              resizeMode="contain"
-            />
+            <View style={styles.avgStarsRow}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Entypo
+                  key={i}
+                  name={parseFloat(avgRating) >= i ? "star" : parseFloat(avgRating) >= i - 0.5 ? "star" : "star-outlined"}
+                  size={22}
+                  color={parseFloat(avgRating) >= i ? "#8A1C27" : parseFloat(avgRating) >= i - 0.5 ? "#8A1C27" : "#CBD5E1"}
+                />
+              ))}
+            </View>
             <Text style={styles.ratingsCount}>{reviewsList.length} total reviews</Text>
           </View>
         </View>
@@ -172,7 +178,7 @@ const styles = StyleSheet.create({
   avgScore: { fontSize: 32, fontWeight: '800', color: '#2D3E5E' },
   maxScore: { fontSize: 18, color: '#A0AEC0' },
   starsContainer: { alignItems: 'flex-end' },
-  avgStars: { width: 100, height: 24, marginBottom: 4 },
+  avgStarsRow: { flexDirection: 'row', marginBottom: 4 },
   ratingsCount: { fontSize: 11, color: '#8391A1', fontWeight: '600' },
 
   actionRow: {

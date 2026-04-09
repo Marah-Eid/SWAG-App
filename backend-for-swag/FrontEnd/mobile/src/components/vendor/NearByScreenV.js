@@ -82,6 +82,8 @@ const NearByScreenV = () => {
               mediaHeight={p.mediaHeight}
               initialLiked={p.isLiked}
               initialSaved={p.isSaved}
+              likeCount={p.likeCount}
+              commentCount={p.commentCount}
               isEvent={p.type === 'event'}
               date={p.eventDate}
               time={p.eventTime}

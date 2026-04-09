@@ -68,6 +68,8 @@ const SearchResultsVScreen = () => {
     postImage: p.postImage ? { uri: p.postImage } : defaultBg,
     isLiked: p.isLiked || false,
     isSaved: p.isSaved || false,
+    likeCount: p.likeCount,
+    commentCount: p.commentCount,
     isEvent: p.type === 'event',
     date: p.eventDate || null,
     time: p.eventTime || null,
@@ -124,6 +126,7 @@ const SearchResultsVScreen = () => {
               {postCards.map((post) => (
                 <View key={post.id} style={styles.postSpacing}>
                   <VendorPosts
+                    postId={post.id}
                     vendorName={post.vendorName}
                     vendorLogo={post.vendorLogo}
                     location={post.location}
@@ -131,6 +134,8 @@ const SearchResultsVScreen = () => {
                     postImage={post.postImage}
                     initialLiked={post.isLiked}
                     initialSaved={post.isSaved}
+                    likeCount={post.likeCount}
+                    commentCount={post.commentCount}
                     isEvent={post.isEvent}
                     date={post.date}
                     time={post.time}

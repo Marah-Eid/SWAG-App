@@ -53,6 +53,10 @@ const ExploreScreen = () => {
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
     postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    isLiked: p.isLiked,
+    isSaved: p.isSaved,
+    likeCount: p.likeCount,
+    commentCount: p.commentCount,
   }));
 
   return (
@@ -85,11 +89,16 @@ const ExploreScreen = () => {
           {explorePosts.map((post) => (
             <View key={post.id} style={styles.postSpacing}>
               <CustomerPosts
+                postId={post.id}
                 vendorName={post.vendorName}
                 vendorLogo={post.vendorLogo}
                 location={post.location}
                 description={post.description}
                 postImage={post.postImage}
+                initialLiked={post.isLiked}
+                initialSaved={post.isSaved}
+                likeCount={post.likeCount}
+                commentCount={post.commentCount}
                 onVendorPress={() => router.push({ pathname: '/customer/VendorProfCust', params: { vendorId: post.vendorId } })}
               />
             </View>

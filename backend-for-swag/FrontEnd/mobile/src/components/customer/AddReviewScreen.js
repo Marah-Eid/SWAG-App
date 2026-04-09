@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,12 @@ import {
 } from 'react-native';
 import { Ionicons, Entypo } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import RevCard from '../common/RevCard';
 import BottomTabs from '../common/BottomTabs';
 import { submitReview } from '../../store/slices/postsSlice';
+import { fetchVendorReviews } from '../../store/slices/vendorSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +31,22 @@ const AddReviewScreen = () => {
   const [rating, setRating] = useState(0);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const reviews = useSelector((state) => state.vendor.reviews) || [];
+
+  useEffect(() => {
+    if (vendorId) dispatch(fetchVendorReviews(vendorId));
+  }, [vendorId, dispatch]);
+
+  const defaultPic = require('../../../assets/images/gorg-icon.png');
+  const recentReviews = (Array.isArray(reviews) ? reviews : []).slice(0, 3).map((r) => ({
+    id: r.id,
+    firstName: (r.customerName || r.userName || r.fullName || 'User').split(' ')[0],
+    lastName: (r.customerName || r.userName || r.fullName || '').split(' ').slice(1).join(' '),
+    profilePic: (r.customerImage || r.profileImage) ? { uri: r.customerImage || r.profileImage } : defaultPic,
+    rating: r.rating,
+    feedback: r.feedback || r.content || '',
+  }));
 
   const handleTextChange = (text) => {
     // Basic word count logic
@@ -141,18 +158,18 @@ const AddReviewScreen = () => {
         </View>
 
         <View style={styles.listContainer}>
-          <RevCard
-            firstName="Ana"
-            lastName="Faisal"
-            profilePic={require('../../../assets/images/gorg-icon.png')}
-            feedback="The service here was fantastic and very fast!"
-          />
-          <RevCard
-            firstName="Hani"
-            lastName="Alomosh"
-            profilePic={require('../../../assets/images/gorg-icon.png')}
-            feedback="Great communication. The parts arrived exactly as described and fit perfectly."
-          />
+          {recentReviews.length > 0 ? recentReviews.map((item) => (
+            <RevCard
+              key={item.id}
+              firstName={item.firstName}
+              lastName={item.lastName}
+              profilePic={item.profilePic}
+              rating={item.rating}
+              feedback={item.feedback}
+            />
+          )) : (
+            <Text style={{ textAlign: 'center', color: '#8391A1', fontSize: 14, fontWeight: '500' }}>No reviews yet. Be the first!</Text>
+          )}
         </View>
 
         <View style={{ height: 120 }} />

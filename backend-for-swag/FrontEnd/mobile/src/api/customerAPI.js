@@ -19,6 +19,15 @@ const customerAPI = {
     }
   },
 
+  getCustomerPublic: async (id) => {
+    try {
+      const response = await apiClient.get(`/customers/${id}/public`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to load customer' };
+    }
+  },
+
   getInterests: async () => {
     try {
       const response = await apiClient.get('/customers/me/interests');
