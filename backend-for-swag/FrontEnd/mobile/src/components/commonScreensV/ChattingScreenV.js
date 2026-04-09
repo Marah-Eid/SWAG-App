@@ -24,7 +24,7 @@ const ChattingScreenV = () => {
     const flatListRef = useRef();
 
     const { user } = useSelector((state) => state.auth);
-    const { messages: allMessages } = useSelector((state) => state.chats);
+    const { messages: allMessages, conversations } = useSelector((state) => state.chats);
     const messages = allMessages[convId] || [];
 
     const [message, setMessage] = useState('');
@@ -39,12 +39,17 @@ const ChattingScreenV = () => {
     // Create conversation if we don't have one yet
     useEffect(() => {
         if (!convId && otherUserId) {
-            dispatch(startConversation({ otherUserId, otherUserType: userType || 'customer' }))
-                .unwrap()
-                .then((data) => {
-                    if (data?.conversationId) setConvId(data.conversationId);
-                })
-                .catch(() => {});
+            const existing = conversations.find(c => String(c.otherParticipantId) === String(otherUserId));
+            if (existing) {
+                setConvId(existing.id);
+            } else {
+                dispatch(startConversation({ otherUserId, otherUserType: userType || 'customer' }))
+                    .unwrap()
+                    .then((data) => {
+                        if (data?.conversationId) setConvId(data.conversationId);
+                    })
+                    .catch(() => {});
+            }
         }
     }, [otherUserId, userType, dispatch]);
 
@@ -159,7 +164,8 @@ const ChattingScreenV = () => {
         const msgType = item.messageType || 'text';
         const mediaUri = item.mediaUrl || null;
         const timeStr = item.sentAt
-            ? new Date(item.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            ? new Date(item.sentAt.endsWith('Z') ? item.sentAt : item.sentAt + 'Z')
+                .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             : '';
 
         return (

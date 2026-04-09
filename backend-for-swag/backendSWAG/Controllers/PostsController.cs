@@ -343,13 +343,25 @@ public class PostsController : ControllerBase
         // Notify post vendor
         if (post.VendorId != myId)
         {
+            string commenterName = "Someone";
+            if (myRole == UserRole.Customer)
+            {
+                var cust = await _db.Customers.FindAsync(myId);
+                if (cust != null) commenterName = cust.FullName;
+            }
+            else if (myRole == UserRole.Vendor)
+            {
+                var v = await _db.Vendors.FindAsync(myId);
+                if (v != null) commenterName = v.ShopName;
+            }
+
             _db.Notifications.Add(new Notification
             {
                 RecipientId = post.VendorId,
                 RecipientType = UserRole.Vendor,
                 Type = NotificationType.Mention,
                 Title = "New Comment",
-                Body = "Someone commented on your post.",
+                Body = $"{commenterName} commented on your post.",
                 DeepLink = $"post/{id}"
             });
             await _db.SaveChangesAsync();
@@ -464,13 +476,16 @@ public class PostsController : ControllerBase
             Feedback = req.Feedback.Trim()
         });
 
+        var reviewer = await _db.Customers.FindAsync(myId);
+        string reviewerName = reviewer?.FullName ?? "Someone";
+
         _db.Notifications.Add(new Notification
         {
             RecipientId = req.VendorId,
             RecipientType = UserRole.Vendor,
             Type = NotificationType.NewReview,
             Title = "New Review",
-            Body = $"You received a {req.Rating}-star review.",
+            Body = $"{reviewerName} left you a {req.Rating}-star review.",
             DeepLink = $"vendor/{req.VendorId}/reviews"
         });
 

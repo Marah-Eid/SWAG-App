@@ -1,15 +1,16 @@
 import React from 'react';
 import { View, TouchableOpacity, Image, StyleSheet, Platform } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
+import { useSelector } from 'react-redux';
 
 const BottomTabs = () => {
   const router = useRouter();
-
-  // This automatically gets the current screen path (e.g., "/customer/HomeCust")
   const pathname = usePathname() || '';
-
-  // Helper function: returns true if the current path includes the keyword
   const isActive = (routeKeyword) => pathname.includes(routeKeyword);
+  const unreadCount = useSelector((state) => state.notifications.unreadCount);
+  const unreadChats = useSelector((state) =>
+    state.chats.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+  );
 
   return (
     <View style={styles.container}>
@@ -23,7 +24,10 @@ const BottomTabs = () => {
 
       {/* Notifications Icon */}
       <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/customer/NotificationsCust')}>
-        <Image source={require('../../../assets/images/noti-icon.png')} style={styles.icon} />
+        <View style={styles.iconWrapper}>
+          <Image source={require('../../../assets/images/noti-icon.png')} style={styles.icon} />
+          {unreadCount > 0 && <View style={styles.badge} />}
+        </View>
         <View style={[styles.dot, { backgroundColor: isActive('NotificationsCust') ? '#FFFFFF' : 'transparent' }]} />
       </TouchableOpacity>
 
@@ -35,7 +39,10 @@ const BottomTabs = () => {
 
       {/* Chats Icon */}
       <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/customer/ChatsCust')}>
-        <Image source={require('../../../assets/images/chats-icon.png')} style={styles.icon} />
+        <View style={styles.iconWrapper}>
+          <Image source={require('../../../assets/images/chats-icon.png')} style={styles.icon} />
+          {unreadChats > 0 && <View style={styles.badge} />}
+        </View>
         <View style={[styles.dot, { backgroundColor: isActive('ChatsCust') ? '#FFFFFF' : 'transparent' }]} />
       </TouchableOpacity>
 
@@ -75,6 +82,21 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconWrapper: {
+    width: 26,
+    height: 26,
+  },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#8A1C27',
+    borderWidth: 1.5,
+    borderColor: '#5A82A0',
   },
   icon: {
     width: 26,

@@ -91,9 +91,9 @@ const chatsSlice = createSlice({
       .addCase(fetchConversations.pending, (state) => { state.loading = true; })
       .addCase(fetchConversations.fulfilled, (state, action) => { state.loading = false; state.conversations = action.payload; })
       .addCase(fetchConversations.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
-      .addCase(startConversation.fulfilled, (state, action) => {
-        const exists = state.conversations.find(c => c.id === action.payload.id);
-        if (!exists) state.conversations.unshift(action.payload);
+      .addCase(startConversation.fulfilled, (_state, _action) => {
+        // Don't add partial data — payload is { conversationId } not a full ConversationDto
+        // Conversations list is refreshed by fetchConversations
       })
       .addCase(fetchMessages.pending, (state) => { state.loading = true; })
       .addCase(fetchMessages.fulfilled, (state, action) => {

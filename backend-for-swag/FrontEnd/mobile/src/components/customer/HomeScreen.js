@@ -14,6 +14,8 @@ import SideMenu from '../common/SideMenu';
 import { fetchVendors } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 import { fetchFollowing, fetchCustomerProfile } from '../../store/slices/customerSlice';
+import { fetchNotifications } from '../../store/slices/notificationsSlice';
+import { fetchConversations } from '../../store/slices/chatsSlice';
 
 const defaultLogo = require('../../../assets/images/carshop-icon.png');
 const defaultBg = require('../../../assets/images/theshop-photo.png');
@@ -33,6 +35,8 @@ const HomeScreen = () => {
     dispatch(fetchPosts());
     dispatch(fetchFollowing());
     dispatch(fetchCustomerProfile());
+    dispatch(fetchNotifications());
+    dispatch(fetchConversations());
   }, [dispatch]);
 
   // Map vendors → NearbyShopsCarousel shape

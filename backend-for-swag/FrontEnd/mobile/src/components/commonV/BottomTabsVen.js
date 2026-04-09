@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Image, Alert, Platform } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
+import { useSelector } from 'react-redux';
 import CreatePostEventModal from './CreatePostEventModal'; // <-- IMPORT MODAL
 
 // --- UPDATED: isPending defaults to true so it stays locked on other screens! ---
@@ -13,6 +14,10 @@ const BottomTabsVen = ({ isPending = true, onRestrictedAction }) => {
 
   // --- ADD STATE FOR MODAL ---
   const [modalVisible, setModalVisible] = useState(false);
+  const unreadCount = useSelector((state) => state.notifications.unreadCount);
+  const unreadChats = useSelector((state) =>
+    state.chats.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+  );
 
   const handleAddPress = () => {
     if (isPending) {
@@ -49,10 +54,13 @@ const BottomTabsVen = ({ isPending = true, onRestrictedAction }) => {
 
         {/* 2. Notifications Button */}
         <TouchableOpacity style={styles.tabButton} onPress={() => router.push('/vendor/NotificationsVen')} activeOpacity={0.8}>
-          <Image
-            source={require('../../../assets/images/noti-icon.png')}
-            style={styles.tabIcon}
-          />
+          <View style={styles.iconWrapper}>
+            <Image
+              source={require('../../../assets/images/noti-icon.png')}
+              style={styles.tabIcon}
+            />
+            {unreadCount > 0 && <View style={styles.badge} />}
+          </View>
           <View style={[styles.dot, { backgroundColor: isActive('NotificationsVen') ? '#FFFFFF' : 'transparent' }]} />
         </TouchableOpacity>
 
@@ -70,10 +78,13 @@ const BottomTabsVen = ({ isPending = true, onRestrictedAction }) => {
 
         {/* 4. Messages/Chats Button */}
         <TouchableOpacity style={styles.tabButton} onPress={() => router.push('/vendor/ChatsVen')} activeOpacity={0.8}>
-          <Image
-            source={require('../../../assets/images/chats-icon.png')}
-            style={styles.tabIcon}
-          />
+          <View style={styles.iconWrapper}>
+            <Image
+              source={require('../../../assets/images/chats-icon.png')}
+              style={styles.tabIcon}
+            />
+            {unreadChats > 0 && <View style={styles.badge} />}
+          </View>
           <View style={[styles.dot, { backgroundColor: isActive('ChatsVen') ? '#FFFFFF' : 'transparent' }]} />
         </TouchableOpacity>
 
@@ -150,12 +161,27 @@ const styles = StyleSheet.create({
     height: 42,
     resizeMode: 'contain',
   },
+  iconWrapper: {
+    width: 26,
+    height: 26,
+  },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#8A1C27',
+    borderWidth: 1.5,
+    borderColor: '#61829B',
+  },
   // --- BULLETPROOF DOT STYLING ---
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginTop: 6, // Adds a safe gap between the icon and the dot
+    marginTop: 6,
   }
 });
 

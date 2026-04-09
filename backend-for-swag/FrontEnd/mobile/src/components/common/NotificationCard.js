@@ -26,13 +26,6 @@ const NotificationCard = ({ title, message, isRead = true, onDelete, onCardPress
       </View>
 
       <Text style={styles.message} numberOfLines={3}>{message}</Text>
-
-      <View style={styles.footer}>
-        <View style={styles.seeMoreButton}>
-          <Text style={styles.seeMoreText}>See more</Text>
-          <Ionicons name="chevron-forward" size={14} color="#FFFFFF" />
-        </View>
-      </View>
     </TouchableOpacity>
   );
 };
@@ -85,32 +78,8 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 14,
     color: '#4A5568',
-    marginBottom: 16,
-    lineHeight: 22, // UI Polish: Better reading height
+    lineHeight: 22,
     fontWeight: '500',
-  },
-  footer: {
-    alignItems: 'flex-end'
-  },
-  seeMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#8A1C27', // Brand Red
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20, // UI Polish: Pill-shaped CTA
-    shadowColor: '#8A1C27',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  seeMoreText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    marginRight: 4,
-    fontWeight: '700',
-    letterSpacing: 0.3,
   },
 });
 

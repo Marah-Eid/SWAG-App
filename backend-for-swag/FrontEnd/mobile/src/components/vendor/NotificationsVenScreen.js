@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import NotificationCard from '../common/NotificationCard';
 import BottomTabsVen from '../commonV/BottomTabsVen';
-import { fetchNotifications, deleteNotification, clearAllNotifications } from '../../store/slices/notificationsSlice';
+import { fetchNotifications, deleteNotification, clearAllNotifications, markNotificationRead } from '../../store/slices/notificationsSlice';
 
 export default function NotificationsVenScreen() {
   const router = useRouter();
@@ -88,7 +88,7 @@ export default function NotificationsVenScreen() {
                 message={item.body}
                 isRead={item.isRead}
                 onDelete={() => handleDelete(item.id)}
-                onCardPress={() => { handleDelete(item.id); handleNavigate(item.deepLink); }}
+                onCardPress={() => { dispatch(markNotificationRead(item.id)); handleNavigate(item.deepLink); }}
               />
             ))
           ) : (

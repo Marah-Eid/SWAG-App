@@ -15,7 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import NotificationCard from '../common/NotificationCard';
 import BottomTabs from '../common/BottomTabs';
-import { fetchNotifications, deleteNotification, clearAllNotifications } from '../../store/slices/notificationsSlice';
+import { fetchNotifications, deleteNotification, clearAllNotifications, markNotificationRead } from '../../store/slices/notificationsSlice';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -91,7 +91,7 @@ export default function NotificationsScreen() {
                 message={item.body}
                 isRead={item.isRead}
                 onDelete={() => handleDelete(item.id)}
-                onCardPress={() => { handleDelete(item.id); handleNavigate(item.deepLink); }}
+                onCardPress={() => { dispatch(markNotificationRead(item.id)); handleNavigate(item.deepLink); }}
               />
             ))
           ) : (

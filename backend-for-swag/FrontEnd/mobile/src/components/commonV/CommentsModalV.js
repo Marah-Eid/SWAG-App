@@ -65,7 +65,7 @@ const CommentsModalV = ({ visible, onClose, postId }) => {
     };
 
     return (
-        <View>
+        <>
             <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
                 <View style={styles.overlay}>
                     <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
@@ -157,17 +157,16 @@ const CommentsModalV = ({ visible, onClose, postId }) => {
                         </View>
                     </KeyboardAvoidingView>
                 </View>
+                {/* Profile Popup inside Modal so it renders above the comments sheet */}
+                <ProfilePopupV
+                    visible={isProfileVisible}
+                    onClose={() => setProfileVisible(false)}
+                    userName={selectedUserData?.commenterName || selectedUserData?.userName || selectedUserData?.user}
+                    profileImage={selectedUserData?.commenterImage ? { uri: selectedUserData.commenterImage } : require('../../../assets/images/user-icon.png')}
+                    customerId={selectedUserData?.id}
+                />
             </Modal>
-
-            {/* Profile Popup Overlay for viewing Customer Details */}
-            <ProfilePopupV
-                visible={isProfileVisible}
-                onClose={() => setProfileVisible(false)}
-                userName={selectedUserData?.commenterName || selectedUserData?.userName || selectedUserData?.user}
-                profileImage={selectedUserData?.commenterImage ? { uri: selectedUserData.commenterImage } : require('../../../assets/images/user-icon.png')}
-                customerId={selectedUserData?.id}
-            />
-        </View>
+        </>
     );
 };
 

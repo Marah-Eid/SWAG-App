@@ -218,13 +218,16 @@ public class CustomersController : ControllerBase
             VendorId = vendorId
         });
 
+        var follower = await _db.Customers.FindAsync(_currentUser.UserId);
+        string followerName = follower?.FullName ?? "Someone";
+
         _db.Notifications.Add(new Notification
         {
             RecipientId = vendorId,
             RecipientType = UserRole.Vendor,
             Type = NotificationType.NewFollower,
             Title = "New Follower",
-            Body = $"Someone started following your shop."
+            Body = $"{followerName} started following your shop."
         });
 
         await _db.SaveChangesAsync();

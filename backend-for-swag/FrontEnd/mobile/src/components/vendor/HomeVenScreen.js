@@ -14,6 +14,8 @@ import BottomTabsVen from '../commonV/BottomTabsVen';
 import SideMenuV from '../commonV/SideMenuV';
 import { fetchMyVendorProfile } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
+import { fetchNotifications } from '../../store/slices/notificationsSlice';
+import { fetchConversations } from '../../store/slices/chatsSlice';
 
 const defaultBg = require('../../../assets/images/tcic-post.png');
 const defaultLogo = require('../../../assets/images/nmk-icon.png');
@@ -30,6 +32,8 @@ const HomeVenScreen = () => {
   useEffect(() => {
     dispatch(fetchMyVendorProfile());
     dispatch(fetchPosts());
+    dispatch(fetchNotifications());
+    dispatch(fetchConversations());
   }, [dispatch]);
 
   const handleRestrictedAction = () => {

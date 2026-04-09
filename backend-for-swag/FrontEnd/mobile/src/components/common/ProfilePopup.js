@@ -42,12 +42,14 @@ const ProfilePopup = ({ visible, onClose, userName, carName, profileImage, banne
 
     const handleMessagePress = () => {
         onClose();
+        const imageUri = profileImage?.uri || '';
         router.push({
             pathname: '/commonScreens/Chatting',
             params: {
                 userName: userName,
                 otherUserId: customerId,
                 userType: 'customer',
+                userImage: imageUri,
             }
         });
     };
