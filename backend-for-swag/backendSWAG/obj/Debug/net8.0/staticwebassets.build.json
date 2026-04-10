@@ -1,11 +1,1 @@
-{
-  "Version": 1,
-  "Hash": "NwqOWtr4a1iD3MTaHQ9ukzZ4/QuC63OGohqTxHk7xMg=",
-  "Source": "SWAG-Backend",
-  "BasePath": "_content/SWAG-Backend",
-  "Mode": "Default",
-  "ManifestType": "Build",
-  "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": []
-}
+{"Version":1,"Hash":"a/s7ut+uZ5dVMve3xv493fawUziaQVr20amVCTbPeh4=","Source":"SWAG-Backend","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}

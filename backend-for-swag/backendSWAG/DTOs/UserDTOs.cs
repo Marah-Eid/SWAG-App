@@ -86,6 +86,7 @@ public class VendorProfileDto
     public double AverageRating { get; set; }
     public int ReviewCount { get; set; }
     public int FollowerCount { get; set; }
+    public int FollowingCount { get; set; }
     public int PostCount { get; set; }
     public bool IsFollowed { get; set; }
     // Selected categories
@@ -124,6 +125,7 @@ public class UpdateVendorRequest
     public string? Bio { get; set; }
     public string? ProfileImage { get; set; }
     public string? BannerImage { get; set; }
+    public string? Phone { get; set; }
     public string? LocationUrl { get; set; }
     public decimal? LocationLat { get; set; }
     public decimal? LocationLng { get; set; }

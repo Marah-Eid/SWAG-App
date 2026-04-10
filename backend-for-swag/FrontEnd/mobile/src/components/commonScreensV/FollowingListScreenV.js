@@ -1,24 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, StatusBar } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
 import BottomTabsVen from '../commonV/BottomTabsVen';
-import { fetchFollowing } from '../../store/slices/customerSlice';
+import { fetchMyFollowing, fetchVendorFollowingById } from '../../store/slices/vendorSlice';
 
 const defaultLogo = require('../../../assets/images/carshop-icon.png');
 
 const FollowingListScreenV = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { vendorId } = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { following } = useSelector((state) => state.customer);
+  const { myFollowing, viewedFollowing } = useSelector((state) => state.vendor);
+
+  // If a vendorId is passed we are viewing someone else's following list,
+  // otherwise we are viewing our own.
+  const following = vendorId ? viewedFollowing : myFollowing;
 
   useEffect(() => {
-    dispatch(fetchFollowing());
-  }, [dispatch]);
+    if (vendorId) {
+      dispatch(fetchVendorFollowingById(vendorId));
+    } else {
+      dispatch(fetchMyFollowing());
+    }
+  }, [vendorId, dispatch]);
 
   const filteredVendors = following.filter(vendor =>
     (vendor.shopName || vendor.fullName || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -56,7 +65,7 @@ const FollowingListScreenV = () => {
             <TouchableOpacity
               key={vendor.id}
               style={styles.vendorCard}
-              onPress={() => router.push({ pathname: '/commonScreensV/otherVendorProfile', params: { vendorId: vendor.id } })}
+              onPress={() => router.push({ pathname: '/vendor/otherVendorProfile', params: { vendorId: vendor.id } })}
               activeOpacity={0.9}
             >
               <View>

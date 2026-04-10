@@ -75,6 +75,7 @@ public class VendorsController : ControllerBase
             .Include(v => v.Reviews)
             .Include(v => v.Followers)
             .Include(v => v.VendorFollowers)
+            .Include(v => v.VendorFollowing)
             .Include(v => v.Posts)
             .FirstOrDefaultAsync(v => v.Id == _currentUser.UserId && !v.IsDeleted);
 
@@ -93,6 +94,7 @@ public class VendorsController : ControllerBase
             .Include(v => v.Reviews)
             .Include(v => v.Followers)
             .Include(v => v.VendorFollowers)
+            .Include(v => v.VendorFollowing)
             .Include(v => v.Posts)
             .FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted);
 
@@ -153,6 +155,7 @@ public class VendorsController : ControllerBase
         if (req.Bio != null) vendor.Bio = req.Bio;
         if (req.ProfileImage != null) vendor.ProfileImage = req.ProfileImage;
         if (req.BannerImage != null) vendor.BannerImage = req.BannerImage;
+        if (req.Phone != null) vendor.Phone = req.Phone;
         if (req.LocationUrl != null) vendor.LocationUrl = req.LocationUrl;
         if (req.LocationLat.HasValue) vendor.LocationLat = req.LocationLat;
         if (req.LocationLng.HasValue) vendor.LocationLng = req.LocationLng;
@@ -170,6 +173,7 @@ public class VendorsController : ControllerBase
             .Include(v => v.Reviews)
             .Include(v => v.Followers)
             .Include(v => v.VendorFollowers)
+            .Include(v => v.VendorFollowing)
             .Include(v => v.Posts)
             .FirstOrDefaultAsync(v => v.Id == _currentUser.UserId);
 
@@ -326,6 +330,42 @@ public class VendorsController : ControllerBase
         return Ok(new { averageRating = Math.Round(avg, 1), reviewCount = reviews.Count, reviews });
     }
 
+    // GET /api/vendors/{id}/following  (public — view any vendor's following list)
+    [HttpGet("{id:guid}/following")]
+    public async Task<IActionResult> GetVendorFollowingById(Guid id)
+    {
+        var follows = await _db.VendorFollows
+            .Where(vf => vf.FollowerId == id && !vf.Following.IsDeleted)
+            .Include(vf => vf.Following)
+                .ThenInclude(v => v.Reviews)
+            .Include(vf => vf.Following)
+                .ThenInclude(v => v.Followers)
+            .Include(vf => vf.Following)
+                .ThenInclude(v => v.VendorFollowers)
+            .ToListAsync();
+
+        return Ok(follows.Select(vf =>
+        {
+            var v = vf.Following;
+            return new VendorSummaryDto
+            {
+                Id = v.Id,
+                FullName = v.FullName,
+                ShopName = v.ShopName,
+                ShopType = v.ShopType,
+                City = v.City,
+                ProfileImage = v.ProfileImage,
+                BannerImage = v.BannerImage,
+                Bio = v.Bio,
+                Status = v.Status.ToString().ToLower(),
+                AverageRating = v.Reviews.Count > 0 ? Math.Round(v.Reviews.Average(r => (double)r.Rating), 1) : 0,
+                ReviewCount = v.Reviews.Count,
+                FollowerCount = v.Followers.Count + v.VendorFollowers.Count,
+                IsFollowed = false
+            };
+        }));
+    }
+
     // GET /api/vendors/me/following  (vendor follows vendors)
     [HttpGet("me/following")]
     [Authorize(Roles = "Vendor")]
@@ -403,6 +443,55 @@ public class VendorsController : ControllerBase
         _db.VendorFollows.Remove(follow);
         await _db.SaveChangesAsync();
         return Ok(new MessageResponse { Message = "Unfollowed." });
+    }
+
+    // GET /api/vendors/me/saved-posts
+    [HttpGet("me/saved-posts")]
+    [Authorize(Roles = "Vendor")]
+    public async Task<IActionResult> GetSavedPosts()
+    {
+        var myId = _currentUser.UserId;
+        var saves = await _db.PostSaves
+            .Where(ps => ps.SaverId == myId && ps.SaverType == UserRole.Vendor)
+            .Include(ps => ps.Post).ThenInclude(p => p.Vendor)
+            .Include(ps => ps.Post).ThenInclude(p => p.Likes)
+            .Include(ps => ps.Post).ThenInclude(p => p.Saves)
+            .Include(ps => ps.Post).ThenInclude(p => p.Comments)
+            .Include(ps => ps.Post).ThenInclude(p => p.Categories)
+            .OrderByDescending(ps => ps.CreatedAt)
+            .ToListAsync();
+
+        var result = saves.Select(ps =>
+        {
+            var p = ps.Post;
+            return new PostDto
+            {
+                Id = p.Id,
+                VendorId = p.VendorId,
+                VendorShopName = p.Vendor.ShopName,
+                VendorProfileImage = p.Vendor.ProfileImage,
+                Description = p.Description,
+                PostImage = p.PostImage,
+                MediaType = p.MediaType.ToString().ToLower(),
+                MediaWidth = p.MediaWidth,
+                MediaHeight = p.MediaHeight,
+                Type = p.Type.ToString().ToLower(),
+                EventTitle = p.EventTitle,
+                EventDate = p.EventDate,
+                EventTime = p.EventTime,
+                EventEndTime = p.EventEndTime,
+                Location = p.Location,
+                CreatedAt = p.CreatedAt,
+                LikeCount = p.Likes.Count,
+                CommentCount = p.Comments.Count(c => c.DeletedAt == null),
+                SaveCount = p.Saves.Count,
+                IsLiked = p.Likes.Any(l => l.LikerId == myId && l.LikerType == UserRole.Vendor),
+                IsSaved = true,
+                CategoryIds = p.Categories.Select(c => c.ItemId).ToList()
+            };
+        });
+
+        return Ok(result);
     }
 
     // GET /api/vendors/me/collections
@@ -573,6 +662,7 @@ public class VendorsController : ControllerBase
             AverageRating = v.Reviews.Count > 0 ? Math.Round(v.Reviews.Average(r => (double)r.Rating), 1) : 0,
             ReviewCount = v.Reviews.Count,
             FollowerCount = v.Followers.Count + v.VendorFollowers.Count,
+            FollowingCount = v.VendorFollowing.Count,
             PostCount = v.Posts.Count,
             IsFollowed = isFollowed,
             CategoryIds = v.SelectedCategories.Select(sc => sc.ItemId).ToList()

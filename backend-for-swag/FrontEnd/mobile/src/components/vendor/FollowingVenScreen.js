@@ -11,7 +11,7 @@ import VendorPosts from '../commonV/VendorPosts';
 import BottomTabsVen from '../commonV/BottomTabsVen';
 import SideMenuV from '../commonV/SideMenuV';
 
-import { fetchFollowing, unfollowVendor } from '../../store/slices/customerSlice';
+import { fetchMyFollowing, unfollowVendor } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 
 // Enable smooth Layout Animations for Android when cards disappear
@@ -27,18 +27,17 @@ const FollowingVenScreen = () => {
   const dispatch = useDispatch();
   const [isMenuVisible, setMenuVisible] = useState(false);
 
-  const { following } = useSelector((state) => state.customer);
+  const { myFollowing: following, myProfile } = useSelector((state) => state.vendor);
   const { posts } = useSelector((state) => state.posts);
-  const { myProfile } = useSelector((state) => state.vendor);
 
   useEffect(() => {
-    dispatch(fetchFollowing());
+    dispatch(fetchMyFollowing());
     dispatch(fetchPosts());
   }, [dispatch]);
 
-  const handleUnfollow = (vendorId) => {
+  const handleUnfollow = (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    dispatch(unfollowVendor(vendorId));
+    dispatch(unfollowVendor(id));
   };
 
   const followedIds = following.map((v) => String(v.id));

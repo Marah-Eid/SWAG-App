@@ -6,6 +6,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useSelector } from 'react-redux';
 import searchAPI from '../../api/searchAPI';
 import VendorSearchBar from './VendorSearchBar';
 import SuggestedCarouselV from './SuggestedCarouselV';
@@ -18,6 +19,7 @@ const defaultBg = require('../../../assets/images/theshop-photo.png');
 const SearchResultsVScreen = () => {
   const { query } = useLocalSearchParams();
   const router = useRouter();
+  const myProfile = useSelector((state) => state.vendor.myProfile);
 
   const [results, setResults] = useState({ vendors: [], posts: [] });
   const [loading, setLoading] = useState(false);
@@ -48,7 +50,7 @@ const SearchResultsVScreen = () => {
     doSearch();
   }, [query]);
 
-  const vendorCards = (results.vendors || []).map((v) => ({
+  const vendorCards = (results.vendors || []).filter((v) => String(v.id) !== String(myProfile?.id)).map((v) => ({
     id: v.id,
     name: v.shopName || '',
     sub: [v.city, v.shopType].filter(Boolean).join(' · '),
@@ -58,7 +60,7 @@ const SearchResultsVScreen = () => {
     isFollowed: v.isFollowed || false,
   }));
 
-  const postCards = (results.posts || []).map((p) => ({
+  const postCards = (results.posts || []).filter((p) => String(p.vendorId) !== String(myProfile?.id)).map((p) => ({
     id: p.id,
     vendorId: p.vendorId,
     vendorName: p.vendorShopName || '',

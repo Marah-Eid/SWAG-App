@@ -12,7 +12,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import BottomTabsVen from '../commonV/BottomTabsVen';
 import VendorPosts from '../commonV/VendorPosts';
 import CreatePostEventModal from '../commonV/CreatePostEventModal';
-import { fetchMyVendorProfile, updateMyVendorProfile } from '../../store/slices/vendorSlice';
+import { fetchMyVendorProfile, updateMyVendorProfile, fetchMyFollowing } from '../../store/slices/vendorSlice';
+import vendorAPI from '../../api/vendorAPI';
 import { fetchPosts, deletePost } from '../../store/slices/postsSlice';
 import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 
@@ -28,7 +29,7 @@ const VendorProfileScreen = () => {
   const dispatch = useDispatch();
   const params = useLocalSearchParams();
 
-  const { myProfile } = useSelector((state) => state.vendor);
+  const { myProfile, myFollowing } = useSelector((state) => state.vendor);
   const { posts: reduxPosts } = useSelector((state) => state.posts);
   const { user } = useSelector((state) => state.auth);
 
@@ -76,6 +77,7 @@ const VendorProfileScreen = () => {
   // Fetch on mount
   useEffect(() => {
     dispatch(fetchMyVendorProfile());
+    dispatch(fetchMyFollowing());
     dispatch(fetchPosts());
   }, [dispatch]);
 
@@ -87,7 +89,7 @@ const VendorProfileScreen = () => {
         location: myProfile.city || '',
         rating: myProfile.averageRating || 0,
         followers: myProfile.followerCount || 0,
-        following: 0,
+        following: myProfile.followingCount || myFollowing.length || 0,
         bio: myProfile.bio || '',
         bgImage: myProfile.bannerImage ? { uri: myProfile.bannerImage } : defaultBg,
         profileImage: myProfile.profileImage ? { uri: myProfile.profileImage } : defaultLogo,
@@ -100,6 +102,16 @@ const VendorProfileScreen = () => {
         5: myProfile.instagramUrl || '',
         7: `${(myProfile.averageRating || 0).toFixed(1)} rated ( ${myProfile.reviewCount || 0} Reviews )`,
       });
+      if (myProfile.openTime) {
+        const [oh, om] = myProfile.openTime.split(':').map(Number);
+        const d = new Date(); d.setHours(oh, om, 0, 0);
+        setOpenTime(d);
+      }
+      if (myProfile.closeTime) {
+        const [ch, cm] = myProfile.closeTime.split(':').map(Number);
+        const d = new Date(); d.setHours(ch, cm, 0, 0);
+        setCloseTime(d);
+      }
     }
   }, [myProfile]);
 
@@ -151,6 +163,27 @@ const VendorProfileScreen = () => {
     hours = hours ? hours : 12;
     minutes = minutes < 10 ? '0' + minutes : minutes;
     return `${hours}${minutes === '00' ? '' : ':' + minutes} ${ampm}`;
+  };
+
+  const formatTimeForAPI = (date) => {
+    const h = String(date.getHours()).padStart(2, '0');
+    const m = String(date.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
+  };
+
+  const handleSaveDetails = async () => {
+    await Promise.all([
+      dispatch(updateMyVendorProfile({ phone: shopDetailsText[2] })),
+      vendorAPI.updateProfileDetails({
+        address: shopDetailsText[1],
+        whatsapp: shopDetailsText[4],
+        instagramUrl: shopDetailsText[5],
+        openTime: formatTimeForAPI(openTime),
+        closeTime: formatTimeForAPI(closeTime),
+      }),
+    ]);
+    dispatch(fetchMyVendorProfile());
+    setIsEditingDetails(false);
   };
 
   const getWorkHoursStatus = () => {
@@ -251,15 +284,45 @@ const VendorProfileScreen = () => {
   };
 
   const openMap = (addressText) => {
-    const query = encodeURIComponent(addressText.replace(/\n/g, ' '));
-    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    Linking.openURL(url).catch(() => alert("Couldn't open Google Maps."));
+    const raw = addressText.trim();
+    if (!raw) return;
+    // If it's already a URL (e.g. pasted Google Maps link), open it directly
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      Linking.openURL(raw).catch(() => alert("Couldn't open Maps."));
+      return;
+    }
+    // Otherwise search by place name
+    const query = encodeURIComponent(raw.replace(/\n/g, ' '));
+    const nativeUrl = `geo:0,0?q=${query}`;
+    const webUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    Linking.canOpenURL(nativeUrl)
+      .then((supported) => Linking.openURL(supported ? nativeUrl : webUrl))
+      .catch(() => alert("Couldn't open Maps."));
   };
 
-  const openLink = (linkText) => {
-    let url = linkText.split(' ')[0];
-    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
-    Linking.openURL(url).catch(() => alert("Couldn't open link."));
+  const openInstagram = (value) => {
+    const raw = value.trim();
+    if (!raw) return;
+    // Already a full URL
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      Linking.openURL(raw).catch(() => alert("Couldn't open Instagram."));
+      return;
+    }
+    // Strip leading @ if present
+    const username = raw.startsWith('@') ? raw.slice(1) : raw;
+    Linking.openURL(`https://instagram.com/${username}`).catch(() => alert("Couldn't open Instagram."));
+  };
+
+  const openWhatsApp = (value) => {
+    const raw = value.trim();
+    if (!raw) return;
+    // Remove all non-digit characters except leading +
+    let digits = raw.replace(/[^\d+]/g, '');
+    // Strip leading +
+    if (digits.startsWith('+')) digits = digits.slice(1);
+    // Local number starting with 0: replace leading 0 with country code 962 (Jordan)
+    if (digits.startsWith('0')) digits = '962' + digits.slice(1);
+    Linking.openURL(`https://wa.me/${digits}`).catch(() => alert("Couldn't open WhatsApp."));
   };
 
   const workHoursStatus = getWorkHoursStatus();
@@ -268,8 +331,8 @@ const VendorProfileScreen = () => {
     { id: 1, label: 'Address', iconImage: require('../../../assets/images/locationVendor-icon.png'), action: () => openMap(shopDetailsText[1]) },
     { id: 2, label: 'Mobile', iconImage: require('../../../assets/images/phone-icon.png'), action: () => Linking.openURL(`tel:${shopDetailsText[2].replace(/\s/g, '')}`) },
     { id: 3, label: 'Email', iconName: 'mail', action: () => Linking.openURL(`mailto:${shopDetailsText[3]}`) },
-    { id: 4, label: 'WhatsApp', iconImage: require('../../../assets/images/whatsapp-icon.png'), action: () => Linking.openURL(`https://wa.me/${shopDetailsText[4].replace(/[\s+]/g, '')}`) },
-    { id: 5, label: 'Confirmed link', iconImage: require('../../../assets/images/insta-icon.png'), action: () => openLink(shopDetailsText[5]) },
+    { id: 4, label: 'WhatsApp', iconImage: require('../../../assets/images/whatsapp-icon.png'), action: () => openWhatsApp(shopDetailsText[4]) },
+    { id: 5, label: 'Confirmed link', iconImage: require('../../../assets/images/insta-icon.png'), action: () => openInstagram(shopDetailsText[5]) },
     { id: 6, label: 'Work hours', textColor: workHoursStatus.color, text: workHoursStatus.text, iconName: 'time' },
     { id: 7, label: 'Rate', textColor: '#D32F2F', iconImage: require('../../../assets/images/rate-icon.png'), action: () => router.push('/vendor/Rating&RevVen') },
     { id: 8, label: 'My Categories', iconName: 'grid-outline', action: () => router.push('/vendor/ManageCategoriesVen') },
@@ -377,7 +440,7 @@ const VendorProfileScreen = () => {
             <Text style={styles.sectionTitle}>Shop Details</Text>
             <TouchableOpacity
               style={styles.editDetailsBtn}
-              onPress={() => setIsEditingDetails(!isEditingDetails)}
+              onPress={() => isEditingDetails ? handleSaveDetails() : setIsEditingDetails(true)}
               activeOpacity={0.7}
             >
               <Text style={styles.editDetailsBtnText}>{isEditingDetails ? "Save Details" : "Edit Details"}</Text>

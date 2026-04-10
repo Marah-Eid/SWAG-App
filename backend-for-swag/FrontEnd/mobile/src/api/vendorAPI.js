@@ -100,9 +100,27 @@ const vendorAPI = {
     }
   },
 
+  getSavedPosts: async () => {
+    try {
+      const response = await apiClient.get('/vendors/me/saved-posts');
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to load saved posts' };
+    }
+  },
+
   getMyFollowing: async () => {
     try {
       const response = await apiClient.get('/vendors/me/following');
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to load following' };
+    }
+  },
+
+  getVendorFollowingById: async (id) => {
+    try {
+      const response = await apiClient.get(`/vendors/${id}/following`);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.message || 'Failed to load following' };

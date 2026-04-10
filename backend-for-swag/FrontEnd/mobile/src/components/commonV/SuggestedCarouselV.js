@@ -9,7 +9,7 @@ const CARD_MARGIN = 15;
 
 const defaultBanner = require('../../../assets/images/theshop-photo.png');
 
-const ShopCard = ({ shop, onFollow }) => {
+const ShopCard = ({ shop, onFollow, myId }) => {
   const router = useRouter();
   const [isAdded, setIsAdded] = useState(shop.isFollowed || false);
   const [bgSrc, setBgSrc] = useState(shop.bgImage || defaultBanner);
@@ -61,17 +61,19 @@ const ShopCard = ({ shop, onFollow }) => {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => { const next = !isAdded; setIsAdded(next); if (onFollow) onFollow(shop.id, next); }}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name={isAdded ? "checkmark" : "add"}
-                size={22}
-                color="#2D3E5E"
-              />
-            </TouchableOpacity>
+            {String(shop.id) !== String(myId) && (
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => { const next = !isAdded; setIsAdded(next); if (onFollow) onFollow(shop.id, next); }}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={isAdded ? "checkmark" : "add"}
+                  size={22}
+                  color="#2D3E5E"
+                />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Footer Bio */}
@@ -84,7 +86,7 @@ const ShopCard = ({ shop, onFollow }) => {
 };
 
 // Main Carousel Component
-const SuggestedCarouselV = ({ data, onFollow }) => {
+const SuggestedCarouselV = ({ data, onFollow, myId }) => {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -96,7 +98,7 @@ const SuggestedCarouselV = ({ data, onFollow }) => {
         snapToAlignment="center"
       >
         {data.map((shopData) => (
-          <ShopCard key={shopData.id} shop={shopData} onFollow={onFollow} />
+          <ShopCard key={shopData.id} shop={shopData} onFollow={onFollow} myId={myId} />
         ))}
       </ScrollView>
     </View>

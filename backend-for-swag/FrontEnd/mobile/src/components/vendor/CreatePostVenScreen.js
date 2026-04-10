@@ -7,7 +7,7 @@ import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Video, ResizeMode } from 'expo-av';
 import { useRouter } from 'expo-router';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { createPost } from '../../store/slices/postsSlice';
 import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 import categoriesAPI from '../../api/categoriesAPI';
@@ -16,9 +16,12 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+const defaultLogo = require('../../../assets/images/carag-icon.png');
+
 const CreatePostVenScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const myProfile = useSelector((state) => state.vendor.myProfile);
   const [publishing, setPublishing] = useState(false);
   // selectedItems: array of { id: number, name: string } — real DB items
   const [selectedItems, setSelectedItems] = useState([]);
@@ -137,13 +140,16 @@ const CreatePostVenScreen = () => {
         <View style={styles.postCard}>
           <View style={styles.postHeader}>
             <View style={styles.avatarWrapper}>
-              <Image source={require('../../../assets/images/carag-icon.png')} style={styles.vendorAvatar} />
+              <Image
+                source={myProfile?.profileImage ? { uri: myProfile.profileImage } : defaultLogo}
+                style={styles.vendorAvatar}
+              />
             </View>
             <View>
-              <Text style={styles.vendorName}>Automotive</Text>
+              <Text style={styles.vendorName}>{myProfile?.shopName || myProfile?.fullName || ''}</Text>
               <View style={styles.locationRow}>
                 <Ionicons name="location" size={12} color="#8391A1" />
-                <Text style={styles.vendorLocation}>Amman, Jordan</Text>
+                <Text style={styles.vendorLocation}>{myProfile?.city || ''}</Text>
               </View>
             </View>
           </View>

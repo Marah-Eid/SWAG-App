@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { formatChatTime } from '../../utils/timeUtils';
 import {
     View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
     Image, KeyboardAvoidingView, Platform, Dimensions, Alert, StatusBar, ActivityIndicator, Modal
@@ -169,10 +170,7 @@ const ChattingScreenContent = ({ userName }) => {
         const msgText = item.messageText || '';
         const msgType = item.messageType || 'text';
         const mediaUri = item.mediaUrl || null;
-        const timeStr = item.sentAt
-            ? new Date(item.sentAt.endsWith('Z') ? item.sentAt : item.sentAt + 'Z')
-                .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            : '';
+        const timeStr = formatChatTime(item.sentAt);
 
         return (
             <View style={[styles.msgWrapper, isMe ? styles.myMsgWrapper : styles.otherMsgWrapper]}>

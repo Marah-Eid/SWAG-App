@@ -4,6 +4,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSelector } from 'react-redux';
 
 import VendorSearchBar from '../commonV/VendorSearchBar';
 import TopCategoryBarV from '../commonV/TopCategoryBarV';
@@ -22,6 +23,7 @@ const norm = (s) => s.toLowerCase().replace(/[^a-z]/g, '');
 
 const CategoryFeedScreenV = ({ category }) => {
   const router = useRouter();
+  const myProfile = useSelector((state) => state.vendor.myProfile);
 
   const [sectionItems, setSectionItems] = useState([]);
   const [selectedItemId, setSelectedItemId] = useState(null);
@@ -78,7 +80,7 @@ const CategoryFeedScreenV = ({ category }) => {
     if (selectedItemId != null) fetchFeed(selectedItemId);
   }, [selectedItemId, fetchFeed]);
 
-  const suggestions = vendors.map((v) => ({
+  const suggestions = vendors.filter((v) => String(v.id) !== String(myProfile?.id)).map((v) => ({
     id: v.id,
     name: v.shopName || '',
     sub: v.city || '',
@@ -128,7 +130,7 @@ const CategoryFeedScreenV = ({ category }) => {
 
               {/* Posts */}
               <View style={styles.feedContainer}>
-                {posts.map((p) => (
+                {posts.filter((p) => String(p.vendorId) !== String(myProfile?.id)).map((p) => (
                   <VendorPosts
                     key={p.id}
                     vendorName={p.vendorShopName || ''}

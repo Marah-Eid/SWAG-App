@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { formatChatTime } from '../../utils/timeUtils';
 import {
   View, Text, StyleSheet, TextInput, FlatList, SafeAreaView,
   TouchableOpacity, ActivityIndicator, Dimensions, StatusBar, Alert
@@ -229,7 +230,7 @@ export default function ChatsScreen() {
                 userName={item.otherParticipantName || 'Unknown'}
                 avatar={item.otherParticipantImage}
                 lastMessage={item.lastMessage || 'No messages yet'}
-                time={item.lastMessageTime ? new Date(item.lastMessageTime.endsWith('Z') ? item.lastMessageTime : item.lastMessageTime + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                time={formatChatTime(item.lastMessageTime)}
                 hasUnread={(item.unreadCount || 0) > 0}
                 onPress={() => openChat(item)}
                 onLongPress={() => handleDeleteChat(item)}

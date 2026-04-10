@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 
 import VendorPosts from '../commonV/VendorPosts';
-import { fetchSavedPosts } from '../../store/slices/customerSlice';
+import { fetchSavedPosts } from '../../store/slices/vendorSlice';
 
 const defaultLogo = require('../../../assets/images/user-icon.png');
 const defaultBg = require('../../../assets/images/nmk-pic.png');
@@ -15,7 +15,7 @@ const SavedPostsScreenV = () => {
     const router = useRouter();
     const dispatch = useDispatch();
 
-    const rawSaved = useSelector((state) => state.customer.savedPosts) || [];
+    const rawSaved = useSelector((state) => state.vendor.savedPosts) || [];
 
     useEffect(() => {
         dispatch(fetchSavedPosts());
@@ -79,7 +79,7 @@ const SavedPostsScreenV = () => {
                                 likeCount={item.likeCount}
                                 commentCount={item.commentCount}
                                 onVendorPress={() => router.push({
-                                    pathname: '/commonScreensV/otherVendorProfile',
+                                    pathname: '/vendor/otherVendorProfile',
                                     params: { vendorId: item.vendorId }
                                 })}
                             />

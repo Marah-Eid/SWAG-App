@@ -31,7 +31,7 @@ const NearByScreenV = () => {
     dispatch(fetchMyVendorProfile());
   }, [dispatch]);
 
-  const nearbyShops = vendors.map((v) => ({
+  const nearbyShops = vendors.filter((v) => String(v.id) !== String(myProfile?.id)).map((v) => ({
     id: v.id,
     name: v.shopName || '',
     sub: v.city || '',
@@ -64,6 +64,7 @@ const NearByScreenV = () => {
           {(() => {
             const nearbyVendorIds = new Set(
               vendors
+                .filter((v) => String(v.id) !== String(myProfile?.id))
                 .filter((v) => !userCity || (v.city || '').toLowerCase() === userCity.toLowerCase())
                 .map((v) => v.id)
             );

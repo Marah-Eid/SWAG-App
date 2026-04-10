@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, StatusBar } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -14,6 +14,7 @@ const defaultLogo = require('../../../assets/images/nmk-icon.png');
 const FollowersListScreenV = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { vendorId: paramVendorId } = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isPopupVisible, setPopupVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -21,9 +22,13 @@ const FollowersListScreenV = () => {
   const myProfile = useSelector((state) => state.vendor.myProfile);
   const vendorFollowers = useSelector((state) => state.vendor.vendorFollowers) || [];
 
+  // Use vendorId from navigation params when viewing another vendor's profile,
+  // otherwise fall back to the logged-in vendor's own profile id.
+  const targetId = paramVendorId || myProfile?.id;
+
   useEffect(() => {
-    if (myProfile?.id) dispatch(fetchVendorFollowers(myProfile.id));
-  }, [myProfile?.id, dispatch]);
+    if (targetId) dispatch(fetchVendorFollowers(targetId));
+  }, [targetId, dispatch]);
 
   const followersData = vendorFollowers.map((f) => ({
     id: f.id,
@@ -77,7 +82,8 @@ const FollowersListScreenV = () => {
               style={styles.userCard}
               onPress={() => {
                 if (follower.type === 'vendor') {
-                  router.push('/vendor/otherVendorProfile');
+                  if (String(follower.id) === String(myProfile?.id)) return;
+                  router.push({ pathname: '/vendor/otherVendorProfile', params: { vendorId: follower.id } });
                 } else {
                   handleCustomerPress(follower);
                 }

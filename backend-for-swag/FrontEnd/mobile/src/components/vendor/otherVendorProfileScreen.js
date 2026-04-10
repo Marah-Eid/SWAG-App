@@ -20,7 +20,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import BottomTabsVen from '../commonV/BottomTabsVen';
 import VendorPosts from '../commonV/VendorPosts';
-import { fetchVendorById } from '../../store/slices/vendorSlice';
+import { fetchVendorById, followVendor, unfollowVendor } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 
 const { width, height } = Dimensions.get('window');
@@ -36,8 +36,9 @@ const OtherVendorProfileScreen = () => {
   const [activeTab, setActiveTab] = useState('Part Posts');
   const [previewImage, setPreviewImage] = useState(null);
 
-  const { selectedVendor, loading } = useSelector((state) => state.vendor);
+  const { selectedVendor, loading, myProfile } = useSelector((state) => state.vendor);
   const { posts } = useSelector((state) => state.posts);
+  const isOwnProfile = myProfile && String(vendorId) === String(myProfile.id);
 
   useEffect(() => {
     if (vendorId) {
@@ -61,9 +62,11 @@ const OtherVendorProfileScreen = () => {
     if (isFollowing) {
       setIsFollowing(false);
       setFollowersCount((prev) => prev - 1);
+      dispatch(unfollowVendor(vendorId));
     } else {
       setIsFollowing(true);
       setFollowersCount((prev) => prev + 1);
+      dispatch(followVendor(vendorId));
     }
   };
 
@@ -181,15 +184,17 @@ const OtherVendorProfileScreen = () => {
             </View>
 
             <View style={styles.actionButtonsRow}>
-              <TouchableOpacity
-                style={[styles.actionBtn, isFollowing ? styles.followingBtn : styles.followBtn]}
-                onPress={handleFollowToggle}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.actionBtnText, isFollowing && styles.followingBtnText]}>
-                  {isFollowing ? 'Following' : 'Follow'}
-                </Text>
-              </TouchableOpacity>
+              {!isOwnProfile && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, isFollowing ? styles.followingBtn : styles.followBtn]}
+                  onPress={handleFollowToggle}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.actionBtnText, isFollowing && styles.followingBtnText]}>
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity style={[styles.actionBtn, styles.messageBtn]} onPress={handleMessagePress} activeOpacity={0.8}>
                 <Text style={styles.actionBtnText}>Message</Text>
@@ -220,7 +225,7 @@ const OtherVendorProfileScreen = () => {
           </View>
 
           <View style={styles.statsBar}>
-            <TouchableOpacity onPress={() => router.push('/commonScreensV/FollowersListV')} style={styles.statItem}>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/commonScreensV/FollowersListV', params: { vendorId } })} style={styles.statItem}>
               <Text style={styles.statNumber}>{followersCount}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </TouchableOpacity>
@@ -230,7 +235,7 @@ const OtherVendorProfileScreen = () => {
               <Text style={styles.statLabel}>Posts</Text>
             </View>
             <View style={styles.statDivider} />
-            <TouchableOpacity onPress={() => router.push('/commonScreensV/FollowingListV')} style={styles.statItem}>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/commonScreensV/FollowingListV', params: { vendorId } })} style={styles.statItem}>
               <Text style={styles.statNumber}>{vendor.followingCount || 0}</Text>
               <Text style={styles.statLabel}>Following</Text>
             </TouchableOpacity>

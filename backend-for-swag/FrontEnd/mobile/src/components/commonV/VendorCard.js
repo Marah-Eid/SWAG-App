@@ -2,9 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient'; // Added LinearGradient
+import { Entypo } from '@expo/vector-icons';
 
 const VendorCard = ({ shopName = "Automotive", rating = "4.0", logo }) => {
   const router = useRouter();
+  const ratingNum = parseFloat(rating) || 0;
 
   const handleNavigate = () => {
     router.push('/vendor/ProfileVen');
@@ -23,10 +25,16 @@ const VendorCard = ({ shopName = "Automotive", rating = "4.0", logo }) => {
         <View style={styles.textContainer}>
           <Text style={styles.name} numberOfLines={1}>{shopName}</Text>
           <Text style={styles.subText} numberOfLines={1}>Avg Rating {rating}</Text>
-          <Image
-            source={require('../../../assets/images/Stars-icon.png')}
-            style={styles.starsImage}
-          />
+          <View style={styles.starsRow}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Entypo
+                key={i}
+                name={ratingNum >= i ? 'star' : 'star-outlined'}
+                size={12}
+                color={ratingNum >= i ? '#8A1C27' : '#CBD5E1'}
+              />
+            ))}
+          </View>
         </View>
 
         <TouchableOpacity style={styles.shopAction} onPress={handleNavigate} activeOpacity={0.7}>
@@ -122,11 +130,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontWeight: '600',
   },
-  starsImage: {
-    width: 65,
-    height: 12,
+  starsRow: {
+    flexDirection: 'row',
     marginTop: 6,
-    resizeMode: 'contain',
   },
   shopAction: {
     alignItems: 'center',

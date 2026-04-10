@@ -19,7 +19,7 @@ const ExploreVenScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const { vendors } = useSelector((state) => state.vendor);
+  const { vendors, myProfile } = useSelector((state) => state.vendor);
   const { posts } = useSelector((state) => state.posts);
 
   useEffect(() => {
@@ -27,7 +27,10 @@ const ExploreVenScreen = () => {
     dispatch(fetchPosts());
   }, [dispatch]);
 
-  const trendingShops = vendors.slice(0, 6).map((v) => ({
+  const trendingShops = vendors
+    .filter((v) => String(v.id) !== String(myProfile?.id))
+    .slice(0, 6)
+    .map((v) => ({
     id: v.id,
     name: v.shopName || '',
     sub: v.city || '',
@@ -45,7 +48,10 @@ const ExploreVenScreen = () => {
     }
   };
 
-  const explorePosts = posts.slice(0, 10).map((p) => ({
+  const explorePosts = posts
+    .filter((p) => String(p.vendorId) !== String(myProfile?.id))
+    .slice(0, 10)
+    .map((p) => ({
     id: p.id,
     vendorId: p.vendorId,
     vendorName: p.vendorShopName || '',
@@ -79,7 +85,7 @@ const ExploreVenScreen = () => {
 
         {/* SECTION 2: Trending Carousel */}
         <View style={styles.section}>
-          <SuggestedCarouselV data={trendingShops} onFollow={handleFollow} />
+          <SuggestedCarouselV data={trendingShops} onFollow={handleFollow} myId={myProfile?.id} />
         </View>
 
         {/* SECTION 3: Explore Feed */}

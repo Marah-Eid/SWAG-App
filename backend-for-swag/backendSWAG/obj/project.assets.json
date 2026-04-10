@@ -3148,26 +3148,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\user\\.nuget\\packages\\": {}
+    "C:\\Users\\4T4\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
+      "projectUniqueName": "C:\\notswag\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
       "projectName": "SWAG-Backend",
-      "projectPath": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
-      "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\obj\\",
+      "projectPath": "C:\\notswag\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
+      "packagesPath": "C:\\Users\\4T4\\.nuget\\packages\\",
+      "outputPath": "C:\\notswag\\Otp\\backend-for-swag\\backendSWAG\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\4T4\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -3186,7 +3184,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net8.0": {
@@ -3242,7 +3240,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
