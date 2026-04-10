@@ -28,14 +28,17 @@ const FollowerListScreen = () => {
     if (vendorId) dispatch(fetchVendorFollowers(vendorId));
   }, [vendorId, dispatch]);
 
-  const followersData = vendorFollowers.map((f) => ({
+  const followersData = vendorFollowers.map((f) => {
+    const type = f.userType || f.type || 'customer';
+    return {
     id: f.id,
-    name: f.fullName || f.shopName || 'User',
-    type: f.userType || f.type || 'customer',
+    name: type === 'vendor' ? (f.shopName || f.fullName || 'User') : (f.fullName || f.shopName || 'User'),
+    type,
     pfp: f.profileImage ? { uri: f.profileImage } : defaultPfp,
     logo: f.profileImage ? { uri: f.profileImage } : defaultLogo,
     banner: f.bannerImage ? { uri: f.bannerImage } : null,
-  }));
+  };
+  });
 
   const filteredFollowers = followersData.filter(follower =>
     follower.name.toLowerCase().includes(searchQuery.toLowerCase())
