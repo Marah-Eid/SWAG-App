@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient'; // Added LinearGradient
 
-const defaultIcon = require('../../../assets/images/carshop-icon.png');
+const defaultIcon = require('../../../assets/images/default-user-pfp.png');
 
 const VendorPin = ({ icon, onPress }) => {
   const [imgError, setImgError] = useState(false);

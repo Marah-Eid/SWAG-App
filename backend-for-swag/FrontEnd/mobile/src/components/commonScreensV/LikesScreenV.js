@@ -13,7 +13,7 @@ const commentIcon = require('../../../assets/images/coment-icon.png');
 const shareIcon = require('../../../assets/images/share-icon.png');
 const saveIcon = require('../../../assets/images/saved-icon.png');
 const savedIcon = require('../../../assets/images/save-icon.png');
-const defaultLogo = require('../../../assets/images/user-icon.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const LikedPostItem = ({ item }) => {
     const dispatch = useDispatch();
@@ -28,7 +28,7 @@ const LikedPostItem = ({ item }) => {
                 <View style={cardStyles.vendorInfo}>
                     <Image source={vendorLogo} style={cardStyles.logo} />
                     <View>
-                        <Text style={cardStyles.vendorName}>{item.vendorShopName || ''}</Text>
+                        <Text style={cardStyles.vendorName}>{item.vendorShopName || 'User Name'}</Text>
                         {item.location ? <Text style={cardStyles.location}>{'Location: ' + item.location}</Text> : null}
                     </View>
                 </View>

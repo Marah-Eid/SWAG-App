@@ -6,7 +6,7 @@ import customerAPI from '../../api/customerAPI';
 
 const { width, height } = Dimensions.get('window');
 
-const defaultBanner = require('../../../assets/images/nmk-pic.png');
+const defaultBanner = require('../../../assets/images/default-banner.png');
 
 const ProfilePopup = ({ visible, onClose, userName, carName, profileImage, bannerImage, customerId }) => {
     const router = useRouter();

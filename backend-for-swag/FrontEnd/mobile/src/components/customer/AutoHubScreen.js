@@ -10,7 +10,7 @@ import CustomerCard from '../common/CustomerCard';
 import BottomTabs from '../common/BottomTabs';
 import SideMenu from '../common/SideMenu';
 
-const defaultPic = require('../../../assets/images/gorg-icon.png');
+const defaultPic = require('../../../assets/images/default-user-pfp.png');
 
 const AutoHub = () => {
     const router = useRouter();

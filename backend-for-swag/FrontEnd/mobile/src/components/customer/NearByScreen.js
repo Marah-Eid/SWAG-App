@@ -12,8 +12,8 @@ import SideMenu from '../common/SideMenu';
 import { fetchVendors } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
-const defaultBg = require('../../../assets/images/theshop-photo.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const NearByScreen = () => {
   const router = useRouter();
@@ -33,7 +33,7 @@ const NearByScreen = () => {
 
   const nearbyShops = vendors.map((v) => ({
     id: v.id,
-    name: v.shopName || '',
+    name: v.shopName || 'User Name',
     sub: v.city || '',
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
@@ -51,11 +51,11 @@ const NearByScreen = () => {
     .map((p) => ({
       id: p.id,
       vendorId: p.vendorId,
-      vendorName: p.vendorShopName || '',
+      vendorName: p.vendorShopName || 'User Name',
       location: p.location || '',
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-      postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      postImage: p.postImage ? { uri: p.postImage } : null,
       isLiked: p.isLiked,
       isSaved: p.isSaved,
       likeCount: p.likeCount,
@@ -79,7 +79,7 @@ const NearByScreen = () => {
             name={profile?.fullName || 'User'}
             phone={profile?.phone || profile?.email || ''}
             location={profile?.city || ''}
-            profileImage={profile?.profileImage ? { uri: profile.profileImage } : require('../../../assets/images/gorg-icon.png')}
+            profileImage={profile?.profileImage ? { uri: profile.profileImage } : require('../../../assets/images/default-user-pfp.png')}
             onProfilePress={() => router.push('/customer/ProfileCust')}
             onCarPress={() => router.push('/customer/ProfileCust')}
           />

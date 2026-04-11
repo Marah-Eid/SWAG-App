@@ -16,7 +16,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const defaultLogo = require('../../../assets/images/carag-icon.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const CreatePostVenScreen = () => {
   const router = useRouter();
@@ -146,7 +146,7 @@ const CreatePostVenScreen = () => {
               />
             </View>
             <View>
-              <Text style={styles.vendorName}>{myProfile?.shopName || myProfile?.fullName || ''}</Text>
+              <Text style={styles.vendorName}>{myProfile?.shopName || myProfile?.fullName || 'User Name'}</Text>
               <View style={styles.locationRow}>
                 <Ionicons name="location" size={12} color="#8391A1" />
                 <Text style={styles.vendorLocation}>{myProfile?.city || ''}</Text>

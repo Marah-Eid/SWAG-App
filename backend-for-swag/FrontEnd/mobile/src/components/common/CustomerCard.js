@@ -38,7 +38,7 @@ const CustomerCard = ({ name, phone, city, location, profileImage }) => {
       {/* Profile Picture: Always navigates to ProfileCust */}
       <TouchableOpacity style={styles.pfpContainer} onPress={handleNavigate} activeOpacity={0.8}>
         <Image
-          source={profileImage || require('../../../assets/images/gorg-icon.png')}
+          source={profileImage || require('../../../assets/images/default-user-pfp.png')}
           style={styles.profilePic}
         />
       </TouchableOpacity>

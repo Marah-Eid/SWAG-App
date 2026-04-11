@@ -19,8 +19,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
-const defaultBg = require('../../../assets/images/nmk-pic.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const FollowingVenScreen = () => {
   const router = useRouter();
@@ -46,7 +46,7 @@ const FollowingVenScreen = () => {
 
   const visibleShops = following.map((v) => ({
     id: v.id,
-    name: v.shopName || v.fullName || '',
+    name: v.shopName || v.fullName || 'User Name',
     sub: v.phone ? `${v.phone} / ${v.city || ''}` : (v.city || ''),
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
@@ -58,11 +58,11 @@ const FollowingVenScreen = () => {
     .map((p) => ({
       id: p.id,
       vendorId: p.vendorId,
-      vendorName: p.vendorShopName || '',
+      vendorName: p.vendorShopName || 'User Name',
       location: p.location || '',
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-      postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      postImage: p.postImage ? { uri: p.postImage } : null,
       isLiked: p.isLiked,
       isSaved: p.isSaved,
       likeCount: p.likeCount,
@@ -83,7 +83,7 @@ const FollowingVenScreen = () => {
         {/* VENDOR IDENTITY CARD */}
         <View style={styles.cardWrapper}>
           <VendorCard
-            shopName={myProfile?.shopName || ''}
+            shopName={myProfile?.shopName || 'User Name'}
             rating={myProfile?.averageRating?.toFixed(1) || '0.0'}
             logo={myProfile?.profileImage ? { uri: myProfile.profileImage } : defaultLogo}
           />

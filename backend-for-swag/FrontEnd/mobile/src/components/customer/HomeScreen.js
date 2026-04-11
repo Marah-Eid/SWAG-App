@@ -17,8 +17,8 @@ import { fetchFollowing, fetchCustomerProfile } from '../../store/slices/custome
 import { fetchNotifications } from '../../store/slices/notificationsSlice';
 import { fetchConversations } from '../../store/slices/chatsSlice';
 
-const defaultLogo = require('../../../assets/images/carshop-icon.png');
-const defaultBg = require('../../../assets/images/theshop-photo.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const HomeScreen = () => {
   const router = useRouter();
@@ -58,12 +58,12 @@ const HomeScreen = () => {
     .map((p) => ({
       id: p.id,
       vendorId: p.vendorId,
-      title: p.eventTitle || p.vendorShopName || '',
+      title: p.eventTitle || p.vendorShopName || 'User Name',
       location: p.location || '',
       date: p.eventDate || '',
       description: p.description || '',
       logo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-      bgImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      bgImage: p.postImage ? { uri: p.postImage } : null,
     }));
 
   return (
@@ -80,7 +80,7 @@ const HomeScreen = () => {
         {/* UI Polish: Added a wrapper to create a clean gap below the card */}
         <View style={styles.cardWrapper}>
           <CustomerCard
-            name={profile?.fullName || user?.firstName || ''}
+            name={profile?.fullName || user?.firstName || 'User Name'}
             phone={profile?.phone || profile?.email || user?.email || ''}
             city={profile?.city || user?.city || ''}
             profileImage={profile?.profileImage ? { uri: profile.profileImage } : undefined}

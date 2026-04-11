@@ -9,7 +9,7 @@ import BottomTabs from '../common/BottomTabs';
 import { fetchVendorReviews } from '../../store/slices/vendorSlice';
 import { fetchVendorById } from '../../store/slices/vendorSlice';
 
-const defaultPic = require('../../../assets/images/gorg-icon.png');
+const defaultPic = require('../../../assets/images/default-user-pfp.png');
 
 const RatingRevScreen = () => {
   const router = useRouter();
@@ -41,8 +41,8 @@ const RatingRevScreen = () => {
 
   const reviewsList = reviews.map((r) => ({
     id: r.id,
-    firstName: (r.customerName || r.userName || r.fullName || 'User').split(' ')[0],
-    lastName: (r.customerName || r.userName || r.fullName || '').split(' ').slice(1).join(' '),
+    firstName: (r.customerName || r.userName || r.fullName || 'User Name').split(' ')[0],
+    lastName: (r.customerName || r.userName || r.fullName || 'User Name').split(' ').slice(1).join(' '),
     profilePic: (r.customerImage || r.profileImage) ? { uri: r.customerImage || r.profileImage } : defaultPic,
     rating: r.rating,
     feedback: r.feedback || r.content || '',

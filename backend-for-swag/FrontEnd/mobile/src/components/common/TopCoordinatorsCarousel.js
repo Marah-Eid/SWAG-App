@@ -10,8 +10,8 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.75;
 const CARD_MARGIN = 15;
 
-const defaultBanner = require('../../../assets/images/theshop-photo.png');
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
+const defaultBanner = require('../../../assets/images/default-banner.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const CoordinatorCard = ({ shop, onVendorPress, onFollow }) => {
   const [isAdded, setIsAdded] = useState(shop.isFollowed || false);

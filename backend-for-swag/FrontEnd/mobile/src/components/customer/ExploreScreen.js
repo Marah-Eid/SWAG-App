@@ -12,8 +12,8 @@ import { fetchVendors } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 import { followVendor, unfollowVendor } from '../../store/slices/customerSlice';
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
-const defaultBg = require('../../../assets/images/theshop-photo.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const ExploreScreen = () => {
   const router = useRouter();
@@ -48,11 +48,11 @@ const ExploreScreen = () => {
   const explorePosts = posts.map((p) => ({
     id: p.id,
     vendorId: p.vendorId,
-    vendorName: p.vendorShopName || '',
+    vendorName: p.vendorShopName || 'User Name',
     location: p.location || '',
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-    postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    postImage: p.postImage ? { uri: p.postImage } : null,
     isLiked: p.isLiked,
     isSaved: p.isSaved,
     likeCount: p.likeCount,

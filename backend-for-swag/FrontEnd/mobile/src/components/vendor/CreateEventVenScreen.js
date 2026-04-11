@@ -18,7 +18,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const defaultAvatar = require('../../../assets/images/carag-icon.png');
+const defaultAvatar = require('../../../assets/images/default-user-pfp.png');
 
 const CreateEventScreen = () => {
   const router = useRouter();
@@ -169,7 +169,7 @@ const CreateEventScreen = () => {
     return new Date();
   };
 
-  const vendorName = myProfile?.shopName || '';
+  const vendorName = myProfile?.shopName || 'User Name';
   const vendorCity = myProfile?.city || '';
   const vendorAvatar = myProfile?.profileImage ? { uri: myProfile.profileImage } : defaultAvatar;
 

@@ -54,7 +54,7 @@ const VendorCard = ({ shopName = '', rating = '0', logo }) => {
             <View style={[styles.profilePic, { backgroundColor: '#F1F4F9' }]} />
           ) : (
             <Image
-              source={logo || require('../../../assets/images/nmk-icon.png')}
+              source={logo || require('../../../assets/images/default-user-pfp.png')}
               style={styles.profilePic}
             />
           )}

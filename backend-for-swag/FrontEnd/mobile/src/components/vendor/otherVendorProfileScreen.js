@@ -26,8 +26,8 @@ import vendorAPI from '../../api/vendorAPI';
 
 const { width, height } = Dimensions.get('window');
 
-const defaultBg = require('../../../assets/images/nmk-pic.png');
-const defaultLogo = require('../../../assets/images/carag-icon.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const OtherVendorProfileScreen = () => {
   const router = useRouter();
@@ -82,7 +82,7 @@ const OtherVendorProfileScreen = () => {
     router.push({
       pathname: '/commonScreensV/ChattingV',
       params: {
-        userName: vendor.shopName || '',
+        userName: vendor.shopName || 'User Name',
         userType: 'vendor',
         otherUserId: vendorId,
         userImage: vendor.profileImage || '',
@@ -148,11 +148,11 @@ const OtherVendorProfileScreen = () => {
       : true)
     .map((p) => ({
       id: p.id,
-      vendorName: p.vendorShopName || vendor.shopName || '',
+      vendorName: p.vendorShopName || vendor.shopName || 'User Name',
       location: p.location || '',
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-      postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      postImage: p.postImage ? { uri: p.postImage } : null,
       isLiked: p.isLiked,
       isSaved: p.isSaved,
       likeCount: p.likeCount,
@@ -216,7 +216,7 @@ const OtherVendorProfileScreen = () => {
         <View style={styles.identityCard}>
           <View style={styles.identityHeader}>
             <View>
-              <Text style={styles.vendorTitle}>{vendor.shopName || ''}</Text>
+              <Text style={styles.vendorTitle}>{vendor.shopName || 'User Name'}</Text>
               <View style={styles.locationTag}>
                 <Ionicons name="location" size={14} color="#8391A1" />
                 <Text style={styles.locationText}>{vendor.city || vendor.address || ''}</Text>

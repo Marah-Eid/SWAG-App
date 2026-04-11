@@ -4,8 +4,8 @@ import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 
-const defaultLogo = require('../../../assets/images/carshop-icon.png');
-const defaultBanner = require('../../../assets/images/theshop-photo.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBanner = require('../../../assets/images/default-banner.png');
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.88;

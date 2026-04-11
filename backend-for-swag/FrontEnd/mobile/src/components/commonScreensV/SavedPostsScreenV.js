@@ -8,8 +8,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import VendorPosts from '../commonV/VendorPosts';
 import { fetchSavedPosts } from '../../store/slices/vendorSlice';
 
-const defaultLogo = require('../../../assets/images/user-icon.png');
-const defaultBg = require('../../../assets/images/nmk-pic.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const SavedPostsScreenV = () => {
     const router = useRouter();
@@ -24,11 +24,11 @@ const SavedPostsScreenV = () => {
     const posts = (Array.isArray(rawSaved) ? rawSaved : []).map((p) => ({
         id: p.id,
         vendorId: p.vendorId,
-        vendorName: p.vendorShopName || '',
+        vendorName: p.vendorShopName || 'User Name',
         vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
         location: p.location || '',
         description: p.description || '',
-        postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+        postImage: p.postImage ? { uri: p.postImage } : null,
         isLiked: p.isLiked,
         likeCount: p.likeCount,
         commentCount: p.commentCount,

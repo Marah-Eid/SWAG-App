@@ -278,7 +278,9 @@ public class AuthController : ControllerBase
             _ => OtpPurpose.Signup
         };
 
-        bool valid = await _otpService.VerifyAsync(req.Recipient.Trim(), req.Code.Trim(), purpose);
+        // For forgot_password, don't consume the OTP here — ResetPassword will consume it
+        bool consumeNow = purpose != OtpPurpose.ForgotPassword;
+        bool valid = await _otpService.VerifyAsync(req.Recipient.Trim(), req.Code.Trim(), purpose, consumeNow);
 
         if (!valid)
             return BadRequest(new { message = "Invalid or expired code." });

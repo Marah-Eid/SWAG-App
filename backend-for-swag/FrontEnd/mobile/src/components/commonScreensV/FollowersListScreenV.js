@@ -8,8 +8,8 @@ import BottomTabsVen from '../commonV/BottomTabsVen';
 import ProfilePopup from '../common/ProfilePopup';
 import { fetchVendorFollowers } from '../../store/slices/vendorSlice';
 
-const defaultPfp = require('../../../assets/images/Euleback-photo.png');
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
+const defaultPfp = require('../../../assets/images/default-banner.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const FollowersListScreenV = () => {
   const router = useRouter();
@@ -34,7 +34,7 @@ const FollowersListScreenV = () => {
     const type = f.userType || f.type || 'customer';
     return {
     id: f.id,
-    name: type === 'vendor' ? (f.shopName || f.fullName || 'User') : (f.fullName || f.shopName || 'User'),
+    name: type === 'vendor' ? (f.shopName || f.fullName || 'User Name') : (f.fullName || f.shopName || 'User Name'),
     type,
     pfp: f.profileImage ? { uri: f.profileImage } : defaultPfp,
     logo: f.profileImage ? { uri: f.profileImage } : defaultLogo,

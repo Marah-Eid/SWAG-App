@@ -7,53 +7,62 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import vendorAPI from '../../api/vendorAPI';
+import categoriesAPI from '../../api/categoriesAPI';
 
 const ManageCategoriesScreen = () => {
   const router = useRouter();
 
-  const [collections, setCollections] = useState([]);
+  const [allSections, setAllSections] = useState([]);
+  const [myItemIds, setMyItemIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState(null);
+  const [busyIds, setBusyIds] = useState(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
-    const result = await vendorAPI.getMyCollections();
-    if (result.success) setCollections(result.data || []);
+    const [catRes, myRes] = await Promise.all([
+      categoriesAPI.getCategories(),
+      vendorAPI.getMyCategories(),
+    ]);
+    if (catRes.success) setAllSections(catRes.data || []);
+    if (myRes.success) {
+      setMyItemIds(new Set((myRes.data || []).map((i) => i.id)));
+    }
     setLoading(false);
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const showError = (msg) => {
-    if (Platform.OS === 'web') window.alert(msg);
-    else Alert.alert('Error', msg);
-  };
+  const toggleItem = async (itemId) => {
+    if (busyIds.has(itemId)) return;
+    setBusyIds((prev) => new Set(prev).add(itemId));
 
-  const handleDelete = (collection) => {
-    const confirmDelete = async () => {
-      setBusyId(collection.id);
-      const result = await vendorAPI.deleteCollection(collection.id);
-      setBusyId(null);
-      if (!result.success) {
-        showError(result.error || 'Failed to delete category.');
-        return;
-      }
-      load();
-    };
+    const isSelected = myItemIds.has(itemId);
+    const result = isSelected
+      ? await vendorAPI.removeCategory(itemId)
+      : await vendorAPI.addCategory(itemId);
 
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Delete the category "${collection.name}"?`)) confirmDelete();
+    if (result.success) {
+      setMyItemIds((prev) => {
+        const next = new Set(prev);
+        if (isSelected) next.delete(itemId);
+        else next.add(itemId);
+        return next;
+      });
     } else {
-      Alert.alert(
-        'Delete Category',
-        `Delete "${collection.name}"? Posts will remain but will no longer be in this category.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: confirmDelete },
-        ]
-      );
+      const msg = result.error || (isSelected ? 'Failed to remove category.' : 'Failed to add category.');
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Error', msg);
     }
+
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
   };
+
+  const sectionSelectedCount = (section) =>
+    (section.items || []).filter((i) => myItemIds.has(i.id)).length;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,17 +75,9 @@ const ManageCategoriesScreen = () => {
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>My Categories</Text>
           <Text style={styles.headerSub}>
-            {collections.length} {collections.length === 1 ? 'category' : 'categories'}
+            Your selected service categories
           </Text>
         </View>
-        <TouchableOpacity
-          onPress={() => router.push('/vendor/AddCategoryVen')}
-          style={styles.addBtn}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="add" size={20} color="#FFFFFF" />
-          <Text style={styles.addBtnText}>New</Text>
-        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -84,65 +85,63 @@ const ManageCategoriesScreen = () => {
           <ActivityIndicator size="large" color="#2D3E5E" />
           <Text style={styles.loadingText}>Loading categories…</Text>
         </View>
-      ) : collections.length === 0 ? (
-        <View style={styles.centered}>
-          <Ionicons name="grid-outline" size={56} color="#BFCEDC" />
-          <Text style={styles.emptyTitle}>No categories yet</Text>
-          <Text style={styles.emptySub}>
-            Create your first custom category to organise your posts.
-          </Text>
-          <TouchableOpacity
-            style={styles.emptyCta}
-            onPress={() => router.push('/vendor/AddCategoryVen')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.emptyCtaText}>Create Category</Text>
-          </TouchableOpacity>
-        </View>
       ) : (
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.hint}>
-            Tap a category to edit its name, description, or which posts belong to it.
+            These are the service categories you chose during sign-up. They help customers find your shop through search and filters. Tap items to update your selection.
           </Text>
 
-          {collections.map((col) => (
-            <View key={col.id} style={styles.card}>
-              <TouchableOpacity
-                style={styles.cardBody}
-                onPress={() => router.push({ pathname: '/vendor/AddCategoryVen', params: { collectionId: col.id } })}
-                activeOpacity={0.85}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{col.name}</Text>
-                  {!!col.description && (
-                    <Text style={styles.cardDesc} numberOfLines={2}>{col.description}</Text>
-                  )}
-                  <View style={styles.metaRow}>
-                    <Ionicons name="images-outline" size={14} color="#8391A1" />
-                    <Text style={styles.metaText}>
-                      {col.postCount || 0} {col.postCount === 1 ? 'post' : 'posts'}
-                    </Text>
-                  </View>
+          {allSections.map((section) => {
+            const count = sectionSelectedCount(section);
+            return (
+              <View key={section.id} style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>{section.name}</Text>
+                  <Text style={styles.sectionCount}>
+                    {count}/{(section.items || []).length} selected
+                  </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
-              </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.deleteBtn}
-                onPress={() => handleDelete(col)}
-                disabled={busyId === col.id}
-                activeOpacity={0.7}
-              >
-                {busyId === col.id
-                  ? <ActivityIndicator size="small" color="#8A1C27" />
-                  : <Ionicons name="trash-outline" size={18} color="#8A1C27" />
-                }
-              </TouchableOpacity>
-            </View>
-          ))}
+                <View style={styles.itemsGrid}>
+                  {(section.items || []).map((item) => {
+                    const isSelected = myItemIds.has(item.id);
+                    const isBusy = busyIds.has(item.id);
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[styles.itemChip, isSelected && styles.itemChipActive]}
+                        onPress={() => toggleItem(item.id)}
+                        disabled={isBusy}
+                        activeOpacity={0.7}
+                      >
+                        {isBusy ? (
+                          <ActivityIndicator size="small" color={isSelected ? '#FFF' : '#2D3E5E'} />
+                        ) : (
+                          <>
+                            <Ionicons
+                              name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                              size={18}
+                              color={isSelected ? '#FFF' : '#8391A1'}
+                              style={{ marginRight: 6 }}
+                            />
+                            <Text
+                              style={[styles.itemText, isSelected && styles.itemTextActive]}
+                              numberOfLines={1}
+                            >
+                              {item.name}
+                            </Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            );
+          })}
 
           <View style={{ height: 40 }} />
         </ScrollView>
@@ -167,58 +166,73 @@ const styles = StyleSheet.create({
   headerCenter: { flex: 1 },
   headerTitle: { fontSize: 17, fontWeight: '800', color: '#2D3E5E' },
   headerSub: { fontSize: 12, color: '#8391A1', fontWeight: '500', marginTop: 1 },
-  addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2D3E5E',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-  },
-  addBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13, marginLeft: 4 },
 
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30, gap: 10 },
   loadingText: { fontSize: 14, color: '#2D3E5E', fontWeight: '600' },
-  emptyTitle: { fontSize: 17, fontWeight: '800', color: '#2D3E5E', marginTop: 8 },
-  emptySub: { fontSize: 13, color: '#8391A1', textAlign: 'center', lineHeight: 19, marginBottom: 12 },
-  emptyCta: { backgroundColor: '#8A1C27', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 22 },
-  emptyCtaText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
 
   scroll: { padding: 16 },
-  hint: { fontSize: 13, color: '#64748B', lineHeight: 19, marginBottom: 14 },
+  hint: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 19,
+    marginBottom: 18,
+  },
 
-  card: {
+  sectionCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 8,
+    marginBottom: 14,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 3,
   },
-  cardBody: {
-    flex: 1,
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: { fontSize: 16, fontWeight: '800', color: '#2D3E5E' },
+  sectionCount: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#8A1C27',
+    backgroundColor: '#FDF2F3',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+
+  itemsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  itemChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    backgroundColor: '#F1F4F9',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
-  cardTitle: { fontSize: 16, fontWeight: '800', color: '#2D3E5E' },
-  cardDesc: { fontSize: 13, color: '#64748B', marginTop: 4, lineHeight: 18 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  metaText: { fontSize: 12, color: '#8391A1', marginLeft: 5, fontWeight: '600' },
-
-  deleteBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FDF2F3',
-    marginRight: 6,
+  itemChipActive: {
+    backgroundColor: '#2D3E5E',
+    borderColor: '#2D3E5E',
+  },
+  itemText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#4A5568',
+  },
+  itemTextActive: {
+    color: '#FFFFFF',
   },
 });
 

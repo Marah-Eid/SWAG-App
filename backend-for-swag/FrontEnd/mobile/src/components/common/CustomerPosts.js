@@ -169,13 +169,13 @@ const CustomerPosts = ({
               />
             )}
 
-            {isEvent && (date || time) && (
+            {isEvent && !!(date || time) && (
               <View style={styles.eventOverlay}>
                 <View style={styles.overlayRow}>
                   <Ionicons name="calendar" size={16} color="#8A1C27" />
                   <Text style={styles.overlayText}>{date}</Text>
                 </View>
-                {time && (
+                {!!time && (
                   <View style={[styles.overlayRow, { marginLeft: 15 }]}>
                     <Ionicons name="time" size={16} color="#8A1C27" />
                     <Text style={styles.overlayText}>{time}</Text>

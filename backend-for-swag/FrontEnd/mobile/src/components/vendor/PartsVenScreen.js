@@ -9,7 +9,7 @@ import VendorSearchBar from '../commonV/VendorSearchBar';
 import VendorCard from '../commonV/VendorCard';
 import BottomTabsVen from '../commonV/BottomTabsVen';
 
-const defaultLogo = require('../../../assets/images/carshop-icon.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const PartsVenScreen = () => {
   const router = useRouter();
@@ -60,7 +60,7 @@ const PartsVenScreen = () => {
         {/* UI Polish: Full width card with perfect bottom gap */}
         <View style={styles.cardWrapper}>
           <VendorCard
-            shopName={myProfile?.shopName || ''}
+            shopName={myProfile?.shopName || 'User Name'}
             rating={myProfile?.averageRating?.toFixed(1) || '0.0'}
             logo={myProfile?.profileImage ? { uri: myProfile.profileImage } : defaultLogo}
           />

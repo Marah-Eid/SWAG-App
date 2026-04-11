@@ -15,8 +15,8 @@ import categoriesAPI from '../../api/categoriesAPI';
 import vendorAPI from '../../api/vendorAPI';
 import postsAPI from '../../api/postsAPI';
 
-const defaultLogo = require('../../../assets/images/carshop-icon.png');
-const defaultBg = require('../../../assets/images/Euleback-photo.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 // Normalize a string for fuzzy matching: lowercase, strip non-letters
 const norm = (s) => s.toLowerCase().replace(/[^a-z]/g, '');
@@ -82,7 +82,7 @@ const CategoryFeedScreenV = ({ category }) => {
 
   const suggestions = vendors.filter((v) => String(v.id) !== String(myProfile?.id)).map((v) => ({
     id: v.id,
-    name: v.shopName || '',
+    name: v.shopName || 'User Name',
     sub: v.city || '',
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
@@ -133,11 +133,11 @@ const CategoryFeedScreenV = ({ category }) => {
                 {posts.filter((p) => String(p.vendorId) !== String(myProfile?.id)).map((p) => (
                   <VendorPosts
                     key={p.id}
-                    vendorName={p.vendorShopName || ''}
+                    vendorName={p.vendorShopName || 'User Name'}
                     vendorLogo={p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo}
                     location={p.location || ''}
                     description={p.description || ''}
-                    postImage={p.postImage ? { uri: p.postImage } : defaultBg}
+                    postImage={p.postImage ? { uri: p.postImage } : null}
                     mediaType={p.mediaType}
                     mediaWidth={p.mediaWidth}
                     mediaHeight={p.mediaHeight}

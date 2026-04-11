@@ -8,7 +8,7 @@ import RevCard from '../common/RevCard';
 import BottomTabsVen from '../commonV/BottomTabsVen';
 import { fetchVendorReviews } from '../../store/slices/vendorSlice';
 
-const defaultPic = require('../../../assets/images/gorg-icon.png');
+const defaultPic = require('../../../assets/images/default-user-pfp.png');
 
 const RatingRevVenScreen = () => {
   const router = useRouter();
@@ -25,8 +25,8 @@ const RatingRevVenScreen = () => {
 
   const reviewsList = (Array.isArray(reviews) ? reviews : []).map((r) => ({
     id: r.id,
-    firstName: (r.customerName || r.userName || r.fullName || 'User').split(' ')[0],
-    lastName: (r.customerName || r.userName || r.fullName || '').split(' ').slice(1).join(' '),
+    firstName: (r.customerName || r.userName || r.fullName || 'User Name').split(' ')[0],
+    lastName: (r.customerName || r.userName || r.fullName || 'User Name').split(' ').slice(1).join(' '),
     profilePic: (r.customerImage || r.profileImage) ? { uri: r.customerImage || r.profileImage } : defaultPic,
     rating: r.rating,
     feedback: r.feedback || r.content || '',

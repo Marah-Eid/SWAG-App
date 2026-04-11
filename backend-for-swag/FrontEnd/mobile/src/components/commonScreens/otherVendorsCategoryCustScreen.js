@@ -19,8 +19,8 @@ import { fetchPosts } from '../../store/slices/postsSlice';
 
 const { width } = Dimensions.get('window');
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
-const defaultBg = require('../../../assets/images/nmk-pic.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const CATEGORY_META = {
   'Part Posts': 'Find the best genuine and aftermarket parts for your vehicle engine, body, and more.',
@@ -71,11 +71,11 @@ const OtherVendorsCategoryCustScreen = () => {
   const currentPosts = filteredPosts.map((p) => ({
     id: p.id,
     vendorId: p.vendorId,
-    vendorName: p.vendorShopName || '',
+    vendorName: p.vendorShopName || 'User Name',
     location: p.location || '',
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-    postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    postImage: p.postImage ? { uri: p.postImage } : null,
     isLiked: p.isLiked,
     isSaved: p.isSaved,
     likeCount: p.likeCount,

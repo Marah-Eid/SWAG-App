@@ -12,8 +12,8 @@ import TopCategoryBarV from '../commonV/TopCategoryBarV';
 import { fetchVendors, followVendor, unfollowVendor } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
-const defaultBg = require('../../../assets/images/theshop-photo.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const ExploreVenScreen = () => {
   const router = useRouter();
@@ -32,7 +32,7 @@ const ExploreVenScreen = () => {
     .slice(0, 6)
     .map((v) => ({
     id: v.id,
-    name: v.shopName || '',
+    name: v.shopName || 'User Name',
     sub: v.city || '',
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
@@ -54,11 +54,11 @@ const ExploreVenScreen = () => {
     .map((p) => ({
     id: p.id,
     vendorId: p.vendorId,
-    vendorName: p.vendorShopName || '',
+    vendorName: p.vendorShopName || 'User Name',
     location: p.location || '',
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-    postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    postImage: p.postImage ? { uri: p.postImage } : null,
     isLiked: p.isLiked,
     isSaved: p.isSaved,
     likeCount: p.likeCount,

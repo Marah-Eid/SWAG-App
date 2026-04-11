@@ -27,8 +27,8 @@ import vendorAPI from '../../api/vendorAPI';
 
 const { width, height } = Dimensions.get('window');
 
-const defaultBg = require('../../../assets/images/nmk-pic.png');
-const defaultLogo = require('../../../assets/images/carag-icon.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const VendorProfScreen = () => {
   const router = useRouter();
@@ -80,7 +80,7 @@ const VendorProfScreen = () => {
     router.push({
       pathname: '/commonScreens/Chatting',
       params: {
-        userName: selectedVendor?.shopName || '',
+        userName: selectedVendor?.shopName || 'User Name',
         userType: 'vendor',
         otherUserId: vendorId,
         userImage: selectedVendor?.profileImage || '',
@@ -203,7 +203,7 @@ const VendorProfScreen = () => {
         <View style={styles.identityCard}>
           <View style={styles.identityHeader}>
             <View>
-              <Text style={styles.vendorTitle}>{v.shopName || v.fullName || ''}</Text>
+              <Text style={styles.vendorTitle}>{v.shopName || v.fullName || 'User Name'}</Text>
               <View style={styles.locationTag}>
                 <Ionicons name="location" size={14} color="#8391A1" />
                 <Text style={styles.locationText}>{v.city || ''}</Text>

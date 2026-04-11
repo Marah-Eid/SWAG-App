@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using SwagBackend.Data;
@@ -8,7 +9,7 @@ namespace SwagBackend.Services;
 public interface IOtpService
 {
     Task<string> GenerateAndSendAsync(string recipient, OtpPurpose purpose);
-    Task<bool> VerifyAsync(string recipient, string code, OtpPurpose purpose);
+    Task<bool> VerifyAsync(string recipient, string code, OtpPurpose purpose, bool markUsed = true);
 }
 
 public class OtpService : IOtpService
@@ -27,8 +28,9 @@ public class OtpService : IOtpService
     public async Task<string> GenerateAndSendAsync(string recipient, OtpPurpose purpose)
     {
         // Invalidate any previous unused OTPs for this recipient/purpose
+        var normalized = recipient.Trim().ToLower();
         var old = _db.OtpVerifications
-            .Where(o => o.Recipient == recipient && o.Purpose == purpose && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow);
+            .Where(o => o.Recipient == normalized && o.Purpose == purpose && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow);
         _db.OtpVerifications.RemoveRange(old);
 
         // Generate 5-digit code
@@ -36,7 +38,7 @@ public class OtpService : IOtpService
 
         var otp = new OtpVerification
         {
-            Recipient = recipient,
+            Recipient = recipient.Trim().ToLower(),
             Code = code,
             Purpose = purpose,
             IsUsed = false,
@@ -61,22 +63,47 @@ public class OtpService : IOtpService
         return code;
     }
 
-    public async Task<bool> VerifyAsync(string recipient, string code, OtpPurpose purpose)
+    public async Task<bool> VerifyAsync(string recipient, string code, OtpPurpose purpose, bool markUsed = true)
     {
-        var otp = _db.OtpVerifications
-            .Where(o =>
-                o.Recipient == recipient &&
-                o.Code == code &&
-                o.Purpose == purpose &&
-                !o.IsUsed &&
-                o.ExpiresAt > DateTime.UtcNow)
+        var normalized = recipient.Trim().ToLower();
+        var now = DateTime.UtcNow;
+
+        // Diagnostic: find any OTP for this recipient+purpose regardless of code/expiry/used
+        var allForRecipient = await _db.OtpVerifications
+            .Where(o => o.Recipient == normalized && o.Purpose == purpose)
             .OrderByDescending(o => o.CreatedAt)
-            .FirstOrDefault();
+            .ToListAsync();
 
-        if (otp == null) return false;
+        if (allForRecipient.Count == 0)
+        {
+            _logger.LogWarning("OTP verify: NO records found for recipient={Recipient} purpose={Purpose}", normalized, purpose);
+        }
+        else
+        {
+            foreach (var r in allForRecipient)
+            {
+                _logger.LogInformation(
+                    "OTP record: Recipient={Recipient} Code={Code} Purpose={Purpose} IsUsed={IsUsed} ExpiresAt={ExpiresAt} Now={Now} CodeMatch={CodeMatch}",
+                    r.Recipient, r.Code, r.Purpose, r.IsUsed, r.ExpiresAt, now, r.Code == code);
+            }
+        }
 
-        otp.IsUsed = true;
-        await _db.SaveChangesAsync();
+        var otp = allForRecipient.FirstOrDefault(o =>
+            o.Code == code &&
+            !o.IsUsed &&
+            o.ExpiresAt > now);
+
+        if (otp == null)
+        {
+            _logger.LogWarning("OTP verify FAILED for recipient={Recipient} code={Code} purpose={Purpose}", normalized, code, purpose);
+            return false;
+        }
+
+        if (markUsed)
+        {
+            otp.IsUsed = true;
+            await _db.SaveChangesAsync();
+        }
         return true;
     }
 

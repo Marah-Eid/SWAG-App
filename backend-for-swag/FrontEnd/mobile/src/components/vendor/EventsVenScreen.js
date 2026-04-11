@@ -12,8 +12,8 @@ import VendorPosts from '../commonV/VendorPosts';
 import TopCoordinatorsCarousel from '../common/TopCoordinatorsCarousel';
 import { fetchPosts } from '../../store/slices/postsSlice';
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
-const defaultBg = require('../../../assets/images/nmk-pic.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const EventsVenScreen = () => {
   const router = useRouter();
@@ -32,11 +32,11 @@ const EventsVenScreen = () => {
   const feedEvents = eventPosts.map((p) => ({
     id: p.id,
     vendorId: p.vendorId,
-    vendorName: p.vendorShopName || '',
+    vendorName: p.vendorShopName || 'User Name',
     location: p.location || '',
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-    postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    postImage: p.postImage ? { uri: p.postImage } : null,
     date: p.eventDate || '',
     time: p.eventTime || '',
     isLiked: p.isLiked,
@@ -59,7 +59,7 @@ const EventsVenScreen = () => {
         {/* VENDOR IDENTITY CARD */}
         <View style={styles.cardWrapper}>
           <VendorCard
-            shopName={myProfile?.shopName || ''}
+            shopName={myProfile?.shopName || 'User Name'}
             rating={myProfile?.averageRating?.toFixed(1) || '0.0'}
             logo={myProfile?.profileImage ? { uri: myProfile.profileImage } : defaultLogo}
           />

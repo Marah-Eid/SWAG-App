@@ -13,8 +13,8 @@ import SuggestedCarouselV from './SuggestedCarouselV';
 import VendorPosts from './VendorPosts';
 import BottomTabsVen from './BottomTabsVen';
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
-const defaultBg = require('../../../assets/images/theshop-photo.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const SearchResultsVScreen = () => {
   const { query } = useLocalSearchParams();
@@ -52,7 +52,7 @@ const SearchResultsVScreen = () => {
 
   const vendorCards = (results.vendors || []).filter((v) => String(v.id) !== String(myProfile?.id)).map((v) => ({
     id: v.id,
-    name: v.shopName || '',
+    name: v.shopName || 'User Name',
     sub: [v.city, v.shopType].filter(Boolean).join(' · '),
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
@@ -63,11 +63,11 @@ const SearchResultsVScreen = () => {
   const postCards = (results.posts || []).filter((p) => String(p.vendorId) !== String(myProfile?.id)).map((p) => ({
     id: p.id,
     vendorId: p.vendorId,
-    vendorName: p.vendorShopName || '',
+    vendorName: p.vendorShopName || 'User Name',
     location: p.location || '',
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-    postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+    postImage: p.postImage ? { uri: p.postImage } : null,
     isLiked: p.isLiked || false,
     isSaved: p.isSaved || false,
     likeCount: p.likeCount,

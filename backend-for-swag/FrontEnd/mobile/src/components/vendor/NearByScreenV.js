@@ -12,8 +12,8 @@ import SideMenuV from '../commonV/SideMenuV';
 import { fetchVendors, fetchMyVendorProfile } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
-const defaultBg = require('../../../assets/images/theshop-photo.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const NearByScreenV = () => {
   const router = useRouter();
@@ -33,7 +33,7 @@ const NearByScreenV = () => {
 
   const nearbyShops = vendors.filter((v) => String(v.id) !== String(myProfile?.id)).map((v) => ({
     id: v.id,
-    name: v.shopName || '',
+    name: v.shopName || 'User Name',
     sub: v.city || '',
     bio: v.bio || '',
     logo: v.profileImage ? { uri: v.profileImage } : defaultLogo,
@@ -52,7 +52,7 @@ const NearByScreenV = () => {
 
         <View style={styles.cardWrapper}>
           <VendorCard
-            shopName={myProfile?.shopName || 'My Shop'}
+            shopName={myProfile?.shopName || 'User Name'}
             rating={myProfile?.averageRating?.toFixed(1) || '0.0'}
             logo={myProfile?.profileImage ? { uri: myProfile.profileImage } : null}
           />
@@ -73,11 +73,11 @@ const NearByScreenV = () => {
               .map((p) => (
             <VendorPosts
               key={p.id}
-              vendorName={p.vendorShopName || ''}
+              vendorName={p.vendorShopName || 'User Name'}
               vendorLogo={p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo}
               location={p.location || ''}
               description={p.description || ''}
-              postImage={p.postImage ? { uri: p.postImage } : defaultBg}
+              postImage={p.postImage ? { uri: p.postImage } : null}
               mediaType={p.mediaType}
               mediaWidth={p.mediaWidth}
               mediaHeight={p.mediaHeight}

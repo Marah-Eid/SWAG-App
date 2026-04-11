@@ -9,8 +9,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import CustomerPosts from '../common/CustomerPosts';
 import { fetchSavedPosts } from '../../store/slices/customerSlice';
 
-const defaultLogo = require('../../../assets/images/user-icon.png');
-const defaultBg = require('../../../assets/images/nmk-pic.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const SavedPostsScreen = () => {
     const router = useRouter();
@@ -24,11 +24,11 @@ const SavedPostsScreen = () => {
     const savedPosts = (Array.isArray(rawSaved) ? rawSaved : []).map((p) => ({
         id: p.id,
         vendorId: p.vendorId,
-        vendorName: p.vendorShopName || '',
+        vendorName: p.vendorShopName || 'User Name',
         vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
         location: p.location || '',
         description: p.description || '',
-        postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+        postImage: p.postImage ? { uri: p.postImage } : null,
         isLiked: p.isLiked,
         likeCount: p.likeCount,
         commentCount: p.commentCount,
@@ -63,7 +63,7 @@ const SavedPostsScreen = () => {
                 <View style={styles.contentWrapper}>
                     <FlatList
                         data={savedPosts}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item) => String(item.id)}
                         contentContainerStyle={styles.listContent}
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => (

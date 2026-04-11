@@ -83,7 +83,7 @@ const CommentsModal = ({ visible, onClose, postId }) => {
                         {/* COMMENTS LIST */}
                         <FlatList
                             data={comments}
-                            keyExtractor={item => item.id}
+                            keyExtractor={item => String(item.id)}
                             contentContainerStyle={styles.listContent}
                             showsVerticalScrollIndicator={false}
                             renderItem={({ item }) => {
@@ -162,7 +162,7 @@ const CommentsModal = ({ visible, onClose, postId }) => {
                     visible={isProfileVisible}
                     onClose={() => setProfileVisible(false)}
                     userName={selectedUser?.name}
-                    profileImage={selectedUser?.image ? { uri: selectedUser.image } : require('../../../assets/images/user-icon.png')}
+                    profileImage={selectedUser?.image ? { uri: selectedUser.image } : require('../../../assets/images/default-user-pfp.png')}
                     customerId={selectedUser?.id}
                 />
             </Modal>

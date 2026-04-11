@@ -18,8 +18,8 @@ import { fetchPosts } from '../../store/slices/postsSlice';
 import { fetchNotifications } from '../../store/slices/notificationsSlice';
 import { fetchConversations } from '../../store/slices/chatsSlice';
 
-const defaultBg = require('../../../assets/images/tcic-post.png');
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const HomeVenScreen = () => {
   const dispatch = useDispatch();
@@ -57,11 +57,11 @@ const HomeVenScreen = () => {
     .map((p) => ({
       id: p.id,
       vendorId: p.vendorId,
-      title: p.eventTitle || p.vendorShopName || '',
+      title: p.eventTitle || p.vendorShopName || 'User Name',
       location: p.location || '',
       date: p.eventDate || '',
       description: p.description || '',
-      bgImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      bgImage: p.postImage ? { uri: p.postImage } : null,
       logo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
     }));
 
@@ -86,7 +86,7 @@ const HomeVenScreen = () => {
         {/* UI Polish: Added a wrapper to create a clean gap below the card */}
         <View style={styles.cardWrapper}>
           <VendorCard
-            shopName={myProfile?.shopName || ''}
+            shopName={myProfile?.shopName || 'User Name'}
             rating={myProfile?.averageRating?.toFixed(1) || '0'}
             logo={myProfile?.profileImage ? { uri: myProfile.profileImage } : null}
             onSharePress={isPending ? handleRestrictedAction : undefined}

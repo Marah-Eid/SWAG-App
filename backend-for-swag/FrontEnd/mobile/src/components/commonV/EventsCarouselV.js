@@ -6,7 +6,7 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.88;
 const CARD_MARGIN = 15;
 
-const defaultBanner = require('../../../assets/images/theshop-photo.png');
+const defaultBanner = require('../../../assets/images/default-banner.png');
 
 const EventCardV = ({ event, router }) => {
   const [bgSrc, setBgSrc] = useState(event.bgImage || defaultBanner);

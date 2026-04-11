@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import BottomTabsVen from '../commonV/BottomTabsVen';
 import { fetchMyFollowing, fetchVendorFollowingById } from '../../store/slices/vendorSlice';
 
-const defaultLogo = require('../../../assets/images/carshop-icon.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const FollowingListScreenV = () => {
   const router = useRouter();
@@ -30,7 +30,7 @@ const FollowingListScreenV = () => {
   }, [vendorId, dispatch]);
 
   const filteredVendors = following.filter(vendor =>
-    (vendor.shopName || vendor.fullName || '').toLowerCase().includes(searchQuery.toLowerCase())
+    (vendor.shopName || vendor.fullName || 'User Name').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -76,7 +76,7 @@ const FollowingListScreenV = () => {
               </View>
 
               <View style={styles.vendorInfo}>
-                <Text style={styles.vendorName}>{vendor.shopName || vendor.fullName || ''}</Text>
+                <Text style={styles.vendorName}>{vendor.shopName || vendor.fullName || 'User Name'}</Text>
               </View>
 
               <View style={styles.actionContainer}>

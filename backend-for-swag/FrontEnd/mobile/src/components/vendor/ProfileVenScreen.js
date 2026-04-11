@@ -19,8 +19,8 @@ import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 
 const { width, height } = Dimensions.get('window');
 
-const defaultBg = require('../../../assets/images/nmk-pic.png');
-const defaultLogo = require('../../../assets/images/carag-icon.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const VendorProfileScreen = () => {
   const router = useRouter();
@@ -88,7 +88,7 @@ const VendorProfileScreen = () => {
   useEffect(() => {
     if (myProfile) {
       setVendorData({
-        name: myProfile.shopName || myProfile.fullName || '',
+        name: myProfile.shopName || myProfile.fullName || 'User Name',
         location: myProfile.city || '',
         rating: myProfile.averageRating || 0,
         followers: myProfile.followerCount || 0,

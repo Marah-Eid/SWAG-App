@@ -7,7 +7,7 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const CARD_MARGIN = 15;
 
-const defaultBanner = require('../../../assets/images/theshop-photo.png');
+const defaultBanner = require('../../../assets/images/default-banner.png');
 
 const FollowingShopCard = ({ shop, isUnfollowed, onToggle, router }) => {
   const [bgSrc, setBgSrc] = useState(shop.bgImage || defaultBanner);

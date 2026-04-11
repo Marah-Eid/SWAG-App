@@ -23,8 +23,8 @@ import VendorPosts from '../commonV/VendorPosts';
 import { fetchPosts } from '../../store/slices/postsSlice';
 import vendorAPI from '../../api/vendorAPI';
 
-const defaultLogo = require('../../../assets/images/carag-icon.png');
-const defaultBg = require('../../../assets/images/tcic-post.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
+const defaultBg = require('../../../assets/images/default-banner.png');
 
 const AddCategoryVenScreen = () => {
   const router = useRouter();
@@ -73,11 +73,11 @@ const AddCategoryVenScreen = () => {
     .filter((p) => myProfile && String(p.vendorId) === String(myProfile.id))
     .map((p) => ({
       id: p.id,
-      vendorName: p.vendorShopName || myProfile?.shopName || '',
+      vendorName: p.vendorShopName || myProfile?.shopName || 'User Name',
       location: p.location || '',
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-      postImage: p.postImage ? { uri: p.postImage } : defaultBg,
+      postImage: p.postImage ? { uri: p.postImage } : null,
     }));
 
   // TOGGLE SELECTION

@@ -3153,11 +3153,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
+      "projectUniqueName": "C:\\Users\\user\\OneDrive\\Desktop\\backend-for-swag\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
       "projectName": "SWAG-Backend",
-      "projectPath": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
+      "projectPath": "C:\\Users\\user\\OneDrive\\Desktop\\backend-for-swag\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
       "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\user\\Desktop\\otp\\Otp\\backend-for-swag\\backendSWAG\\obj\\",
+      "outputPath": "C:\\Users\\user\\OneDrive\\Desktop\\backend-for-swag\\backend-for-swag\\backendSWAG\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -3185,8 +3185,7 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      },
-      "SdkAnalysisLevel": "9.0.300"
+      }
     },
     "frameworks": {
       "net8.0": {
@@ -3242,7 +3241,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.417/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

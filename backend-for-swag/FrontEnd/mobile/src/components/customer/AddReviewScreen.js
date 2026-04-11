@@ -51,11 +51,11 @@ const AddReviewScreen = () => {
     }
   }, [myReview?.id]);
 
-  const defaultPic = require('../../../assets/images/gorg-icon.png');
+  const defaultPic = require('../../../assets/images/default-user-pfp.png');
   const recentReviews = (Array.isArray(reviews) ? reviews : []).slice(0, 3).map((r) => ({
     id: r.id,
-    firstName: (r.customerName || r.userName || r.fullName || 'User').split(' ')[0],
-    lastName: (r.customerName || r.userName || r.fullName || '').split(' ').slice(1).join(' '),
+    firstName: (r.customerName || r.userName || r.fullName || 'User Name').split(' ')[0],
+    lastName: (r.customerName || r.userName || r.fullName || 'User Name').split(' ').slice(1).join(' '),
     profilePic: (r.customerImage || r.profileImage) ? { uri: r.customerImage || r.profileImage } : defaultPic,
     rating: r.rating,
     feedback: r.feedback || r.content || '',

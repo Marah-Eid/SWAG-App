@@ -162,7 +162,7 @@ const CommentsModalV = ({ visible, onClose, postId }) => {
                     visible={isProfileVisible}
                     onClose={() => setProfileVisible(false)}
                     userName={selectedUserData?.commenterName || selectedUserData?.userName || selectedUserData?.user}
-                    profileImage={selectedUserData?.commenterImage ? { uri: selectedUserData.commenterImage } : require('../../../assets/images/user-icon.png')}
+                    profileImage={selectedUserData?.commenterImage ? { uri: selectedUserData.commenterImage } : require('../../../assets/images/default-user-pfp.png')}
                     customerId={selectedUserData?.id}
                 />
             </Modal>

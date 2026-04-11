@@ -116,11 +116,11 @@ export default function ProfileCust() {
   // --- SYNC profile from Redux ---
   useEffect(() => {
     if (profile) {
-      setProfileData({ name: profile.fullName || '', email: profile.email || '' });
+      setProfileData({ name: profile.fullName || 'User Name', email: profile.email || '' });
       setProfileImage(profile.profileImage || null);
       setBannerImage(profile.bannerImage || null);
     } else if (user) {
-      setProfileData({ name: user.fullName || '', email: user.email || '' });
+      setProfileData({ name: user.fullName || 'User Name', email: user.email || '' });
     }
   }, [profile, user]);
 
@@ -297,7 +297,7 @@ export default function ProfileCust() {
 
   const handleImagePress = (type, source, carId = null) => {
     if (type === 'banner') isEditingProfile ? pickImage('banner') : (source && setPreviewSource({ uri: source }));
-    else if (type === 'avatar') isEditingProfile ? pickImage('avatar') : setPreviewSource(source ? { uri: source } : require('../../../assets/images/profile-img.png'));
+    else if (type === 'avatar') isEditingProfile ? pickImage('avatar') : setPreviewSource(source ? { uri: source } : require('../../../assets/images/default-user-pfp.png'));
     else if (type === 'car') editingCarId === carId ? pickCarImage(carId) : setPreviewSource(source ? { uri: source } : require('../../../assets/images/car-new-img.png'));
   };
 
@@ -315,13 +315,13 @@ export default function ProfileCust() {
 
         <View style={styles.profileInfoCard}>
           <TouchableOpacity style={styles.bannerBackground} onPress={() => handleImagePress('banner', bannerImage)} activeOpacity={0.9}>
-            {bannerImage && <Image source={{ uri: bannerImage }} style={styles.bannerImage} resizeMode="cover" />}
+            <Image source={bannerImage ? { uri: bannerImage } : require('../../../assets/images/default-banner.png')} style={styles.bannerImage} resizeMode="cover" />
             {isEditingProfile && <View style={styles.cameraIconOverlay}><Ionicons name="camera" size={24} color="white" /></View>}
           </TouchableOpacity>
 
           <View style={styles.middleRow}>
             <TouchableOpacity style={styles.avatarWrapper} onPress={() => handleImagePress('avatar', profileImage)} activeOpacity={0.9}>
-              <Image source={profileImage ? { uri: profileImage } : require('../../../assets/images/profile-img.png')} style={styles.avatarImage} resizeMode="cover" />
+              <Image source={profileImage ? { uri: profileImage } : require('../../../assets/images/default-user-pfp.png')} style={styles.avatarImage} resizeMode="cover" />
               {isEditingProfile && <View style={styles.avatarOverlay}><Ionicons name="camera" size={20} color="white" /></View>}
             </TouchableOpacity>
             <View style={styles.actionButtons}>

@@ -105,7 +105,7 @@ const CreativeSplashScreen = ({ onFinish }) => {
             <Animated.View style={[styles.fadeWrapper, { opacity: introOpacity }]}>
                 <Video
                     ref={videoRef}
-                    source={require('../../assets/videos/swag-splash.mp4')}
+                    source={require('../../assets/videos/newSPLASHSCREEN.mp4')}
                     style={styles.video}
                     resizeMode={ResizeMode.COVER}
                     shouldPlay={true}

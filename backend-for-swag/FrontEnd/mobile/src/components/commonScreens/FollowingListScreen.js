@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import BottomTabs from '../common/BottomTabs';
 import { fetchFollowing } from '../../store/slices/customerSlice';
 
-const defaultLogo = require('../../../assets/images/nmk-icon.png');
+const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
 const FollowingListScreen = () => {
   const router = useRouter();
@@ -23,8 +23,8 @@ const FollowingListScreen = () => {
 
   const followedVendors = following.map((v) => ({
     id: v.id,
-    name: v.shopName || v.fullName || '',
-    logo: v.profileImage ? { uri: v.profileImage } : require('../../../assets/images/nmk-icon.png'),
+    name: v.shopName || v.fullName || 'User Name',
+    logo: v.profileImage ? { uri: v.profileImage } : require('../../../assets/images/default-user-pfp.png'),
     hasNewPosts: false,
   }));
 
