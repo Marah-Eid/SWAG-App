@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\notswag\\Otp\\backend-for-swag\\BackendSWAG\\SWAG-Backend.csproj": {}
+    "C:\\notswag\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj": {}
   },
   "projects": {
-    "C:\\notswag\\Otp\\backend-for-swag\\BackendSWAG\\SWAG-Backend.csproj": {
+    "C:\\notswag\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\notswag\\Otp\\backend-for-swag\\BackendSWAG\\SWAG-Backend.csproj",
+        "projectUniqueName": "C:\\notswag\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
         "projectName": "SWAG-Backend",
-        "projectPath": "C:\\notswag\\Otp\\backend-for-swag\\BackendSWAG\\SWAG-Backend.csproj",
+        "projectPath": "C:\\notswag\\Otp\\backend-for-swag\\backendSWAG\\SWAG-Backend.csproj",
         "packagesPath": "C:\\Users\\4T4\\.nuget\\packages\\",
-        "outputPath": "C:\\notswag\\Otp\\backend-for-swag\\BackendSWAG\\obj\\",
+        "outputPath": "C:\\notswag\\Otp\\backend-for-swag\\backendSWAG\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\4T4\\AppData\\Roaming\\NuGet\\NuGet.Config"

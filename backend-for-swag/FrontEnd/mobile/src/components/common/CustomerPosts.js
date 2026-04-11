@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Dimensions, Share, Alert } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +35,7 @@ const CustomerPosts = ({
   const [isSaved, setIsSaved] = useState(initialSaved);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const CHARACTER_LIMIT = 100;
 
@@ -108,7 +110,7 @@ const CustomerPosts = ({
           style={styles.vendorInfo}
           onPress={() => router.push('/customer/VendorProfCust')}
         >
-          <Image source={vendorLogo} style={styles.logo} />
+          <ExpoImage source={vendorLogo} style={styles.logo} contentFit="cover" transition={200} />
           <View>
             <Text style={styles.vendorName}>{vendorName}</Text>
             <View style={styles.locationRow}>
@@ -140,19 +142,30 @@ const CustomerPosts = ({
             style={[styles.imageContainer, { aspectRatio: calculatedAspect }]}
           >
             {mediaType === 'video' ? (
-              <Video
-                style={styles.dynamicMedia}
-                source={typeof postImage === 'string' ? { uri: postImage } : postImage}
-                resizeMode={ResizeMode.COVER}
-                isLooping
-                shouldPlay={true}
-                isMuted={true}
-              />
+              <>
+                <Video
+                  style={styles.dynamicMedia}
+                  source={typeof postImage === 'string' ? { uri: postImage } : postImage}
+                  resizeMode={ResizeMode.COVER}
+                  isLooping
+                  shouldPlay={isVideoPlaying}
+                  isMuted={true}
+                />
+                {!isVideoPlaying && (
+                  <TouchableOpacity
+                    style={styles.playOverlay}
+                    onPress={(e) => { e.stopPropagation(); setIsVideoPlaying(true); }}
+                  >
+                    <Ionicons name="play-circle" size={60} color="rgba(255,255,255,0.9)" />
+                  </TouchableOpacity>
+                )}
+              </>
             ) : (
-              <Image
+              <ExpoImage
                 source={typeof postImage === 'string' ? { uri: postImage } : postImage}
                 style={styles.dynamicMedia}
-                resizeMode="cover"
+                contentFit="cover"
+                transition={300}
               />
             )}
 
@@ -204,7 +217,7 @@ const CustomerPosts = ({
               isMuted={false}
             />
           ) : (
-            <Image source={typeof postImage === 'string' ? { uri: postImage } : postImage} style={styles.fullscreenMedia} resizeMode="contain" />
+            <ExpoImage source={typeof postImage === 'string' ? { uri: postImage } : postImage} style={styles.fullscreenMedia} contentFit="contain" />
           )}
         </View>
       </Modal>
@@ -238,6 +251,7 @@ const styles = StyleSheet.create({
   readMore: { color: '#8A1C27', fontWeight: 'bold', fontSize: 14 },
   imageContainer: { width: '100%', borderRadius: 15, overflow: 'hidden', backgroundColor: '#F4F7FA', marginTop: 5 },
   dynamicMedia: { width: '100%', height: '100%' },
+  playOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.25)' },
   eventOverlay: { position: 'absolute', bottom: 10, left: 10, right: 10, backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 12, flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 15, elevation: 5 },
   overlayRow: { flexDirection: 'row', alignItems: 'center' },
   overlayText: { color: '#2C3E50', fontWeight: 'bold', fontSize: 13, marginLeft: 6 },

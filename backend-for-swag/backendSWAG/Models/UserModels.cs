@@ -69,6 +69,9 @@ public class Customer
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [Column("last_seen_at")]
+    public DateTime? LastSeenAt { get; set; }
+
     public ICollection<CustomerInterest> Interests { get; set; } = new List<CustomerInterest>();
     public ICollection<CustomerCar> Cars { get; set; } = new List<CustomerCar>();
     public ICollection<CustomerFollow> Following { get; set; } = new List<CustomerFollow>();
@@ -146,6 +149,9 @@ public class Vendor
 
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("last_seen_at")]
+    public DateTime? LastSeenAt { get; set; }
 
     public VendorDocument? Document { get; set; }
     public VendorProfileDetail? ProfileDetail { get; set; }

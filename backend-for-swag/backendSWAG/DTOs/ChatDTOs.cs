@@ -11,6 +11,7 @@ public class ConversationDto
     public DateTime? LastMessageTime { get; set; }
     public int UnreadCount { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? OtherParticipantLastSeen { get; set; }
 }
 
 public class ChatMessageDto

@@ -33,10 +33,23 @@ const AddReviewScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reviews = useSelector((state) => state.vendor.reviews) || [];
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (vendorId) dispatch(fetchVendorReviews(vendorId));
   }, [vendorId, dispatch]);
+
+  // Find this customer's existing review (if any)
+  const myReview = reviews.find(r => String(r.customerId) === String(user?.id));
+  const isUpdating = !!myReview;
+
+  // Pre-fill from existing review once loaded
+  useEffect(() => {
+    if (myReview) {
+      setFeedback(myReview.feedback || '');
+      setRating(myReview.rating || 0);
+    }
+  }, [myReview?.id]);
 
   const defaultPic = require('../../../assets/images/gorg-icon.png');
   const recentReviews = (Array.isArray(reviews) ? reviews : []).slice(0, 3).map((r) => ({
@@ -87,20 +100,20 @@ const AddReviewScreen = () => {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={28} color="#2D3E5E" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Review</Text>
+        <Text style={styles.headerTitle}>{isUpdating ? 'Update Review' : 'Add Review'}</Text>
 
         <TouchableOpacity style={styles.postBtn} onPress={handlePost} activeOpacity={0.8} disabled={isSubmitting}>
           {isSubmitting
             ? <ActivityIndicator size="small" color="#FFF" />
-            : <Text style={styles.postBtnText}>Post</Text>
+            : <Text style={styles.postBtnText}>{isUpdating ? 'Update' : 'Post'}</Text>
           }
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPadding}>
         <View style={styles.topTextSection}>
-          <Text style={styles.mainTitle}>How was your experience?</Text>
-          <Text style={styles.subTitle}>Your feedback helps the community grow!</Text>
+          <Text style={styles.mainTitle}>{isUpdating ? 'Update your review' : 'How was your experience?'}</Text>
+          <Text style={styles.subTitle}>{isUpdating ? 'Your previous review will be replaced.' : 'Your feedback helps the community grow!'}</Text>
         </View>
 
         {/* --- REVIEW INPUT CARD --- */}

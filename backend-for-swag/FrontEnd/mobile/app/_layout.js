@@ -1,22 +1,42 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
-import { Provider, useDispatch } from 'react-redux';
+import { Provider, useDispatch, useSelector } from 'react-redux';
 import * as SplashScreen from 'expo-splash-screen';
 
 import store from '../src/store';
 import CreativeSplashScreen from '../src/components/CreativeSplashScreen';
 import { checkAuthStatus } from '../src/store/slices/authSlice';
+import chatsAPI from '../src/api/chatsAPI';
 
 SplashScreen.preventAutoHideAsync();
 
 // Inner component that has access to Redux store
 function AppContent({ onSplashFinish }) {
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const appState = useRef(AppState.currentState);
 
   useEffect(() => {
-    // Restore auth session from AsyncStorage on startup
     dispatch(checkAuthStatus());
   }, [dispatch]);
+
+  // Send heartbeat whenever app becomes active (foreground)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Send immediately on mount
+    chatsAPI.heartbeat();
+
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (appState.current.match(/inactive|background/) && nextState === 'active') {
+        chatsAPI.heartbeat();
+      }
+      appState.current = nextState;
+    });
+
+    return () => subscription.remove();
+  }, [isAuthenticated]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

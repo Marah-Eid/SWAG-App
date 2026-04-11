@@ -70,13 +70,18 @@ const ChattingScreenContent = ({ userName }) => {
 
     const handleBackPress = () => router.back();
 
-    const [lastSeenTimestamp] = useState(new Date().getTime() - 1000 * 60 * 2);
+    const conversation = conversations.find(c => String(c.id) === String(convId));
     const onlineStatus = useMemo(() => {
-        const now = new Date().getTime();
-        const diffInMinutes = Math.floor((now - lastSeenTimestamp) / (1000 * 60));
-        if (diffInMinutes < 5) return { text: 'Active Now', color: '#22C55E' };
-        return { text: `Last seen ${diffInMinutes}m ago`, color: '#94A3B8' };
-    }, [lastSeenTimestamp]);
+        const lastSeen = conversation?.otherParticipantLastSeen;
+        if (!lastSeen) return { text: 'Offline', color: '#94A3B8' };
+        const diffMs = Date.now() - new Date(lastSeen).getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 5) return { text: 'Active Now', color: '#22C55E' };
+        if (diffMin < 60) return { text: `Active ${diffMin}m ago`, color: '#94A3B8' };
+        const diffH = Math.floor(diffMin / 60);
+        if (diffH < 24) return { text: `Active ${diffH}h ago`, color: '#94A3B8' };
+        return { text: `Active ${Math.floor(diffH / 24)}d ago`, color: '#94A3B8' };
+    }, [conversation?.otherParticipantLastSeen]);
 
     const handleHeaderPress = () => {
         if (userType === 'vendor') {

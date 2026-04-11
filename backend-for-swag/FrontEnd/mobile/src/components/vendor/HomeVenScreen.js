@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, StyleSheet, ScrollView, SafeAreaView, StatusBar, Text, TouchableOpacity, Alert, Platform
 } from 'react-native';
@@ -12,7 +12,8 @@ import FollowingSectionV from '../commonV/FollowingSectionV';
 import EventsCarouselV from '../commonV/EventsCarouselV';
 import BottomTabsVen from '../commonV/BottomTabsVen';
 import SideMenuV from '../commonV/SideMenuV';
-import { fetchMyVendorProfile } from '../../store/slices/vendorSlice';
+import { useFocusEffect } from 'expo-router';
+import { fetchMyVendorProfile, fetchMyFollowing } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
 import { fetchNotifications } from '../../store/slices/notificationsSlice';
 import { fetchConversations } from '../../store/slices/chatsSlice';
@@ -29,12 +30,15 @@ const HomeVenScreen = () => {
 
   const isPending = !myProfile || myProfile.status !== 'active';
 
-  useEffect(() => {
-    dispatch(fetchMyVendorProfile());
-    dispatch(fetchPosts());
-    dispatch(fetchNotifications());
-    dispatch(fetchConversations());
-  }, [dispatch]);
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchMyVendorProfile());
+      dispatch(fetchMyFollowing());
+      dispatch(fetchPosts());
+      dispatch(fetchNotifications());
+      dispatch(fetchConversations());
+    }, [dispatch])
+  );
 
   const handleRestrictedAction = () => {
     if (Platform.OS === 'web') {
@@ -82,8 +86,8 @@ const HomeVenScreen = () => {
         {/* UI Polish: Added a wrapper to create a clean gap below the card */}
         <View style={styles.cardWrapper}>
           <VendorCard
-            shopName={myProfile?.shopName || 'My Shop'}
-            rating={myProfile?.averageRating?.toFixed(1) || '0.0'}
+            shopName={myProfile?.shopName || ''}
+            rating={myProfile?.averageRating?.toFixed(1) || '0'}
             logo={myProfile?.profileImage ? { uri: myProfile.profileImage } : null}
             onSharePress={isPending ? handleRestrictedAction : undefined}
           />

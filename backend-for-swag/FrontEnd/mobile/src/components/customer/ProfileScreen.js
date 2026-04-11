@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
   SafeAreaView, TextInput, Dimensions, Alert, Platform, Modal, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -105,11 +105,13 @@ export default function ProfileCust() {
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [statusFormStatus, setStatusFormStatus] = useState('Completed');
 
-  // --- FETCH on mount ---
-  useEffect(() => {
-    dispatch(fetchCustomerProfile());
-    dispatch(fetchMyCars());
-  }, [dispatch]);
+  // --- FETCH on focus ---
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchCustomerProfile());
+      dispatch(fetchMyCars());
+    }, [dispatch])
+  );
 
   // --- SYNC profile from Redux ---
   useEffect(() => {

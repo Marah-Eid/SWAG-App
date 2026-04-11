@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient'; // Added LinearGradient
 import { Entypo } from '@expo/vector-icons';
 
-const VendorCard = ({ shopName = "Automotive", rating = "4.0", logo }) => {
+const VendorCard = ({ shopName = '', rating = '0', logo }) => {
   const router = useRouter();
   const ratingNum = parseFloat(rating) || 0;
 

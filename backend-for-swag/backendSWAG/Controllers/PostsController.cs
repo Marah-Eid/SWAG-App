@@ -452,7 +452,7 @@ public class PostsController : ControllerBase
         return Ok(result);
     }
 
-    // POST /api/reviews
+    // POST /api/reviews  (upsert — creates or updates the customer's review for this vendor)
     [HttpPost("/api/reviews")]
     [Authorize(Roles = "Customer")]
     public async Task<IActionResult> AddReview([FromBody] AddReviewRequest req)
@@ -468,29 +468,46 @@ public class PostsController : ControllerBase
 
         var myId = _currentUser.UserId;
 
-        _db.Reviews.Add(new Review
-        {
-            VendorId = req.VendorId,
-            CustomerId = myId,
-            Rating = (short)req.Rating,
-            Feedback = req.Feedback.Trim()
-        });
+        var existing = await _db.Reviews.FirstOrDefaultAsync(r =>
+            r.VendorId == req.VendorId && r.CustomerId == myId);
 
-        var reviewer = await _db.Customers.FindAsync(myId);
-        string reviewerName = reviewer?.FullName ?? "Someone";
+        bool isNew = existing == null;
 
-        _db.Notifications.Add(new Notification
+        if (existing != null)
         {
-            RecipientId = req.VendorId,
-            RecipientType = UserRole.Vendor,
-            Type = NotificationType.NewReview,
-            Title = "New Review",
-            Body = $"{reviewerName} left you a {req.Rating}-star review.",
-            DeepLink = $"vendor/{req.VendorId}/reviews"
-        });
+            existing.Rating = (short)req.Rating;
+            existing.Feedback = req.Feedback.Trim();
+        }
+        else
+        {
+            _db.Reviews.Add(new Review
+            {
+                VendorId = req.VendorId,
+                CustomerId = myId,
+                Rating = (short)req.Rating,
+                Feedback = req.Feedback.Trim()
+            });
+        }
+
+        // Only notify vendor when it is a brand-new review
+        if (isNew)
+        {
+            var reviewer = await _db.Customers.FindAsync(myId);
+            string reviewerName = reviewer?.FullName ?? "Someone";
+
+            _db.Notifications.Add(new Notification
+            {
+                RecipientId = req.VendorId,
+                RecipientType = UserRole.Vendor,
+                Type = NotificationType.NewReview,
+                Title = "New Review",
+                Body = $"{reviewerName} left you a {req.Rating}-star review.",
+                DeepLink = $"vendor/{req.VendorId}/reviews"
+            });
+        }
 
         await _db.SaveChangesAsync();
-        return Ok(new MessageResponse { Message = "Review submitted." });
+        return Ok(new MessageResponse { Message = isNew ? "Review submitted." : "Review updated." });
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, Image, StyleSheet, SafeAreaView,
   TouchableOpacity, Dimensions, Linking, TextInput, Platform, Alert, Share, Modal
 } from 'react-native';
 import { Ionicons, Entypo } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -74,12 +74,14 @@ const VendorProfileScreen = () => {
     bgImage: defaultBg, profileImage: defaultLogo,
   });
 
-  // Fetch on mount
-  useEffect(() => {
-    dispatch(fetchMyVendorProfile());
-    dispatch(fetchMyFollowing());
-    dispatch(fetchPosts());
-  }, [dispatch]);
+  // Fetch on focus
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchMyVendorProfile());
+      dispatch(fetchMyFollowing());
+      dispatch(fetchPosts());
+    }, [dispatch])
+  );
 
   // Sync Redux profile → local vendorData
   useEffect(() => {

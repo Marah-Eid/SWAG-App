@@ -1,25 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSelector } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient'; // Added LinearGradient
 
-const VendorPin = ({ icon, onPress }) => (
-  <TouchableOpacity style={styles.pinWrapper} onPress={onPress} activeOpacity={0.8}>
-    <View style={styles.pinShape} />
-    <View style={styles.iconContainer}>
-      <Image source={icon} style={styles.vendorIcon} />
-    </View>
-  </TouchableOpacity>
-);
+const defaultIcon = require('../../../assets/images/carshop-icon.png');
+
+const VendorPin = ({ icon, onPress }) => {
+  const [imgError, setImgError] = useState(false);
+  const resolvedIcon = imgError ? defaultIcon : icon;
+  return (
+    <TouchableOpacity style={styles.pinWrapper} onPress={onPress} activeOpacity={0.8}>
+      <View style={styles.pinShape} />
+      <View style={styles.iconContainer}>
+        <Image source={resolvedIcon} style={styles.vendorIcon} onError={() => setImgError(true)} />
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const FollowingSectionV = () => {
   const router = useRouter();
+  const { myFollowing } = useSelector((state) => state.vendor);
 
-  const vendors = [
-    { id: 1, icon: require('../../../assets/images/carshop-icon.png') },
-    { id: 2, icon: require('../../../assets/images/nmk-icon.png') },
-    { id: 3, icon: require('../../../assets/images/carshop-icon.png') },
-  ];
+  const vendors = myFollowing.length > 0
+    ? myFollowing.slice(0, 5).map((v) => ({
+        id: v.id,
+        icon: v.profileImage ? { uri: v.profileImage } : defaultIcon,
+      }))
+    : [];
 
   return (
     // Replaced the solid View with the premium LinearGradient
@@ -41,7 +50,7 @@ const FollowingSectionV = () => {
           <VendorPin
             key={vendor.id}
             icon={vendor.icon}
-            onPress={() => router.push('/vendor/otherVendorProfile')}
+            onPress={() => router.push({ pathname: '/vendor/otherVendorProfile', params: { vendorId: vendor.id } })}
           />
         ))}
       </View>

@@ -436,6 +436,36 @@ public class AuthController : ControllerBase
         ProfileImage = c.ProfileImage
     };
 
+    // PUT /api/auth/heartbeat  — updates LastSeenAt for the current user
+    [HttpPut("heartbeat")]
+    [Authorize]
+    public async Task<IActionResult> Heartbeat()
+    {
+        var myId = _currentUser.UserId;
+        var role = _currentUser.Role;
+
+        if (role == "Customer")
+        {
+            var customer = await _db.Customers.FindAsync(myId);
+            if (customer != null)
+            {
+                customer.LastSeenAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
+        }
+        else if (role == "Vendor")
+        {
+            var vendor = await _db.Vendors.FindAsync(myId);
+            if (vendor != null)
+            {
+                vendor.LastSeenAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        return Ok();
+    }
+
     private static UserDto MapVendorToDto(Vendor v) => new()
     {
         Id = v.Id,

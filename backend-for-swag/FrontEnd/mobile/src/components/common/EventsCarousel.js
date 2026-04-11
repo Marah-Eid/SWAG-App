@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -9,8 +10,6 @@ const CARD_MARGIN = 15;
 const defaultBanner = require('../../../assets/images/theshop-photo.png');
 
 const EventCard = ({ event, router }) => {
-  const [bgSrc, setBgSrc] = useState(event.bgImage || defaultBanner);
-
   const goToVendor = () => {
     if (event.vendorId) {
       router.push({ pathname: '/customer/VendorProfCust', params: { vendorId: event.vendorId } });
@@ -19,45 +18,45 @@ const EventCard = ({ event, router }) => {
 
   return (
     <View style={styles.cardWrapper}>
-      <ImageBackground
-        source={bgSrc}
-        onError={() => setBgSrc(defaultBanner)}
-        style={styles.card}
-        imageStyle={{ borderRadius: 16 }}
-      >
-        <View style={styles.darkOverlay}>
+      <ExpoImage
+        source={event.bgImage || defaultBanner}
+        placeholder={defaultBanner}
+        style={StyleSheet.absoluteFillObject}
+        contentFit="cover"
+        transition={300}
+      />
+      <View style={styles.darkOverlay}>
 
-          <TouchableOpacity onPress={() => router.push('/customer/EventsCust')} style={styles.badgeContainer} activeOpacity={0.8}>
-            <Text style={styles.cardHeader}>Upcoming Event</Text>
+        <TouchableOpacity onPress={() => router.push('/customer/EventsCust')} style={styles.badgeContainer} activeOpacity={0.8}>
+          <Text style={styles.cardHeader}>Upcoming Event</Text>
+        </TouchableOpacity>
+
+        <View style={styles.contentRow}>
+
+          <TouchableOpacity onPress={goToVendor} activeOpacity={0.8}>
+            <ExpoImage source={event.logo} style={styles.logo} contentFit="cover" transition={200} />
           </TouchableOpacity>
 
-          <View style={styles.contentRow}>
+          <TouchableOpacity style={styles.textColumn} onPress={goToVendor} activeOpacity={0.8}>
+            <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
 
-            <TouchableOpacity onPress={goToVendor} activeOpacity={0.8}>
-              <Image source={event.logo} style={styles.logo} />
-            </TouchableOpacity>
+            {event.location ? (
+              <Text style={styles.eventSub} numberOfLines={1}>{event.location}</Text>
+            ) : null}
 
-            <TouchableOpacity style={styles.textColumn} onPress={goToVendor} activeOpacity={0.8}>
-              <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
-
-              {event.location ? (
-                <Text style={styles.eventSub} numberOfLines={1}>{event.location}</Text>
-              ) : null}
-
-              <View style={styles.dateRow}>
-                <Text style={styles.eventDate}>Date: </Text>
-                <Text style={styles.eventDate}>{event.date}</Text>
-              </View>
-            </TouchableOpacity>
-
-          </View>
-
-          <Text style={styles.footerText} numberOfLines={2}>
-            {event.description}
-          </Text>
+            <View style={styles.dateRow}>
+              <Text style={styles.eventDate}>Date: </Text>
+              <Text style={styles.eventDate}>{event.date}</Text>
+            </View>
+          </TouchableOpacity>
 
         </View>
-      </ImageBackground>
+
+        <Text style={styles.footerText} numberOfLines={2}>
+          {event.description}
+        </Text>
+
+      </View>
     </View>
   );
 };
@@ -94,20 +93,16 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     width: CARD_WIDTH,
-    height: 170, // UI Polish: Slightly taller for elegance
+    height: 170,
     marginRight: CARD_MARGIN,
     borderRadius: 16,
+    overflow: 'hidden',
     backgroundColor: '#FFF',
-    // UI Polish: Premium depth shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
-  },
-  card: {
-    width: '100%',
-    height: '100%',
   },
   darkOverlay: {
     flex: 1,

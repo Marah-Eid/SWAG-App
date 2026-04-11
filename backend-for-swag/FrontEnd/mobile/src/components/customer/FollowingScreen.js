@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView, StatusBar, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
 import CustomSearchBar from '../common/CustomSearchBar';
@@ -28,10 +28,12 @@ const FollowingScreen = () => {
   const { following, profile } = useSelector((state) => state.customer);
   const { posts } = useSelector((state) => state.posts);
 
-  useEffect(() => {
-    dispatch(fetchFollowing());
-    dispatch(fetchPosts());
-  }, [dispatch]);
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchFollowing());
+      dispatch(fetchPosts());
+    }, [dispatch])
+  );
 
   const handleUnfollow = (vendorId) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

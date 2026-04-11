@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
   Platform
 } from 'react-native';
 import { Ionicons, Entypo } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
 import BottomTabsVen from '../commonV/BottomTabsVen';
@@ -40,12 +40,14 @@ const OtherVendorProfileScreen = () => {
   const { posts } = useSelector((state) => state.posts);
   const isOwnProfile = myProfile && String(vendorId) === String(myProfile.id);
 
-  useEffect(() => {
-    if (vendorId) {
-      dispatch(fetchVendorById(vendorId));
-      dispatch(fetchPosts({ vendorId }));
-    }
-  }, [vendorId, dispatch]);
+  useFocusEffect(
+    useCallback(() => {
+      if (vendorId) {
+        dispatch(fetchVendorById(vendorId));
+        dispatch(fetchPosts({ vendorId }));
+      }
+    }, [vendorId, dispatch])
+  );
 
   const vendor = selectedVendor || {};
   const [isFollowing, setIsFollowing] = useState(vendor.isFollowed || false);

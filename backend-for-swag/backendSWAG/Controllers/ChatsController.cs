@@ -46,18 +46,21 @@ public class ChatsController : ControllerBase
 
             string otherName = "User";
             string? otherImage = null;
+            DateTime? otherLastSeen = null;
 
             if (otherType == UserRole.Customer)
             {
                 var cust = await _db.Customers.FindAsync(otherId);
                 otherName = cust?.FullName ?? otherName;
                 otherImage = cust?.ProfileImage;
+                otherLastSeen = cust?.LastSeenAt;
             }
             else if (otherType == UserRole.Vendor)
             {
                 var v = await _db.Vendors.FindAsync(otherId);
                 otherName = v?.ShopName ?? otherName;
                 otherImage = v?.ProfileImage;
+                otherLastSeen = v?.LastSeenAt;
             }
 
             result.Add(new ConversationDto
@@ -70,7 +73,8 @@ public class ChatsController : ControllerBase
                 LastMessage = conv.LastMessage,
                 LastMessageTime = conv.LastMessageTime,
                 UnreadCount = unread,
-                CreatedAt = conv.CreatedAt
+                CreatedAt = conv.CreatedAt,
+                OtherParticipantLastSeen = otherLastSeen
             });
         }
 

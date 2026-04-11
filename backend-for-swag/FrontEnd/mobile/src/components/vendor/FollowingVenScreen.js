@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, ScrollView, StyleSheet, SafeAreaView, StatusBar, LayoutAnimation, Platform, UIManager, Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
 // 1. Vendor-specific components from commonV
@@ -30,10 +30,12 @@ const FollowingVenScreen = () => {
   const { myFollowing: following, myProfile } = useSelector((state) => state.vendor);
   const { posts } = useSelector((state) => state.posts);
 
-  useEffect(() => {
-    dispatch(fetchMyFollowing());
-    dispatch(fetchPosts());
-  }, [dispatch]);
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchMyFollowing());
+      dispatch(fetchPosts());
+    }, [dispatch])
+  );
 
   const handleUnfollow = (id) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

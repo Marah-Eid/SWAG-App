@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSelector, useDispatch } from 'react-redux';
 
 import CustomSearchBar from '../common/CustomSearchBar';
@@ -30,14 +30,16 @@ const HomeScreen = () => {
   const { vendors } = useSelector((state) => state.vendor);
   const { posts } = useSelector((state) => state.posts);
 
-  useEffect(() => {
-    dispatch(fetchVendors());
-    dispatch(fetchPosts());
-    dispatch(fetchFollowing());
-    dispatch(fetchCustomerProfile());
-    dispatch(fetchNotifications());
-    dispatch(fetchConversations());
-  }, [dispatch]);
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchVendors());
+      dispatch(fetchPosts());
+      dispatch(fetchFollowing());
+      dispatch(fetchCustomerProfile());
+      dispatch(fetchNotifications());
+      dispatch(fetchConversations());
+    }, [dispatch])
+  );
 
   // Map vendors → NearbyShopsCarousel shape
   const shopsData = vendors.map((v) => ({
@@ -78,9 +80,9 @@ const HomeScreen = () => {
         {/* UI Polish: Added a wrapper to create a clean gap below the card */}
         <View style={styles.cardWrapper}>
           <CustomerCard
-            name={profile?.fullName || user?.firstName || "George"}
+            name={profile?.fullName || user?.firstName || ''}
             phone={profile?.phone || profile?.email || user?.email || ''}
-            city={profile?.city || user?.city || "Amman"}
+            city={profile?.city || user?.city || ''}
             profileImage={profile?.profileImage ? { uri: profile.profileImage } : undefined}
             onProfilePress={() => router.push('/customer/ProfileCust')}
             onCarPress={() => router.push('/customer/ProfileCust')}

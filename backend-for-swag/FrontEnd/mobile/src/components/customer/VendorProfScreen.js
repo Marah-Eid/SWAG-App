@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons, Entypo } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
 import BottomTabs from '../common/BottomTabs';
@@ -42,12 +42,14 @@ const VendorProfScreen = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
 
-  useEffect(() => {
-    if (vendorId) {
-      dispatch(fetchVendorById(vendorId));
-      dispatch(fetchPosts({ vendorId }));
-    }
-  }, [vendorId, dispatch]);
+  useFocusEffect(
+    useCallback(() => {
+      if (vendorId) {
+        dispatch(fetchVendorById(vendorId));
+        dispatch(fetchPosts({ vendorId }));
+      }
+    }, [vendorId, dispatch])
+  );
 
   useEffect(() => {
     if (selectedVendor) {

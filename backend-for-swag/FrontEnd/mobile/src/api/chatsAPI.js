@@ -63,6 +63,15 @@ const chatsAPI = {
       return { success: false, error: error.response?.data?.message || 'Failed to mark as read' };
     }
   },
+
+  heartbeat: async () => {
+    try {
+      await apiClient.put('/auth/heartbeat');
+      return { success: true };
+    } catch {
+      return { success: false };
+    }
+  },
 };
 
 export default chatsAPI;

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 
@@ -10,20 +11,7 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.88;
 const CARD_MARGIN = 15;
 
-const ShopLogo = ({ source, fallback, logoStyle }) => {
-  const [error, setError] = useState(false);
-  return (
-    <Image
-      source={error ? fallback : source}
-      style={logoStyle}
-      onError={() => setError(true)}
-    />
-  );
-};
-
 const NearbyShopCard = ({ shop, isVendor, router }) => {
-  const [bgSrc, setBgSrc] = useState(shop.bgImage || defaultBanner);
-
   const goToProfile = () => router.push(
     isVendor
       ? { pathname: '/vendor/otherVendorProfile', params: { vendorId: shop.id } }
@@ -32,45 +20,45 @@ const NearbyShopCard = ({ shop, isVendor, router }) => {
 
   return (
     <View style={styles.cardWrapper}>
-      <ImageBackground
-        source={bgSrc}
-        onError={() => setBgSrc(defaultBanner)}
-        style={styles.card}
-        imageStyle={{ borderRadius: 16 }}
-      >
-        <View style={styles.darkOverlay}>
+      <ExpoImage
+        source={shop.bgImage || defaultBanner}
+        placeholder={defaultBanner}
+        style={StyleSheet.absoluteFillObject}
+        contentFit="cover"
+        transition={300}
+      />
+      <View style={styles.darkOverlay}>
 
-          <TouchableOpacity
-            onPress={() => router.push(isVendor ? '/vendor/NearByVen' : '/customer/NearByCust')}
-            style={styles.badgeContainer}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.cardHeader}>Nearby Shops</Text>
+        <TouchableOpacity
+          onPress={() => router.push(isVendor ? '/vendor/NearByVen' : '/customer/NearByCust')}
+          style={styles.badgeContainer}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.cardHeader}>Nearby Shops</Text>
+        </TouchableOpacity>
+
+        <View style={styles.contentRow}>
+          <TouchableOpacity onPress={goToProfile} activeOpacity={0.8}>
+            <ExpoImage source={shop.logo || defaultLogo} placeholder={defaultLogo} style={styles.logo} contentFit="cover" transition={200} />
           </TouchableOpacity>
 
-          <View style={styles.contentRow}>
-            <TouchableOpacity onPress={goToProfile} activeOpacity={0.8}>
-              <ShopLogo source={shop.logo} fallback={defaultLogo} logoStyle={styles.logo} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.textContainer} onPress={goToProfile} activeOpacity={0.8}>
-              <Text style={styles.shopName} numberOfLines={1}>{shop.name}</Text>
-              {shop.sub ? (
-                <Text style={styles.shopSub} numberOfLines={1}>{shop.sub}</Text>
-              ) : (
-                <View style={styles.infoRow}>
-                  <Text style={styles.shopSub} numberOfLines={1}>{shop.phone}</Text>
-                  <Text style={styles.shopSub}> / </Text>
-                  <Text style={styles.shopSub} numberOfLines={1}>{shop.city}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.bioText} numberOfLines={2}>{shop.bio}</Text>
-
+          <TouchableOpacity style={styles.textContainer} onPress={goToProfile} activeOpacity={0.8}>
+            <Text style={styles.shopName} numberOfLines={1}>{shop.name}</Text>
+            {shop.sub ? (
+              <Text style={styles.shopSub} numberOfLines={1}>{shop.sub}</Text>
+            ) : (
+              <View style={styles.infoRow}>
+                <Text style={styles.shopSub} numberOfLines={1}>{shop.phone}</Text>
+                <Text style={styles.shopSub}> / </Text>
+                <Text style={styles.shopSub} numberOfLines={1}>{shop.city}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
-      </ImageBackground>
+
+        <Text style={styles.bioText} numberOfLines={2}>{shop.bio}</Text>
+
+      </View>
     </View>
   );
 };
@@ -122,16 +110,13 @@ const styles = StyleSheet.create({
     height: 170,
     marginRight: CARD_MARGIN,
     borderRadius: 16,
+    overflow: 'hidden',
     backgroundColor: '#FFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
-  },
-  card: {
-    width: '100%',
-    height: '100%',
   },
   darkOverlay: {
     flex: 1,
