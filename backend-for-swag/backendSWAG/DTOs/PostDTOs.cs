@@ -25,6 +25,7 @@ public class PostDto
     public bool IsSaved { get; set; }
     public List<int> CategoryIds { get; set; } = new();
     public List<int> EventTypeIds { get; set; } = new();
+    public List<Guid> CollectionIds { get; set; } = new();
 }
 
 public class CreatePostRequest

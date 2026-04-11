@@ -160,13 +160,23 @@ public class VendorCollectionDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public int PostCount { get; set; }
+    public List<Guid> PostIds { get; set; } = new();
 }
 
 public class CreateCollectionRequest
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public List<Guid> PostIds { get; set; } = new();
+}
+
+public class UpdateCollectionRequest
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public List<Guid>? PostIds { get; set; }
 }
 
 public class SearchResultDto

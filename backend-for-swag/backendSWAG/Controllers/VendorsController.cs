@@ -458,6 +458,7 @@ public class VendorsController : ControllerBase
             .Include(ps => ps.Post).ThenInclude(p => p.Saves)
             .Include(ps => ps.Post).ThenInclude(p => p.Comments)
             .Include(ps => ps.Post).ThenInclude(p => p.Categories)
+            .Include(ps => ps.Post).ThenInclude(p => p.CollectionPosts)
             .OrderByDescending(ps => ps.CreatedAt)
             .ToListAsync();
 
@@ -487,7 +488,8 @@ public class VendorsController : ControllerBase
                 SaveCount = p.Saves.Count,
                 IsLiked = p.Likes.Any(l => l.LikerId == myId && l.LikerType == UserRole.Vendor),
                 IsSaved = true,
-                CategoryIds = p.Categories.Select(c => c.ItemId).ToList()
+                CategoryIds = p.Categories.Select(c => c.ItemId).ToList(),
+                CollectionIds = p.CollectionPosts.Select(cp => cp.CollectionId).ToList()
             };
         });
 
@@ -509,7 +511,33 @@ public class VendorsController : ControllerBase
                 Name = vc.Name,
                 Description = vc.Description,
                 CreatedAt = vc.CreatedAt,
-                PostCount = vc.Posts.Count
+                UpdatedAt = vc.UpdatedAt,
+                PostCount = vc.Posts.Count,
+                PostIds = vc.Posts.Select(cp => cp.PostId).ToList()
+            })
+            .ToListAsync();
+
+        return Ok(collections);
+    }
+
+    // GET /api/vendors/{vendorId}/collections  (public)
+    [HttpGet("{vendorId:guid}/collections")]
+    [Authorize]
+    public async Task<IActionResult> GetVendorCollections(Guid vendorId)
+    {
+        var collections = await _db.VendorCollections
+            .Where(vc => vc.VendorId == vendorId)
+            .Include(vc => vc.Posts)
+            .OrderByDescending(vc => vc.CreatedAt)
+            .Select(vc => new VendorCollectionDto
+            {
+                Id = vc.Id,
+                Name = vc.Name,
+                Description = vc.Description,
+                CreatedAt = vc.CreatedAt,
+                UpdatedAt = vc.UpdatedAt,
+                PostCount = vc.Posts.Count,
+                PostIds = vc.Posts.Select(cp => cp.PostId).ToList()
             })
             .ToListAsync();
 
@@ -534,13 +562,95 @@ public class VendorsController : ControllerBase
         _db.VendorCollections.Add(collection);
         await _db.SaveChangesAsync();
 
+        var addedPostIds = new List<Guid>();
+        if (req.PostIds != null && req.PostIds.Count > 0)
+        {
+            var ownedPostIds = await _db.VendorPosts
+                .Where(p => p.VendorId == _currentUser.UserId && req.PostIds.Contains(p.Id))
+                .Select(p => p.Id)
+                .ToListAsync();
+
+            foreach (var postId in ownedPostIds.Distinct())
+            {
+                _db.VendorCollectionPosts.Add(new VendorCollectionPost
+                {
+                    CollectionId = collection.Id,
+                    PostId = postId
+                });
+                addedPostIds.Add(postId);
+            }
+            await _db.SaveChangesAsync();
+        }
+
         return CreatedAtAction(nameof(GetCollections), new VendorCollectionDto
         {
             Id = collection.Id,
             Name = collection.Name,
             Description = collection.Description,
             CreatedAt = collection.CreatedAt,
-            PostCount = 0
+            UpdatedAt = collection.UpdatedAt,
+            PostCount = addedPostIds.Count,
+            PostIds = addedPostIds
+        });
+    }
+
+    // PUT /api/vendors/me/collections/{collectionId}
+    [HttpPut("me/collections/{collectionId:guid}")]
+    [Authorize(Roles = "Vendor")]
+    public async Task<IActionResult> UpdateCollection(Guid collectionId, [FromBody] UpdateCollectionRequest req)
+    {
+        var collection = await _db.VendorCollections
+            .Include(vc => vc.Posts)
+            .FirstOrDefaultAsync(vc => vc.Id == collectionId && vc.VendorId == _currentUser.UserId);
+
+        if (collection == null) return NotFound(new { message = "Collection not found." });
+
+        if (req.Name != null)
+        {
+            if (string.IsNullOrWhiteSpace(req.Name))
+                return BadRequest(new { message = "Collection name cannot be empty." });
+            collection.Name = req.Name.Trim();
+        }
+
+        if (req.Description != null)
+            collection.Description = req.Description;
+
+        if (req.PostIds != null)
+        {
+            _db.VendorCollectionPosts.RemoveRange(collection.Posts);
+
+            var ownedPostIds = await _db.VendorPosts
+                .Where(p => p.VendorId == _currentUser.UserId && req.PostIds.Contains(p.Id))
+                .Select(p => p.Id)
+                .ToListAsync();
+
+            foreach (var postId in ownedPostIds.Distinct())
+            {
+                _db.VendorCollectionPosts.Add(new VendorCollectionPost
+                {
+                    CollectionId = collection.Id,
+                    PostId = postId
+                });
+            }
+        }
+
+        collection.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        var postIds = await _db.VendorCollectionPosts
+            .Where(cp => cp.CollectionId == collection.Id)
+            .Select(cp => cp.PostId)
+            .ToListAsync();
+
+        return Ok(new VendorCollectionDto
+        {
+            Id = collection.Id,
+            Name = collection.Name,
+            Description = collection.Description,
+            CreatedAt = collection.CreatedAt,
+            UpdatedAt = collection.UpdatedAt,
+            PostCount = postIds.Count,
+            PostIds = postIds
         });
     }
 

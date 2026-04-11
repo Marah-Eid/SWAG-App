@@ -19,8 +19,6 @@ import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 
 const { width, height } = Dimensions.get('window');
 
-let GLOBAL_DESCRIPTIONS = {};
-
 const defaultBg = require('../../../assets/images/nmk-pic.png');
 const defaultLogo = require('../../../assets/images/carag-icon.png');
 
@@ -35,7 +33,8 @@ const VendorProfileScreen = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [categoriesList, setCategoriesList] = useState(['Part Posts', 'Events', 'Services', 'Reviews']);
+  const [collections, setCollections] = useState([]);
+  const [selectedCollectionId, setSelectedCollectionId] = useState(null);
 
   const isPending = !myProfile || myProfile.status !== 'active';
 
@@ -51,8 +50,6 @@ const VendorProfileScreen = () => {
     }
   };
 
-  const [activeTab, setActiveTab] = useState('Part Posts');
-
   // States for Editing
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
@@ -62,12 +59,15 @@ const VendorProfileScreen = () => {
     (p) => myProfile && String(p.vendorId) === String(myProfile.id)
   );
 
-  // Posts shown in the active tab
-  const posts = myPosts.filter((p) => {
-    if (activeTab === 'Events') return p.type === 'event';
-    if (activeTab === 'Part Posts') return p.type !== 'event';
-    return false; // Services and Reviews tabs have no posts feed
-  });
+  // Posts shown — filtered by selected custom collection (or all if none selected)
+  const posts = selectedCollectionId
+    ? myPosts.filter((p) => Array.isArray(p.collectionIds) && p.collectionIds.includes(selectedCollectionId))
+    : myPosts;
+
+  const loadCollections = useCallback(async () => {
+    const result = await vendorAPI.getMyCollections();
+    if (result.success) setCollections(result.data || []);
+  }, []);
 
   const [vendorData, setVendorData] = useState({
     name: '', location: '', rating: 0, followers: 0, following: 0, bio: '',
@@ -80,7 +80,8 @@ const VendorProfileScreen = () => {
       dispatch(fetchMyVendorProfile());
       dispatch(fetchMyFollowing());
       dispatch(fetchPosts());
-    }, [dispatch])
+      loadCollections();
+    }, [dispatch, loadCollections])
   );
 
   // Sync Redux profile → local vendorData
@@ -218,18 +219,7 @@ const VendorProfileScreen = () => {
   useEffect(() => {
     if (params.newPost) { try { addContentToFeed(JSON.parse(params.newPost)); } catch (e) { } }
     if (params.newEvent) { try { addContentToFeed(JSON.parse(params.newEvent)); } catch (e) { } }
-    if (params.newCategory) {
-      if (params.newDescription) GLOBAL_DESCRIPTIONS[params.newCategory] = params.newDescription;
-      setCategoriesList(prev => {
-        if (prev.includes(params.newCategory)) return prev;
-        const updatedList = [...prev];
-        const reviewIndex = updatedList.indexOf('Reviews');
-        if (reviewIndex !== -1) updatedList.splice(reviewIndex, 0, params.newCategory);
-        else updatedList.push(params.newCategory);
-        return updatedList;
-      });
-    }
-  }, [params.newPost, params.newEvent, params.newCategory, params.newDescription]);
+  }, [params.newPost, params.newEvent]);
 
   const addContentToFeed = (newItem) => {
     setPosts(prevPosts => {
@@ -249,27 +239,25 @@ const VendorProfileScreen = () => {
     }
   };
 
-  const handleDeleteCategory = (categoryToRemove) => {
-    const confirmDelete = () => {
-      setCategoriesList(prev => {
-        const newList = prev.filter(c => c !== categoryToRemove);
-        // If we deleted the active tab, switch to the first available category
-        if (activeTab === categoryToRemove && newList.length > 0) {
-          setActiveTab(newList[0]);
-        } else if (newList.length === 0) {
-          setActiveTab('');
-        }
-        return newList;
-      });
-      delete GLOBAL_DESCRIPTIONS[categoryToRemove];
+  const handleDeleteCategory = (collection) => {
+    const confirmDelete = async () => {
+      const result = await vendorAPI.deleteCollection(collection.id);
+      if (!result.success) {
+        if (Platform.OS === 'web') window.alert(result.error || 'Failed to delete category.');
+        else Alert.alert('Error', result.error || 'Failed to delete category.');
+        return;
+      }
+      if (selectedCollectionId === collection.id) setSelectedCollectionId(null);
+      await loadCollections();
+      dispatch(fetchPosts());
     };
 
     if (Platform.OS === 'web') {
-      if (window.confirm(`Are you sure you want to delete the category "${categoryToRemove}"?`)) confirmDelete();
+      if (window.confirm(`Are you sure you want to delete the category "${collection.name}"?`)) confirmDelete();
     } else {
       Alert.alert(
         "Delete Category",
-        `Are you sure you want to delete "${categoryToRemove}"?`,
+        `Are you sure you want to delete "${collection.name}"?`,
         [
           { text: "Cancel", style: "cancel" },
           { text: "Delete", style: "destructive", onPress: confirmDelete }
@@ -499,36 +487,55 @@ const VendorProfileScreen = () => {
           ))}
         </View>
 
-        {/* --- CATEGORY PILLS --- */}
+        {/* --- CATEGORY PILLS (dynamic, vendor's custom collections) --- */}
         <View style={styles.categoriesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
             <TouchableOpacity style={styles.addCatTab} onPress={() => isPending ? handleRestrictedAction() : router.push('/vendor/AddCategoryVen')} activeOpacity={0.7}>
               <Ionicons name="add-circle" size={22} color="#FFFFFF" />
             </TouchableOpacity>
 
-            {categoriesList.map((cat) => (
-              <View key={cat} style={{ position: 'relative' }}>
-                <TouchableOpacity
-                  style={[styles.catTab, activeTab === cat && styles.catTabActive]}
-                  onPress={() => { setActiveTab(cat); router.push({ pathname: '/vendor/VendorsCategoryVen', params: { category: cat, description: GLOBAL_DESCRIPTIONS[cat] || '' } }); }}
-                  onLongPress={() => handleDeleteCategory(cat)} // Long press to delete!
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.catText, activeTab === cat && styles.catTextActive]}>{cat}</Text>
-                </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.catTab, selectedCollectionId === null && styles.catTabActive]}
+              onPress={() => setSelectedCollectionId(null)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.catText, selectedCollectionId === null && styles.catTextActive]}>All</Text>
+            </TouchableOpacity>
 
-                {/* Show a red "X" badge if they are in "Edit Profile" mode */}
-                {isEditing && (
+            {collections.map((col) => {
+              const isActive = selectedCollectionId === col.id;
+              return (
+                <View key={col.id} style={{ position: 'relative', flexDirection: 'row', alignItems: 'center' }}>
                   <TouchableOpacity
-                    style={styles.deleteCatBadge}
-                    onPress={() => handleDeleteCategory(cat)}
-                    activeOpacity={0.7}
+                    style={[styles.catTab, isActive && styles.catTabActive, isActive && { paddingRight: 14 }]}
+                    onPress={() => setSelectedCollectionId(isActive ? null : col.id)}
+                    onLongPress={() => handleDeleteCategory(col)}
+                    activeOpacity={0.8}
                   >
-                    <Ionicons name="close" size={12} color="#FFF" />
+                    <Text style={[styles.catText, isActive && styles.catTextActive]}>{col.name}</Text>
+                    {isActive && (
+                      <TouchableOpacity
+                        style={styles.editCatPencil}
+                        onPress={() => router.push({ pathname: '/vendor/AddCategoryVen', params: { collectionId: col.id } })}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="pencil" size={12} color="#8A1C27" />
+                      </TouchableOpacity>
+                    )}
                   </TouchableOpacity>
-                )}
-              </View>
-            ))}
+
+                  {isEditing && (
+                    <TouchableOpacity
+                      style={styles.deleteCatBadge}
+                      onPress={() => handleDeleteCategory(col)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="close" size={12} color="#FFF" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
           </ScrollView>
         </View>
 
@@ -683,11 +690,12 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#E2E8F0', marginLeft: 60 },
 
   categoriesContainer: { marginTop: 25, marginBottom: 20, paddingLeft: 20 },
-  catTab: { backgroundColor: '#FFFFFF', paddingVertical: 10, paddingHorizontal: 25, borderRadius: 20, marginRight: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2, alignItems: 'center', justifyContent: 'center' },
+  catTab: { backgroundColor: '#FFFFFF', paddingVertical: 10, paddingHorizontal: 25, borderRadius: 20, marginRight: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
   catTabActive: { backgroundColor: '#8A1C27' },
   catText: { fontWeight: '700', color: '#8391A1', fontSize: 13 },
   catTextActive: { color: '#FFFFFF' },
   addCatTab: { backgroundColor: '#2D3E5E', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, marginRight: 12, alignItems: 'center', justifyContent: 'center', elevation: 2 },
+  editCatPencil: { marginLeft: 8, backgroundColor: '#FFFFFF', width: 22, height: 22, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
 
   // Custom styling for the tiny red delete badge
   deleteCatBadge: {

@@ -10,15 +10,18 @@ import {
   Alert,
   Image,
   Modal,
-  StatusBar
+  StatusBar,
+  Platform,
+  ActivityIndicator
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 
 import BottomTabsVen from '../commonV/BottomTabsVen';
 import VendorPosts from '../commonV/VendorPosts';
 import { fetchPosts } from '../../store/slices/postsSlice';
+import vendorAPI from '../../api/vendorAPI';
 
 const defaultLogo = require('../../../assets/images/carag-icon.png');
 const defaultBg = require('../../../assets/images/tcic-post.png');
@@ -26,11 +29,15 @@ const defaultBg = require('../../../assets/images/tcic-post.png');
 const AddCategoryVenScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { collectionId } = useLocalSearchParams();
+  const isEditMode = !!collectionId;
 
   // FORM STATE
   const [categoryName, setCategoryName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedPostIds, setSelectedPostIds] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingExisting, setLoadingExisting] = useState(isEditMode);
 
   // PREVIEW STATE
   const [previewPost, setPreviewPost] = useState(null);
@@ -41,6 +48,26 @@ const AddCategoryVenScreen = () => {
   useEffect(() => {
     dispatch(fetchPosts());
   }, [dispatch]);
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (!isEditMode) return;
+    let cancelled = false;
+    (async () => {
+      const result = await vendorAPI.getMyCollections();
+      if (cancelled) return;
+      if (result.success) {
+        const found = (result.data || []).find((c) => String(c.id) === String(collectionId));
+        if (found) {
+          setCategoryName(found.name || '');
+          setDescription(found.description || '');
+          setSelectedPostIds((found.postIds || []).map(String));
+        }
+      }
+      setLoadingExisting(false);
+    })();
+    return () => { cancelled = true; };
+  }, [isEditMode, collectionId]);
 
   const myPosts = reduxPosts
     .filter((p) => myProfile && String(p.vendorId) === String(myProfile.id))
@@ -55,25 +82,72 @@ const AddCategoryVenScreen = () => {
 
   // TOGGLE SELECTION
   const togglePostSelection = (id) => {
+    const key = String(id);
     setSelectedPostIds((prev) =>
-      prev.includes(id) ? prev.filter(postId => postId !== id) : [...prev, id]
+      prev.includes(key) ? prev.filter((postId) => postId !== key) : [...prev, key]
     );
   };
 
+  const showError = (msg) => {
+    if (Platform.OS === 'web') window.alert(msg);
+    else Alert.alert('Error', msg);
+  };
+
   // SUBMIT
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!categoryName.trim()) {
-      Alert.alert('Missing Info', 'Please give your category a name.');
+      if (Platform.OS === 'web') window.alert('Please give your category a name.');
+      else Alert.alert('Missing Info', 'Please give your category a name.');
       return;
     }
 
-    router.push({
-      pathname: '/vendor/ProfileVen',
-      params: {
-        newCategory: categoryName,
-        newDescription: description
+    setSubmitting(true);
+    const payload = {
+      name: categoryName.trim(),
+      description: description.trim(),
+      postIds: selectedPostIds,
+    };
+
+    const result = isEditMode
+      ? await vendorAPI.updateCollection(collectionId, payload)
+      : await vendorAPI.createCollection(payload);
+
+    setSubmitting(false);
+
+    if (!result.success) {
+      showError(result.error || 'Failed to save category.');
+      return;
+    }
+
+    // Refresh posts so the new collectionIds propagate to the profile feed filter
+    dispatch(fetchPosts());
+    router.back();
+  };
+
+  const handleDeleteCollection = () => {
+    const confirmDelete = async () => {
+      setSubmitting(true);
+      const result = await vendorAPI.deleteCollection(collectionId);
+      setSubmitting(false);
+      if (!result.success) {
+        showError(result.error || 'Failed to delete category.');
+        return;
       }
-    });
+      dispatch(fetchPosts());
+      router.back();
+    };
+    if (Platform.OS === 'web') {
+      if (window.confirm('Delete this category? Posts will remain but will no longer be in this category.')) confirmDelete();
+    } else {
+      Alert.alert(
+        'Delete Category',
+        'Posts will remain but will no longer be in this category.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: confirmDelete },
+        ]
+      );
+    }
   };
 
   return (
@@ -86,7 +160,7 @@ const AddCategoryVenScreen = () => {
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>New Category</Text>
+        <Text style={styles.headerTitle}>{isEditMode ? 'Edit Category' : 'New Category'}</Text>
 
         <View style={styles.headerSideBtn} />
       </View>
@@ -135,7 +209,7 @@ const AddCategoryVenScreen = () => {
 
           <View style={styles.gridContainer}>
             {myPosts.map((post) => {
-              const isSelected = selectedPostIds.includes(post.id);
+              const isSelected = selectedPostIds.includes(String(post.id));
               return (
                 <TouchableOpacity
                   key={post.id}
@@ -167,9 +241,19 @@ const AddCategoryVenScreen = () => {
         </View>
 
         {/* SUBMIT BUTTON */}
-        <TouchableOpacity style={styles.submitButton} onPress={handleAddCategory} activeOpacity={0.8}>
-          <Text style={styles.submitButtonText}>Create Category</Text>
+        <TouchableOpacity style={[styles.submitButton, submitting && { opacity: 0.7 }]} onPress={handleAddCategory} activeOpacity={0.8} disabled={submitting || loadingExisting}>
+          {submitting
+            ? <ActivityIndicator size="small" color="#FFFFFF" />
+            : <Text style={styles.submitButtonText}>{isEditMode ? 'Save Changes' : 'Create Category'}</Text>
+          }
         </TouchableOpacity>
+
+        {isEditMode && (
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteCollection} activeOpacity={0.8} disabled={submitting}>
+            <Ionicons name="trash" size={18} color="#8A1C27" />
+            <Text style={styles.deleteButtonText}>Delete Category</Text>
+          </TouchableOpacity>
+        )}
 
       </ScrollView>
 
@@ -306,6 +390,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5
   },
+
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: 25,
+    borderWidth: 1.5,
+    borderColor: '#8A1C27',
+    backgroundColor: '#FFFFFF',
+  },
+  deleteButtonText: { color: '#8A1C27', fontSize: 15, fontWeight: '800', marginLeft: 8 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center' },
   modalCloseArea: { ...StyleSheet.absoluteFillObject },

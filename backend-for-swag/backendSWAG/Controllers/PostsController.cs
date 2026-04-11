@@ -41,6 +41,7 @@ public class PostsController : ControllerBase
             .Include(p => p.Saves)
             .Include(p => p.Comments)
             .Include(p => p.EventTypes)
+            .Include(p => p.CollectionPosts)
             .Where(p => !p.Vendor.IsDeleted && p.Vendor.Status == VendorStatus.Active);
 
         if (vendorId.HasValue)
@@ -78,6 +79,7 @@ public class PostsController : ControllerBase
             .Include(p => p.Saves)
             .Include(p => p.Comments)
             .Include(p => p.EventTypes)
+            .Include(p => p.CollectionPosts)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (post == null) return NotFound();
@@ -411,6 +413,7 @@ public class PostsController : ControllerBase
             .Include(p => p.Saves)
             .Include(p => p.Comments)
             .Include(p => p.EventTypes)
+            .Include(p => p.CollectionPosts)
             .Where(p => likedPostIds.Contains(p.Id) && !p.Vendor.IsDeleted)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
@@ -536,7 +539,8 @@ public class PostsController : ControllerBase
         IsLiked = p.Likes.Any(l => l.LikerId == myId && l.LikerType == myRole),
         IsSaved = p.Saves.Any(s => s.SaverId == myId && s.SaverType == myRole),
         CategoryIds = p.Categories.Select(c => c.ItemId).ToList(),
-        EventTypeIds = p.EventTypes.Select(et => et.EventTypeId).ToList()
+        EventTypeIds = p.EventTypes.Select(et => et.EventTypeId).ToList(),
+        CollectionIds = p.CollectionPosts.Select(cp => cp.CollectionId).ToList()
     };
 
     private static UserRole ParseRole(string role) => role switch

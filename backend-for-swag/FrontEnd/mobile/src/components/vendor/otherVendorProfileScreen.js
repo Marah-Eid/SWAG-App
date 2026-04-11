@@ -22,6 +22,7 @@ import BottomTabsVen from '../commonV/BottomTabsVen';
 import VendorPosts from '../commonV/VendorPosts';
 import { fetchVendorById, followVendor, unfollowVendor } from '../../store/slices/vendorSlice';
 import { fetchPosts } from '../../store/slices/postsSlice';
+import vendorAPI from '../../api/vendorAPI';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,7 +34,8 @@ const OtherVendorProfileScreen = () => {
   const dispatch = useDispatch();
   const { vendorId } = useLocalSearchParams();
 
-  const [activeTab, setActiveTab] = useState('Part Posts');
+  const [collections, setCollections] = useState([]);
+  const [selectedCollectionId, setSelectedCollectionId] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
 
   const { selectedVendor, loading, myProfile } = useSelector((state) => state.vendor);
@@ -45,6 +47,10 @@ const OtherVendorProfileScreen = () => {
       if (vendorId) {
         dispatch(fetchVendorById(vendorId));
         dispatch(fetchPosts({ vendorId }));
+        (async () => {
+          const result = await vendorAPI.getVendorCollections(vendorId);
+          if (result.success) setCollections(result.data || []);
+        })();
       }
     }, [vendorId, dispatch])
   );
@@ -135,10 +141,11 @@ const OtherVendorProfileScreen = () => {
     },
   ].filter(Boolean);
 
-  const CATEGORIES = ['Part Posts', 'Events', 'Services', 'Reviews'];
-
   const vendorPosts = posts
     .filter((p) => vendorId && String(p.vendorId) === String(vendorId))
+    .filter((p) => selectedCollectionId
+      ? Array.isArray(p.collectionIds) && p.collectionIds.includes(selectedCollectionId)
+      : true)
     .map((p) => ({
       id: p.id,
       vendorName: p.vendorShopName || vendor.shopName || '',
@@ -280,21 +287,24 @@ const OtherVendorProfileScreen = () => {
           ))}
         </View>
 
-        {/* --- CATEGORY PILLS --- */}
+        {/* --- CATEGORY PILLS (vendor's custom collections, read-only) --- */}
         <View style={styles.tabsContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
-            {CATEGORIES.map((cat) => {
-              const isTabActive = activeTab === cat;
+            <TouchableOpacity
+              style={[styles.pillTab, selectedCollectionId === null && styles.pillTabActive]}
+              onPress={() => setSelectedCollectionId(null)}
+            >
+              <Text style={[styles.pillTabText, selectedCollectionId === null && styles.pillTabTextActive]}>All</Text>
+            </TouchableOpacity>
+            {collections.map((col) => {
+              const isActive = selectedCollectionId === col.id;
               return (
                 <TouchableOpacity
-                  key={cat}
-                  style={[styles.pillTab, isTabActive && styles.pillTabActive]}
-                  onPress={() => {
-                    setActiveTab(cat);
-                    router.push({ pathname: '/commonScreensV/otherVendorsCategoryV', params: { category: cat } });
-                  }}
+                  key={col.id}
+                  style={[styles.pillTab, isActive && styles.pillTabActive]}
+                  onPress={() => setSelectedCollectionId(isActive ? null : col.id)}
                 >
-                  <Text style={[styles.pillTabText, isTabActive && styles.pillTabTextActive]}>{cat}</Text>
+                  <Text style={[styles.pillTabText, isActive && styles.pillTabTextActive]}>{col.name}</Text>
                 </TouchableOpacity>
               );
             })}

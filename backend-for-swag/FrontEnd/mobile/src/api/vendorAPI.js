@@ -154,12 +154,29 @@ const vendorAPI = {
     }
   },
 
-  createCollection: async (name) => {
+  createCollection: async ({ name, description, postIds = [] }) => {
     try {
-      const response = await apiClient.post('/vendors/me/collections', { name });
+      const response = await apiClient.post('/vendors/me/collections', {
+        name,
+        description,
+        postIds,
+      });
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.message || 'Failed to create collection' };
+    }
+  },
+
+  updateCollection: async (collectionId, { name, description, postIds }) => {
+    try {
+      const body = {};
+      if (name !== undefined) body.name = name;
+      if (description !== undefined) body.description = description;
+      if (postIds !== undefined) body.postIds = postIds;
+      const response = await apiClient.put(`/vendors/me/collections/${collectionId}`, body);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to update collection' };
     }
   },
 
@@ -169,6 +186,15 @@ const vendorAPI = {
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: error.response?.data?.message || 'Failed to delete collection' };
+    }
+  },
+
+  getVendorCollections: async (vendorId) => {
+    try {
+      const response = await apiClient.get(`/vendors/${vendorId}/collections`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to load collections' };
     }
   },
 };

@@ -260,6 +260,8 @@ public class CustomersController : ControllerBase
                 .ThenInclude(p => p.Vendor)
             .Include(ps => ps.Post)
                 .ThenInclude(p => p.Categories)
+            .Include(ps => ps.Post)
+                .ThenInclude(p => p.CollectionPosts)
             .OrderByDescending(ps => ps.CreatedAt)
             .Select(ps => MapPost(ps.Post, myId, UserRole.Customer))
             .ToListAsync();
@@ -290,6 +292,7 @@ public class CustomersController : ControllerBase
         SaveCount = p.Saves.Count,
         IsLiked = p.Likes.Any(l => l.LikerId == myId && l.LikerType == myRole),
         IsSaved = p.Saves.Any(s => s.SaverId == myId && s.SaverType == myRole),
-        CategoryIds = p.Categories.Select(c => c.ItemId).ToList()
+        CategoryIds = p.Categories.Select(c => c.ItemId).ToList(),
+        CollectionIds = p.CollectionPosts.Select(cp => cp.CollectionId).ToList()
     };
 }
