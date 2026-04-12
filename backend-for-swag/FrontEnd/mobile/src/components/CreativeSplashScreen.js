@@ -44,7 +44,7 @@ const CreativeSplashScreen = ({ onFinish }) => {
             if (!exitTriggered.current) {
                 triggerExit();
             }
-        }, 8000);
+        }, 16000);
 
         return () => clearTimeout(failsafeTimer);
     }, []);
