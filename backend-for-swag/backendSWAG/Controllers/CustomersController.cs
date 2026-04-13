@@ -169,7 +169,7 @@ public class CustomersController : ControllerBase
     {
         var myId = _currentUser.UserId;
         var follows = await _db.CustomerFollows
-            .Where(cf => cf.CustomerId == myId && !cf.Vendor.IsDeleted)
+            .Where(cf => cf.CustomerId == myId && !cf.Vendor.IsDeleted && cf.Vendor.Status == VendorStatus.Active)
             .Include(cf => cf.Vendor)
                 .ThenInclude(v => v.Reviews)
             .Include(cf => cf.Vendor)
@@ -204,7 +204,7 @@ public class CustomersController : ControllerBase
     [HttpPost("me/following/{vendorId:guid}")]
     public async Task<IActionResult> FollowVendor(Guid vendorId)
     {
-        var vendor = await _db.Vendors.FirstOrDefaultAsync(v => v.Id == vendorId && !v.IsDeleted);
+        var vendor = await _db.Vendors.FirstOrDefaultAsync(v => v.Id == vendorId && !v.IsDeleted && v.Status == VendorStatus.Active);
         if (vendor == null) return NotFound(new { message = "Vendor not found." });
 
         bool alreadyFollows = await _db.CustomerFollows

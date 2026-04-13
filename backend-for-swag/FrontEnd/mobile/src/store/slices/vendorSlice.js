@@ -202,6 +202,31 @@ const vendorSlice = createSlice({
         if (state.myProfile) {
           state.myProfile.followingCount = Math.max(0, (state.myProfile.followingCount || 0) - 1);
         }
+      })
+      // Cross-slice: keep vendor list fresh when a customer follows/unfollows
+      .addCase('customer/followVendor/fulfilled', (state, action) => {
+        const vendorId = action.payload?.vendorId ?? action.payload;
+        const v = state.vendors.find((v) => String(v.id) === String(vendorId));
+        if (v) {
+          v.isFollowed = true;
+          v.followerCount = (v.followerCount || 0) + 1;
+        }
+        if (state.selectedVendor && String(state.selectedVendor.id) === String(vendorId)) {
+          state.selectedVendor.isFollowed = true;
+          state.selectedVendor.followerCount = (state.selectedVendor.followerCount || 0) + 1;
+        }
+      })
+      .addCase('customer/unfollowVendor/fulfilled', (state, action) => {
+        const vendorId = action.payload;
+        const v = state.vendors.find((v) => String(v.id) === String(vendorId));
+        if (v) {
+          v.isFollowed = false;
+          v.followerCount = Math.max(0, (v.followerCount || 0) - 1);
+        }
+        if (state.selectedVendor && String(state.selectedVendor.id) === String(vendorId)) {
+          state.selectedVendor.isFollowed = false;
+          state.selectedVendor.followerCount = Math.max(0, (state.selectedVendor.followerCount || 0) - 1);
+        }
       });
   },
 });

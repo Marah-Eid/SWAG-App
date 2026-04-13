@@ -132,7 +132,7 @@ const VendorProfScreen = () => {
     workHours && {
       id: 6, label: 'Work hours', text: workHours, textColor: '#22C55E', iconName: 'time'
     },
-    {
+    v.status === 'active' && {
       id: 7, label: 'Rate',
       text: `${v.averageRating?.toFixed(1) || '0.0'} rated ( ${v.reviewCount || 0} Reviews )`,
       textColor: '#D32F2F',

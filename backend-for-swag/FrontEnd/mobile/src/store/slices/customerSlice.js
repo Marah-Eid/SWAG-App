@@ -48,9 +48,16 @@ export const fetchFollowing = createAsyncThunk(
 
 export const followVendor = createAsyncThunk(
   'customer/followVendor',
-  async (vendorId, { rejectWithValue }) => {
+  async (vendorId, { getState, rejectWithValue }) => {
     const result = await customerAPI.followVendor(vendorId);
-    if (result.success) return vendorId;
+    if (result.success) {
+      const state = getState();
+      const vendorData =
+        (state.vendor.selectedVendor && String(state.vendor.selectedVendor.id) === String(vendorId))
+          ? state.vendor.selectedVendor
+          : state.vendor.vendors.find((v) => String(v.id) === String(vendorId)) || null;
+      return { vendorId, vendorData };
+    }
     return rejectWithValue(result.error);
   }
 );
@@ -101,7 +108,18 @@ const customerSlice = createSlice({
       .addCase(fetchInterests.fulfilled, (state, action) => { state.interests = action.payload; })
       .addCase(saveInterests.fulfilled, (state, action) => { state.interests = action.payload; })
       .addCase(fetchFollowing.fulfilled, (state, action) => { state.following = action.payload; })
-      .addCase(fetchSavedPosts.fulfilled, (state, action) => { state.savedPosts = action.payload; });
+      .addCase(fetchSavedPosts.fulfilled, (state, action) => { state.savedPosts = action.payload; })
+      .addCase(followVendor.fulfilled, (state, action) => {
+        const { vendorId, vendorData } = action.payload;
+        const alreadyIn = state.following.some((v) => String(v.id) === String(vendorId));
+        if (!alreadyIn && vendorData) {
+          state.following.push({ ...vendorData, isFollowed: true });
+        }
+      })
+      .addCase(unfollowVendor.fulfilled, (state, action) => {
+        const vendorId = action.payload;
+        state.following = state.following.filter((v) => String(v.id) !== String(vendorId));
+      });
   },
 });
 

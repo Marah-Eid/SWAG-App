@@ -467,7 +467,9 @@ public class PostsController : ControllerBase
             return BadRequest(new { message = "Feedback is required." });
 
         var vendor = await _db.Vendors.FindAsync(req.VendorId);
-        if (vendor == null) return NotFound(new { message = "Vendor not found." });
+        if (vendor == null || vendor.IsDeleted) return NotFound(new { message = "Vendor not found." });
+        if (vendor.Status != VendorStatus.Active)
+            return BadRequest(new { message = "This vendor is not yet approved and cannot receive reviews." });
 
         var myId = _currentUser.UserId;
 

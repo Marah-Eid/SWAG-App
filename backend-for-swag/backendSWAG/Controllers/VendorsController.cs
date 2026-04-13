@@ -39,10 +39,7 @@ public class VendorsController : ControllerBase
             .Include(v => v.Reviews)
             .Include(v => v.Followers)
             .Include(v => v.VendorFollowers)
-            .Where(v => !v.IsDeleted);
-
-        if (status != null && Enum.TryParse<VendorStatus>(status, true, out var parsedStatus))
-            query = query.Where(v => v.Status == parsedStatus);
+            .Where(v => !v.IsDeleted && v.Status == VendorStatus.Active);
 
         if (!string.IsNullOrWhiteSpace(city))
             query = query.Where(v => v.City != null && v.City.ToLower().Contains(city.ToLower()));
@@ -96,7 +93,7 @@ public class VendorsController : ControllerBase
             .Include(v => v.VendorFollowers)
             .Include(v => v.VendorFollowing)
             .Include(v => v.Posts)
-            .FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted);
+            .FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted && v.Status == VendorStatus.Active);
 
         if (vendor == null) return NotFound();
 
@@ -270,6 +267,10 @@ public class VendorsController : ControllerBase
     [HttpGet("{id:guid}/followers")]
     public async Task<IActionResult> GetFollowers(Guid id)
     {
+        bool targetVisible = await _db.Vendors
+            .AnyAsync(v => v.Id == id && !v.IsDeleted && v.Status == VendorStatus.Active);
+        if (!targetVisible) return NotFound();
+
         var customerFollowers = await _db.CustomerFollows
             .Where(cf => cf.VendorId == id)
             .Include(cf => cf.Customer)
@@ -308,6 +309,10 @@ public class VendorsController : ControllerBase
     [HttpGet("{id:guid}/reviews")]
     public async Task<IActionResult> GetReviews(Guid id)
     {
+        bool targetVisible = await _db.Vendors
+            .AnyAsync(v => v.Id == id && !v.IsDeleted && v.Status == VendorStatus.Active);
+        if (!targetVisible) return NotFound();
+
         var reviews = await _db.Reviews
             .Where(r => r.VendorId == id)
             .Include(r => r.Customer)
@@ -334,6 +339,10 @@ public class VendorsController : ControllerBase
     [HttpGet("{id:guid}/following")]
     public async Task<IActionResult> GetVendorFollowingById(Guid id)
     {
+        bool targetVisible = await _db.Vendors
+            .AnyAsync(v => v.Id == id && !v.IsDeleted && v.Status == VendorStatus.Active);
+        if (!targetVisible) return NotFound();
+
         var follows = await _db.VendorFollows
             .Where(vf => vf.FollowerId == id && !vf.Following.IsDeleted)
             .Include(vf => vf.Following)
@@ -373,7 +382,7 @@ public class VendorsController : ControllerBase
     {
         var myId = _currentUser.UserId;
         var follows = await _db.VendorFollows
-            .Where(vf => vf.FollowerId == myId && !vf.Following.IsDeleted)
+            .Where(vf => vf.FollowerId == myId && !vf.Following.IsDeleted && vf.Following.Status == VendorStatus.Active)
             .Include(vf => vf.Following)
                 .ThenInclude(v => v.Reviews)
             .Include(vf => vf.Following)
@@ -412,7 +421,7 @@ public class VendorsController : ControllerBase
         if (vendorId == _currentUser.UserId)
             return BadRequest(new { message = "Cannot follow yourself." });
 
-        var target = await _db.Vendors.FirstOrDefaultAsync(v => v.Id == vendorId && !v.IsDeleted);
+        var target = await _db.Vendors.FirstOrDefaultAsync(v => v.Id == vendorId && !v.IsDeleted && v.Status == VendorStatus.Active);
         if (target == null) return NotFound();
 
         bool alreadyFollows = await _db.VendorFollows
@@ -425,6 +434,19 @@ public class VendorsController : ControllerBase
                 FollowerId = _currentUser.UserId,
                 FollowingId = vendorId
             });
+
+            var follower = await _db.Vendors.FindAsync(_currentUser.UserId);
+            string followerName = follower?.ShopName ?? follower?.FullName ?? "Someone";
+
+            _db.Notifications.Add(new Notification
+            {
+                RecipientId = vendorId,
+                RecipientType = UserRole.Vendor,
+                Type = NotificationType.NewFollower,
+                Title = "New Follower",
+                Body = $"{followerName} started following your shop."
+            });
+
             await _db.SaveChangesAsync();
         }
 

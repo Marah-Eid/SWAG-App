@@ -6,12 +6,13 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import searchAPI from '../../api/searchAPI';
 import VendorSearchBar from './VendorSearchBar';
 import SuggestedCarouselV from './SuggestedCarouselV';
 import VendorPosts from './VendorPosts';
 import BottomTabsVen from './BottomTabsVen';
+import { followVendor, unfollowVendor } from '../../store/slices/vendorSlice';
 
 const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 const defaultBg = require('../../../assets/images/default-banner.png');
@@ -20,6 +21,7 @@ const SearchResultsVScreen = () => {
   const { query } = useLocalSearchParams();
   const router = useRouter();
   const myProfile = useSelector((state) => state.vendor.myProfile);
+  const dispatch = useDispatch();
 
   const [results, setResults] = useState({ vendors: [], posts: [] });
   const [loading, setLoading] = useState(false);
@@ -80,6 +82,20 @@ const SearchResultsVScreen = () => {
     mediaHeight: p.mediaHeight,
   }));
 
+  const handleFollow = (vendorId, shouldFollow) => {
+    if (shouldFollow) {
+      dispatch(followVendor(vendorId));
+    } else {
+      dispatch(unfollowVendor(vendorId));
+    }
+    setResults((prev) => ({
+      ...prev,
+      vendors: (prev.vendors || []).map((v) =>
+        String(v.id) === String(vendorId) ? { ...v, isFollowed: shouldFollow } : v
+      ),
+    }));
+  };
+
   const hasVendors = vendorCards.length > 0;
   const hasPosts = postCards.length > 0;
   const hasResults = hasVendors || hasPosts;
@@ -117,7 +133,7 @@ const SearchResultsVScreen = () => {
           {hasVendors && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Vendors</Text>
-              <SuggestedCarouselV data={vendorCards} />
+              <SuggestedCarouselV data={vendorCards} onFollow={handleFollow} myId={myProfile?.id} />
             </View>
           )}
 

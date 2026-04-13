@@ -4,6 +4,7 @@ import {
   ActivityIndicator, TouchableOpacity, StyleSheet
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 
 import searchAPI from '../../api/searchAPI';
@@ -11,6 +12,7 @@ import CustomSearchBar from './CustomSearchBar';
 import SuggestedCarousel from './SuggestedCarousel';
 import CustomerPosts from './CustomerPosts';
 import BottomTabs from './BottomTabs';
+import { followVendor, unfollowVendor } from '../../store/slices/customerSlice';
 
 const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 const defaultBg = require('../../../assets/images/default-banner.png');
@@ -18,6 +20,7 @@ const defaultBg = require('../../../assets/images/default-banner.png');
 const SearchResultsScreen = () => {
   const { query } = useLocalSearchParams();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [results, setResults] = useState({ vendors: [], posts: [] });
   const [loading, setLoading] = useState(false);
@@ -78,6 +81,20 @@ const SearchResultsScreen = () => {
     mediaHeight: p.mediaHeight,
   }));
 
+  const handleFollow = (vendorId, shouldFollow) => {
+    if (shouldFollow) {
+      dispatch(followVendor(vendorId));
+    } else {
+      dispatch(unfollowVendor(vendorId));
+    }
+    setResults((prev) => ({
+      ...prev,
+      vendors: (prev.vendors || []).map((v) =>
+        String(v.id) === String(vendorId) ? { ...v, isFollowed: shouldFollow } : v
+      ),
+    }));
+  };
+
   const hasVendors = vendorCards.length > 0;
   const hasPosts = postCards.length > 0;
   const hasResults = hasVendors || hasPosts;
@@ -115,7 +132,7 @@ const SearchResultsScreen = () => {
           {hasVendors && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Vendors</Text>
-              <SuggestedCarousel data={vendorCards} />
+              <SuggestedCarousel data={vendorCards} onFollow={handleFollow} />
             </View>
           )}
 

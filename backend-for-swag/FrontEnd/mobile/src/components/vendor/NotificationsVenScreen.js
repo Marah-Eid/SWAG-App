@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   StatusBar,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import NotificationCard from '../common/NotificationCard';
 import BottomTabsVen from '../commonV/BottomTabsVen';
@@ -20,9 +21,18 @@ export default function NotificationsVenScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { notifications, loading } = useSelector((state) => state.notifications);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    dispatch(fetchNotifications());
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(fetchNotifications());
+    }, [dispatch])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await dispatch(fetchNotifications());
+    setRefreshing(false);
   }, [dispatch]);
 
   const handleDelete = (id) => {
@@ -60,6 +70,7 @@ export default function NotificationsVenScreen() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2D3E5E" />}
         >
           {/* TIMELINE HEADER */}
           <View style={styles.sectionHeader}>
