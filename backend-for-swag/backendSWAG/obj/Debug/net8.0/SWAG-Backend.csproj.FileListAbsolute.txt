@@ -710,3 +710,9 @@ C:\notswag\Otp\backend-for-swag\backendSWAG\obj\Debug\net8.0\refint\SWAG-Backend
 C:\notswag\Otp\backend-for-swag\backendSWAG\obj\Debug\net8.0\SWAG-Backend.pdb
 C:\notswag\Otp\backend-for-swag\backendSWAG\obj\Debug\net8.0\SWAG-Backend.genruntimeconfig.cache
 C:\notswag\Otp\backend-for-swag\backendSWAG\obj\Debug\net8.0\ref\SWAG-Backend.dll
+C:\Users\user\Desktop\otp\Otp\backend-for-swag\backendSWAG\bin\Debug\net8.0\publish\web.config
+C:\Users\user\Desktop\otp\Otp\backend-for-swag\backendSWAG\bin\Debug\net8.0\publish\appsettings.Development.json
+C:\Users\user\Desktop\otp\Otp\backend-for-swag\backendSWAG\bin\Debug\net8.0\publish\appsettings.json
+C:\Users\user\Desktop\otp\Otp\backend-for-swag\backendSWAG\bin\Debug\net8.0\publish\SWAG-Backend.deps.json
+C:\Users\user\Desktop\otp\Otp\backend-for-swag\backendSWAG\bin\Debug\net8.0\publish\SWAG-Backend.runtimeconfig.json
+C:\Users\user\Desktop\otp\Otp\backend-for-swag\backendSWAG\bin\Debug\net8.0\publish\SWAG-Backend.staticwebassets.endpoints.json

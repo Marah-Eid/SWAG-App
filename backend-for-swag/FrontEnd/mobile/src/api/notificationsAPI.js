@@ -45,6 +45,24 @@ const notificationsAPI = {
       return { success: false, error: error.response?.data?.message || 'Failed to clear notifications' };
     }
   },
+
+  registerPushToken: async (token) => {
+    try {
+      const response = await apiClient.post('/notifications/push-token', { token });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to register push token' };
+    }
+  },
+
+  unregisterPushToken: async (token) => {
+    try {
+      await apiClient.delete('/notifications/push-token', { data: { token } });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Failed to unregister push token' };
+    }
+  },
 };
 
 export default notificationsAPI;

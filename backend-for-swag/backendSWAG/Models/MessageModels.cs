@@ -104,6 +104,25 @@ public class Notification
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
+[Table("device_push_tokens")]
+public class DevicePushToken
+{
+    [Key, Column("id")]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Column("user_id"), Required]
+    public Guid UserId { get; set; }
+
+    [Column("user_type")]
+    public UserRole UserType { get; set; }
+
+    [Column("expo_token"), MaxLength(255), Required]
+    public string ExpoToken { get; set; } = string.Empty;
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
 [Table("vendor_approval_log")]
 public class VendorApprovalLog
 {

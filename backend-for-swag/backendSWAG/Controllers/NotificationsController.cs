@@ -119,6 +119,54 @@ public class NotificationsController : ControllerBase
         return Ok(new MessageResponse { Message = $"Cleared {all.Count} notifications." });
     }
 
+    // POST /api/notifications/push-token
+    [HttpPost("push-token")]
+    public async Task<IActionResult> RegisterPushToken([FromBody] PushTokenRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.Token))
+            return BadRequest(new MessageResponse { Message = "Token is required." });
+
+        var myId = _currentUser.UserId;
+        var myRole = ParseRole(_currentUser.Role);
+
+        var existing = await _db.DevicePushTokens
+            .FirstOrDefaultAsync(d => d.UserId == myId && d.ExpoToken == req.Token);
+
+        if (existing == null)
+        {
+            _db.DevicePushTokens.Add(new DevicePushToken
+            {
+                UserId = myId,
+                UserType = myRole,
+                ExpoToken = req.Token
+            });
+            await _db.SaveChangesAsync();
+        }
+
+        return Ok(new MessageResponse { Message = "Push token registered." });
+    }
+
+    // DELETE /api/notifications/push-token
+    [HttpDelete("push-token")]
+    public async Task<IActionResult> UnregisterPushToken([FromBody] PushTokenRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.Token))
+            return BadRequest(new MessageResponse { Message = "Token is required." });
+
+        var myId = _currentUser.UserId;
+
+        var token = await _db.DevicePushTokens
+            .FirstOrDefaultAsync(d => d.UserId == myId && d.ExpoToken == req.Token);
+
+        if (token != null)
+        {
+            _db.DevicePushTokens.Remove(token);
+            await _db.SaveChangesAsync();
+        }
+
+        return Ok(new MessageResponse { Message = "Push token removed." });
+    }
+
     private static UserRole ParseRole(string role) => role switch
     {
         "Customer" => UserRole.Customer,
@@ -126,4 +174,9 @@ public class NotificationsController : ControllerBase
         "Admin" => UserRole.Admin,
         _ => UserRole.Customer
     };
+}
+
+public class PushTokenRequest
+{
+    public string Token { get; set; } = string.Empty;
 }

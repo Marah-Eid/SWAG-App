@@ -15,11 +15,13 @@ public class CustomersController : ControllerBase
 {
     private readonly SwagDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly INotificationService _notifier;
 
-    public CustomersController(SwagDbContext db, ICurrentUserService currentUser)
+    public CustomersController(SwagDbContext db, ICurrentUserService currentUser, INotificationService notifier)
     {
         _db = db;
         _currentUser = currentUser;
+        _notifier = notifier;
     }
 
     // GET /api/customers/me
@@ -221,16 +223,10 @@ public class CustomersController : ControllerBase
         var follower = await _db.Customers.FindAsync(_currentUser.UserId);
         string followerName = follower?.FullName ?? "Someone";
 
-        _db.Notifications.Add(new Notification
-        {
-            RecipientId = vendorId,
-            RecipientType = UserRole.Vendor,
-            Type = NotificationType.NewFollower,
-            Title = "New Follower",
-            Body = $"{followerName} started following your shop."
-        });
-
         await _db.SaveChangesAsync();
+
+        await _notifier.SendAsync(vendorId, UserRole.Vendor, NotificationType.NewFollower,
+            "New Follower", $"{followerName} started following your shop.");
 
         return Ok(new MessageResponse { Message = "Followed successfully." });
     }

@@ -401,6 +401,39 @@ namespace SwagBackend.Migrations
                     b.ToTable("customer_interests");
                 });
 
+            modelBuilder.Entity("SwagBackend.Models.DevicePushToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("ExpoToken")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("expo_token");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<UserRole>("UserType")
+                        .HasColumnType("user_role")
+                        .HasColumnName("user_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ExpoToken")
+                        .IsUnique();
+
+                    b.ToTable("device_push_tokens");
+                });
+
             modelBuilder.Entity("SwagBackend.Models.EventType", b =>
                 {
                     b.Property<int>("Id")

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, Modal, TouchableOpacity, Image,
-    FlatList, TextInput, KeyboardAvoidingView, Platform, Alert
+    FlatList, TextInput, KeyboardAvoidingView, Platform, Alert, Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -69,7 +69,7 @@ const CommentsModal = ({ visible, onClose, postId }) => {
                 <View style={styles.overlay}>
                     <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
 
-                    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContent}>
+                    <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} style={styles.modalContent}>
 
                         {/* HEADER */}
                         <View style={styles.header}>

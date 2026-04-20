@@ -35,6 +35,7 @@ public class SwagDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<VendorApprovalLog> VendorApprovalLogs => Set<VendorApprovalLog>();
+    public DbSet<DevicePushToken> DevicePushTokens => Set<DevicePushToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -174,6 +175,14 @@ public class SwagDbContext : DbContext
         modelBuilder.Entity<Notification>()
             .Property(n => n.Type)
             .HasColumnType("notification_type");
+
+        modelBuilder.Entity<DevicePushToken>()
+            .Property(d => d.UserType)
+            .HasColumnType("user_role");
+
+        modelBuilder.Entity<DevicePushToken>()
+            .HasIndex(d => new { d.UserId, d.ExpoToken })
+            .IsUnique();
 
         modelBuilder.Entity<VendorApprovalLog>()
             .Property(l => l.Action)

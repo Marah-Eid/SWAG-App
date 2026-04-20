@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
 using SwagBackend.Data;
+using SwagBackend.Hubs;
 using SwagBackend.Models;
 using SwagBackend.Services;
 
@@ -72,9 +73,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew                = TimeSpan.Zero
         };
 
-        // Log JWT errors to the console in development
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = ctx =>
+            {
+                var accessToken = ctx.Request.Query["access_token"];
+                var path = ctx.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                    ctx.Token = accessToken;
+                return Task.CompletedTask;
+            },
             OnAuthenticationFailed = ctx =>
             {
                 if (builder.Environment.IsDevelopment())
@@ -92,7 +100,16 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// ── HTTP Client (used by UploadController for Supabase Storage) ───────────────
+// ── Notification Service ──────────────────────────────────────────────────────
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// ── Expo Push Service ────────────────────────────────────────────────────────
+builder.Services.AddHttpClient<IExpoPushService, ExpoPushService>();
+
+// ── SignalR ───────────────────��────────────────────────────────��──────────────
+builder.Services.AddSignalR();
+
+// ── HTTP Client (used by UploadController for Supabase Storage) ──��────────────
 builder.Services.AddHttpClient();
 
 // ── Controllers ───────────────────────────────────────────────────────────────
@@ -103,9 +120,10 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -194,5 +212,6 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

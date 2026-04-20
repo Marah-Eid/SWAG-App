@@ -14,11 +14,13 @@ public class PostsController : ControllerBase
 {
     private readonly SwagDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly INotificationService _notifier;
 
-    public PostsController(SwagDbContext db, ICurrentUserService currentUser)
+    public PostsController(SwagDbContext db, ICurrentUserService currentUser, INotificationService notifier)
     {
         _db = db;
         _currentUser = currentUser;
+        _notifier = notifier;
     }
 
     // GET /api/posts
@@ -144,19 +146,13 @@ public class PostsController : ControllerBase
             ? $"{vendor?.ShopName} posted a new event: {req.EventTitle}"
             : $"{vendor?.ShopName} shared a new post.";
 
+        await _db.SaveChangesAsync();
+
         foreach (var fId in followerIds)
         {
-            _db.Notifications.Add(new Notification
-            {
-                RecipientId = fId,
-                RecipientType = UserRole.Customer,
-                Type = notifType,
-                Title = notifTitle,
-                Body = notifBody,
-                DeepLink = $"post/{post.Id}"
-            });
+            await _notifier.SendAsync(fId, UserRole.Customer, notifType,
+                notifTitle, notifBody, $"post/{post.Id}");
         }
-        await _db.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetPost), new { id = post.Id }, new { post.Id });
     }
@@ -357,16 +353,10 @@ public class PostsController : ControllerBase
                 if (v != null) commenterName = v.ShopName;
             }
 
-            _db.Notifications.Add(new Notification
-            {
-                RecipientId = post.VendorId,
-                RecipientType = UserRole.Vendor,
-                Type = NotificationType.Mention,
-                Title = "New Comment",
-                Body = $"{commenterName} commented on your post.",
-                DeepLink = $"post/{id}"
-            });
             await _db.SaveChangesAsync();
+
+            await _notifier.SendAsync(post.VendorId, UserRole.Vendor, NotificationType.Mention,
+                "New Comment", $"{commenterName} commented on your post.", $"post/{id}");
         }
 
         return Ok(new { comment.Id, message = "Comment added." });
@@ -494,24 +484,15 @@ public class PostsController : ControllerBase
             });
         }
 
-        // Only notify vendor when it is a brand-new review
+        await _db.SaveChangesAsync();
+
         if (isNew)
         {
             var reviewer = await _db.Customers.FindAsync(myId);
             string reviewerName = reviewer?.FullName ?? "Someone";
-
-            _db.Notifications.Add(new Notification
-            {
-                RecipientId = req.VendorId,
-                RecipientType = UserRole.Vendor,
-                Type = NotificationType.NewReview,
-                Title = "New Review",
-                Body = $"{reviewerName} left you a {req.Rating}-star review.",
-                DeepLink = $"vendor/{req.VendorId}/reviews"
-            });
+            await _notifier.SendAsync(req.VendorId, UserRole.Vendor, NotificationType.NewReview,
+                "New Review", $"{reviewerName} left you a {req.Rating}-star review.", $"vendor/{req.VendorId}/reviews");
         }
-
-        await _db.SaveChangesAsync();
         return Ok(new MessageResponse { Message = isNew ? "Review submitted." : "Review updated." });
     }
 

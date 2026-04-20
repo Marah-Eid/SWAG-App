@@ -15,11 +15,13 @@ public class AdminController : ControllerBase
 {
     private readonly SwagDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly INotificationService _notifier;
 
-    public AdminController(SwagDbContext db, ICurrentUserService currentUser)
+    public AdminController(SwagDbContext db, ICurrentUserService currentUser, INotificationService notifier)
     {
         _db = db;
         _currentUser = currentUser;
+        _notifier = notifier;
     }
 
     // GET /api/admin/vendors/pending
@@ -96,17 +98,12 @@ public class AdminController : ControllerBase
             Action = VendorStatus.Active
         });
 
-        // Notify vendor
-        _db.Notifications.Add(new Notification
-        {
-            RecipientId = id,
-            RecipientType = UserRole.Vendor,
-            Type = NotificationType.AccountStatus,
-            Title = "Account Approved",
-            Body = "Congratulations! Your vendor account has been approved. You can now start posting."
-        });
-
         await _db.SaveChangesAsync();
+
+        await _notifier.SendAsync(id, UserRole.Vendor, NotificationType.AccountStatus,
+            "Account Approved",
+            "Congratulations! Your vendor account has been approved. You can now start posting.");
+
         return Ok(new MessageResponse { Message = "Vendor approved successfully." });
     }
 
@@ -129,17 +126,11 @@ public class AdminController : ControllerBase
 
         string reason = req?.Reason ?? "Your application did not meet our requirements.";
 
-        // Notify vendor
-        _db.Notifications.Add(new Notification
-        {
-            RecipientId = id,
-            RecipientType = UserRole.Vendor,
-            Type = NotificationType.AccountStatus,
-            Title = "Application Rejected",
-            Body = reason
-        });
-
         await _db.SaveChangesAsync();
+
+        await _notifier.SendAsync(id, UserRole.Vendor, NotificationType.AccountStatus,
+            "Application Rejected", reason);
+
         return Ok(new MessageResponse { Message = "Vendor rejected." });
     }
 

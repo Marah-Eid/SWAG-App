@@ -14,11 +14,13 @@ public class VendorsController : ControllerBase
 {
     private readonly SwagDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly INotificationService _notifier;
 
-    public VendorsController(SwagDbContext db, ICurrentUserService currentUser)
+    public VendorsController(SwagDbContext db, ICurrentUserService currentUser, INotificationService notifier)
     {
         _db = db;
         _currentUser = currentUser;
+        _notifier = notifier;
     }
 
     // GET /api/vendors  (public - explore)
@@ -438,16 +440,10 @@ public class VendorsController : ControllerBase
             var follower = await _db.Vendors.FindAsync(_currentUser.UserId);
             string followerName = follower?.ShopName ?? follower?.FullName ?? "Someone";
 
-            _db.Notifications.Add(new Notification
-            {
-                RecipientId = vendorId,
-                RecipientType = UserRole.Vendor,
-                Type = NotificationType.NewFollower,
-                Title = "New Follower",
-                Body = $"{followerName} started following your shop."
-            });
-
             await _db.SaveChangesAsync();
+
+            await _notifier.SendAsync(vendorId, UserRole.Vendor, NotificationType.NewFollower,
+                "New Follower", $"{followerName} started following your shop.");
         }
 
         return Ok(new MessageResponse { Message = "Followed." });

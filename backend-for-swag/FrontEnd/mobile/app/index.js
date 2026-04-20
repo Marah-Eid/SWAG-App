@@ -10,7 +10,6 @@ export default function Index() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Wait for navigation to be ready
     const timer = setTimeout(() => {
       setIsReady(true);
     }, 100);
@@ -21,7 +20,6 @@ export default function Index() {
   useEffect(() => {
     if (!isReady) return;
 
-    // Redirect based on authentication status
     if (isAuthenticated) {
       if (role === 'Customer') {
         router.replace('/customer/HomeCust');
@@ -33,12 +31,10 @@ export default function Index() {
         router.replace('/auth/Login');
       }
     } else {
-      // Not authenticated - go to login (use capital L if file is Login.js)
-        router.replace('/auth/Login');
+      router.replace('/auth/Login');
     }
   }, [isAuthenticated, role, isReady]);
 
-  // Show loading indicator while redirecting
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
       <ActivityIndicator size="large" color="#800C1F" />

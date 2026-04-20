@@ -8,6 +8,9 @@ import store from '../src/store';
 import CreativeSplashScreen from '../src/components/CreativeSplashScreen';
 import { checkAuthStatus } from '../src/store/slices/authSlice';
 import chatsAPI from '../src/api/chatsAPI';
+import ToastProvider from '../src/components/common/ToastProvider';
+import useNotificationSocket from '../src/services/useNotificationSocket';
+import usePushNotifications from '../src/services/usePushNotifications';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -16,6 +19,9 @@ function AppContent({ onSplashFinish }) {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
   const appState = useRef(AppState.currentState);
+
+  useNotificationSocket();
+  usePushNotifications();
 
   useEffect(() => {
     dispatch(checkAuthStatus());
@@ -85,7 +91,9 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <AppContent onSplashFinish={onSplashFinish} />
+      <ToastProvider>
+        <AppContent onSplashFinish={onSplashFinish} />
+      </ToastProvider>
     </Provider>
   );
 }
