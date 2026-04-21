@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\SWAG-Backend.props" />
-</Project>

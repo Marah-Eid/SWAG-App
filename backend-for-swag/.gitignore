@@ -1,0 +1,16 @@
+# Backend build artifacts
+backendSWAG/bin/
+backendSWAG/obj/
+backendSWAG/publish/
+
+# Test project build artifacts
+SWAG-Backend.Tests/bin/
+SWAG-Backend.Tests/obj/
+
+# Frontend
+FrontEnd/mobile/node_modules/
+FrontEnd/mobile/.expo/
+
+# OS files
+.DS_Store
+Thumbs.db
