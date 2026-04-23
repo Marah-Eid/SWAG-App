@@ -15,40 +15,16 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import NotificationCard from '../common/NotificationCard';
 import BottomTabs from '../common/BottomTabs';
-import { useToast } from '../common/ToastProvider';
 import { fetchNotifications, deleteNotification, clearAllNotifications, markNotificationRead } from '../../store/slices/notificationsSlice';
-
-const TEST_TOASTS = [
-  { type: 'follow',  title: 'New Follower',    message: 'Ahmed started following your shop.' },
-  { type: 'post',    title: 'New Post',         message: 'AutoZone shared a new post.' },
-  { type: 'review',  title: 'New Review',       message: 'Sara left you a 5-star review.' },
-  { type: 'comment', title: 'New Comment',      message: 'Omar commented on your post.' },
-  { type: 'event',   title: 'New Event',        message: 'Car Meet 2026 is happening tomorrow!' },
-  { type: 'warning', title: 'Insurance Expiry', message: 'Your insurance expires in 3 days.' },
-  { type: 'account', title: 'Account Approved', message: 'Your vendor account has been approved!' },
-  { type: 'info',    title: 'System Alert',     message: 'App maintenance scheduled tonight.' },
-  { type: 'error',   title: 'Error',            message: 'Something went wrong, try again.' },
-  { type: 'success', title: 'Success',          message: 'Your profile was updated successfully.' },
-];
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { notifications, loading } = useSelector((state) => state.notifications);
-  const { showToast } = useToast();
 
   useEffect(() => {
     dispatch(fetchNotifications());
   }, [dispatch]);
-
-  // --- TEST: Remove this block after testing ---
-  const testToastIndex = React.useRef(0);
-  const handleTestToast = () => {
-    const toast = TEST_TOASTS[testToastIndex.current % TEST_TOASTS.length];
-    showToast(toast);
-    testToastIndex.current++;
-  };
-  // --- END TEST ---
 
   const handleDelete = (id) => {
     dispatch(deleteNotification(id));
@@ -81,16 +57,6 @@ export default function NotificationsScreen() {
         <Text style={styles.headerTitle}>Notifications</Text>
         <View style={{ width: 44 }} />
       </View>
-
-      {/* --- TEST BUTTON: Remove after testing --- */}
-      <TouchableOpacity
-        onPress={handleTestToast}
-        style={{ backgroundColor: '#8A1C27', margin: 16, padding: 14, borderRadius: 12, alignItems: 'center' }}
-        activeOpacity={0.8}
-      >
-        <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 15 }}>Test Toast Notification</Text>
-      </TouchableOpacity>
-      {/* --- END TEST BUTTON --- */}
 
       <View style={{ flex: 1 }}>
         <ScrollView

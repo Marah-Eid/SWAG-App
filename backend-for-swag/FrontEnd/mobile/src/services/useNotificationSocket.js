@@ -6,6 +6,7 @@ import { BASE_URL } from '../api/client';
 import { useToast } from '../components/common/ToastProvider';
 import { getToastType } from '../components/common/ToastNotification';
 import { fetchNotifications } from '../store/slices/notificationsSlice';
+import { logoutUser } from '../store/slices/authSlice';
 
 const HUB_URL = BASE_URL.replace('/api', '/hubs/notifications');
 
@@ -26,12 +27,20 @@ export default function useNotificationSocket() {
 
     async function connect() {
       const token = await AsyncStorage.getItem('userToken');
-      if (!token || cancelled) return;
+      if (!token || cancelled) {
+        if (!token && !cancelled) dispatch(logoutUser());
+        return;
+      }
 
       const connection = new signalR.HubConnectionBuilder()
-        .withUrl(HUB_URL, { accessTokenFactory: () => token })
+        .withUrl(HUB_URL, {
+          accessTokenFactory: async () => {
+            const t = await AsyncStorage.getItem('userToken');
+            return t || '';
+          },
+        })
         .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-        .configureLogging(signalR.LogLevel.Information)
+        .configureLogging(signalR.LogLevel.Warning)
         .build();
 
       connection.on('ReceiveNotification', (notification) => {
@@ -43,12 +52,19 @@ export default function useNotificationSocket() {
         dispatch(fetchNotifications());
       });
 
+      connection.onclose((err) => {
+        if (err && err.message?.includes('401')) {
+          dispatch(logoutUser());
+        }
+      });
+
       try {
         await connection.start();
         connectionRef.current = connection;
-        console.log('SignalR connected');
       } catch (err) {
-        console.warn('SignalR connection failed:', err.message);
+        if (err.message?.includes('401')) {
+          dispatch(logoutUser());
+        }
       }
     }
 
