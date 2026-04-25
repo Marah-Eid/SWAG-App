@@ -453,7 +453,7 @@ export default function ProfileCust() {
         })}
 
         <View style={styles.footerButtons}>
-          <TouchableOpacity style={styles.footerBtn} onPress={() => router.push('/customer/AddNewCarCust')} activeOpacity={0.8}><Text style={styles.footerBtnText}>Add Another Car</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.footerBtn} onPress={() => router.push('/customer/AddNewCarCust')} activeOpacity={0.8}><Text style={styles.footerBtnText}>{cars.length > 0 ? 'Add Another Car' : 'Add Car'}</Text></TouchableOpacity>
           <TouchableOpacity style={styles.footerBtnOutline} onPress={() => router.push({ pathname: '/customer/HistoryCust', params: { syncedCars: JSON.stringify(cars) } })} activeOpacity={0.8}><Text style={styles.footerBtnTextOutline}>View History</Text></TouchableOpacity>
         </View>
         {/* FIXED: Changed <div> to <View> */}

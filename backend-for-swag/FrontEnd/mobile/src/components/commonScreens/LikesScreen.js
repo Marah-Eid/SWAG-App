@@ -32,8 +32,8 @@ const LikedPostItem = ({ item }) => {
                 <View style={cardStyles.vendorInfo}>
                     <Image source={vendorLogo} style={cardStyles.logo} />
                     <View>
-                        <Text style={cardStyles.vendorName}>{item.vendorShopName || 'User Name'}</Text>
-                        {item.location ? <Text style={cardStyles.location}>{'Location: ' + item.location}</Text> : null}
+                        <Text style={cardStyles.vendorName}>{String(item.vendorShopName || 'User Name')}</Text>
+                        {item.location ? <Text style={cardStyles.location}>{`Location: ${item.location}`}</Text> : null}
                     </View>
                 </View>
 
@@ -47,10 +47,10 @@ const LikedPostItem = ({ item }) => {
             </View>
 
             <View style={cardStyles.content}>
-                {item.type === 'event' ? <Text style={cardStyles.eventLabel}>Event</Text> : null}
+                {item.type === 'event' && <Text style={cardStyles.eventLabel}>Event</Text>}
                 {item.description ? (
                     <Text style={cardStyles.desc}>
-                        {item.description}{' '}<Text style={cardStyles.readMore}>Read more...</Text>
+                        {String(item.description)}{' '}<Text style={cardStyles.readMore}>Read more...</Text>
                     </Text>
                 ) : null}
                 {postImage && <Image source={postImage} style={cardStyles.postImg} resizeMode="cover" />}
