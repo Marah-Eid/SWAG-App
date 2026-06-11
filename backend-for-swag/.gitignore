@@ -15,6 +15,12 @@ SWAG-Backend.Tests/obj/
 FrontEnd/mobile/node_modules/
 FrontEnd/mobile/.expo/
 
+# IDE
+.vs/
+
+# Secrets — never commit (API keys, DB passwords, JWT secret are in here)
+backendSWAG/appsettings.json
+
 # OS files
 .DS_Store
 Thumbs.db

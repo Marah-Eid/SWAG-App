@@ -36,6 +36,8 @@ public class SwagDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<VendorApprovalLog> VendorApprovalLogs => Set<VendorApprovalLog>();
     public DbSet<DevicePushToken> DevicePushTokens => Set<DevicePushToken>();
+    public DbSet<AssistantConversation> AssistantConversations => Set<AssistantConversation>();
+    public DbSet<AssistantMessage> AssistantMessages => Set<AssistantMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

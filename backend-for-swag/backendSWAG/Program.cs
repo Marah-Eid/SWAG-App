@@ -106,6 +106,11 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 // â”€â”€ Expo Push Service â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 builder.Services.AddHttpClient<IExpoPushService, ExpoPushService>();
 
+// ── AI Assistant ──────────────────────────────────────────────────────────────────────────────
+builder.Services.AddHttpClient<IVinDecodeService, VinDecodeService>();
+builder.Services.AddHttpClient<IGroqService, GroqService>();
+builder.Services.AddScoped<IAssistantService, AssistantService>();
+
 // â”€â”€ SignalR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ï¿½ï¿½â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ï¿½ï¿½â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 builder.Services.AddSignalR(options =>
 {

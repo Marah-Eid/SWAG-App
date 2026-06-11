@@ -8,6 +8,7 @@ import chatsReducer from './slices/chatsSlice';
 import notificationsReducer from './slices/notificationsSlice';
 import categoriesReducer from './slices/categoriesSlice';
 import adminReducer from './slices/adminSlice';
+import assistantReducer from './slices/assistantSlice';
 
 const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ const store = configureStore({
     notifications: notificationsReducer,
     categories: categoriesReducer,
     admin: adminReducer,
+    assistant: assistantReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

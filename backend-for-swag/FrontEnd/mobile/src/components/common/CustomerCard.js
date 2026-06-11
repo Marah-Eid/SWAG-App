@@ -6,7 +6,11 @@ import { LinearGradient } from 'expo-linear-gradient'; // Added LinearGradient
 const CustomerCard = ({ name, phone, city, location, profileImage }) => {
   const router = useRouter();
 
-  const handleNavigate = () => {
+  const handleCarBot = () => {
+    router.push('/customer/AiAssistant');
+  };
+
+  const handleProfile = () => {
     router.push('/customer/ProfileCust');
   };
 
@@ -25,18 +29,17 @@ const CustomerCard = ({ name, phone, city, location, profileImage }) => {
           <Text style={styles.subText} numberOfLines={1}>{city || location}</Text>
         </View>
 
-        {/* Car Icon: Always navigates to ProfileCust */}
-        <TouchableOpacity style={styles.carAction} onPress={handleNavigate} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.carAction} onPress={handleCarBot} activeOpacity={0.7}>
           <Image
             source={require('../../../assets/images/carprof-icon.png')}
             style={styles.carIcon}
           />
-          <Text style={styles.carLabel}>My Car</Text>
+          <Text style={styles.carLabel}>CarBot</Text>
         </TouchableOpacity>
       </LinearGradient>
 
-      {/* Profile Picture: Always navigates to ProfileCust */}
-      <TouchableOpacity style={styles.pfpContainer} onPress={handleNavigate} activeOpacity={0.8}>
+      {/* Profile Picture: navigates to ProfileCust */}
+      <TouchableOpacity style={styles.pfpContainer} onPress={handleProfile} activeOpacity={0.8}>
         <Image
           source={profileImage || require('../../../assets/images/default-user-pfp.png')}
           style={styles.profilePic}
