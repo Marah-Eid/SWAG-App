@@ -29,7 +29,7 @@ const VendorCertificationScreen = () => {
     const router = useRouter();
     const dispatch = useDispatch();
     const params = useLocalSearchParams();
-    const { emailOrPhone, fullName, shopName, shopType, password, city, locationUrl, categories } = params;
+    const { emailOrPhone, fullName, shopName, shopType, password, city, locationLat, locationLng, categories } = params;
 
     const [regNumber, setRegNumber] = useState('');
     const [licenseFile, setLicenseFile] = useState(null);
@@ -116,7 +116,8 @@ const VendorCertificationScreen = () => {
                 shopName,
                 shopType,
                 city,
-                locationUrl,
+                locationLat: locationLat ? parseFloat(locationLat) : null,
+                locationLng: locationLng ? parseFloat(locationLng) : null,
                 licenseFile: licenseUrl,
                 idFrontFile: idFrontUrl,
                 idBackFile: idBackUrl,

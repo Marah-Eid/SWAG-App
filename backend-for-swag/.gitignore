@@ -3,6 +3,10 @@ backendSWAG/bin/
 backendSWAG/obj/
 backendSWAG/publish/
 
+# Azure deployment output (DLLs, binaries, zip — never commit these)
+deploy_output/
+deploy.zip
+
 # Test project build artifacts
 SWAG-Backend.Tests/bin/
 SWAG-Backend.Tests/obj/

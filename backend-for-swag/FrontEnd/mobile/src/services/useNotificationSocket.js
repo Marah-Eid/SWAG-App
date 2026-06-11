@@ -6,7 +6,6 @@ import { BASE_URL } from '../api/client';
 import { useToast } from '../components/common/ToastProvider';
 import { getToastType } from '../components/common/ToastNotification';
 import { fetchNotifications } from '../store/slices/notificationsSlice';
-import { logoutUser } from '../store/slices/authSlice';
 
 const HUB_URL = BASE_URL.replace('/api', '/hubs/notifications');
 
@@ -27,10 +26,7 @@ export default function useNotificationSocket() {
 
     async function connect() {
       const token = await AsyncStorage.getItem('userToken');
-      if (!token || cancelled) {
-        if (!token && !cancelled) dispatch(logoutUser());
-        return;
-      }
+      if (!token || cancelled) return;
 
       const connection = new signalR.HubConnectionBuilder()
         .withUrl(HUB_URL, {
@@ -43,6 +39,12 @@ export default function useNotificationSocket() {
         .configureLogging(signalR.LogLevel.Warning)
         .build();
 
+      // Give the server 90 s to send any message before declaring a timeout.
+      // Must be > server KeepAliveInterval (10 s) so pings arrive in time.
+      connection.serverTimeoutInMilliseconds = 90000;
+      // Send a ping every 30 s to keep NAT/proxy connections alive.
+      connection.keepAliveIntervalInMilliseconds = 30000;
+
       connection.on('ReceiveNotification', (notification) => {
         showToast({
           type: getToastType(notification.type),
@@ -52,19 +54,13 @@ export default function useNotificationSocket() {
         dispatch(fetchNotifications());
       });
 
-      connection.onclose((err) => {
-        if (err && err.message?.includes('401')) {
-          dispatch(logoutUser());
-        }
-      });
+      connection.onclose(() => {});
 
       try {
         await connection.start();
         connectionRef.current = connection;
       } catch (err) {
-        if (err.message?.includes('401')) {
-          dispatch(logoutUser());
-        }
+        console.warn('SignalR connection failed:', err?.message);
       }
     }
 

@@ -89,6 +89,26 @@ const VendorProfScreen = () => {
   };
 
   const openMap = (addressText) => {
+    // Prefer pinned coordinates if available
+    if (v.locationLat && v.locationLng) {
+      const lat = v.locationLat;
+      const lng = v.locationLng;
+      const nativeUrl = `geo:${lat},${lng}?q=${lat},${lng}`;
+      const webUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      Linking.canOpenURL(nativeUrl)
+        .then((supported) => Linking.openURL(supported ? nativeUrl : webUrl))
+        .catch(() => Linking.openURL(webUrl));
+      return;
+    }
+    // Fall back to location URL
+    if (v.locationUrl) {
+      const url = v.locationUrl;
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        Linking.openURL(url).catch(() => {});
+        return;
+      }
+    }
+    // Fall back to address text
     if (!addressText) return;
     const query = encodeURIComponent(addressText.replace(/\n/g, ' '));
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`).catch(() => {});
@@ -103,9 +123,14 @@ const VendorProfScreen = () => {
   const v = selectedVendor || {};
   const workHours = v.openTime && v.closeTime ? `${v.openTime} - ${v.closeTime}` : null;
 
+  const hasCoords = !!(v.locationLat && v.locationLng);
+  const locationText = v.address || (hasCoords ? 'View pinned location on map' : null);
+
   const DETAILS_LIST = [
-    v.address && {
-      id: 1, label: 'Address', text: v.address,
+    locationText && {
+      id: 1, label: 'Address',
+      text: locationText,
+      textColor: !v.address && hasCoords ? '#2D7DD2' : undefined,
       iconImage: require('../../../assets/images/locationVendor-icon.png'),
       action: () => openMap(v.address)
     },

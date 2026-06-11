@@ -19,6 +19,15 @@ const shareIcon = require('../../../assets/images/share-icon.png');
 const saveIcon = require('../../../assets/images/saved-icon.png');
 const savedIcon = require('../../../assets/images/save-icon.png');
 
+const isEventExpired = (dateStr) => {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
+};
+
 const CustomerPosts = ({
   postId, vendorName, vendorLogo, location, description, postImage,
   initialLiked = false, initialSaved = false,
@@ -38,6 +47,7 @@ const CustomerPosts = ({
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const CHARACTER_LIMIT = 100;
+  const expired = isEvent && isEventExpired(date);
 
   const toggleLike = () => {
     if (postId) dispatch(toggleLikeAction(postId));
@@ -127,9 +137,9 @@ const CustomerPosts = ({
 
       <View style={styles.content}>
         {isEvent && (
-          <View style={styles.eventBadge}>
-            <Ionicons name="star" size={12} color="#FFF" />
-            <Text style={styles.eventBadgeText}>UPCOMING EVENT</Text>
+          <View style={[styles.eventBadge, expired && styles.finishedBadge]}>
+            <Ionicons name={expired ? 'checkmark-circle' : 'star'} size={12} color="#FFF" />
+            <Text style={styles.eventBadgeText}>{expired ? 'FINISHED' : 'UPCOMING EVENT'}</Text>
           </View>
         )}
 
@@ -169,7 +179,12 @@ const CustomerPosts = ({
               />
             )}
 
-            {isEvent && !!(date || time) && (
+            {isEvent && expired && (
+              <View style={styles.finishedOverlay}>
+                <Text style={styles.finishedOverlayText}>FINISHED</Text>
+              </View>
+            )}
+            {isEvent && !expired && !!(date || time) && (
               <View style={styles.eventOverlay}>
                 <View style={styles.overlayRow}>
                   <Ionicons name="calendar" size={16} color="#8A1C27" />
@@ -244,7 +259,10 @@ const styles = StyleSheet.create({
   saveIcon: { width: 22, height: 22, resizeMode: 'contain', tintColor: '#2D3E5E' },
   content: { marginTop: 5 },
   eventBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#8A1C27', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginBottom: 8 },
+  finishedBadge: { backgroundColor: '#6B7280' },
   eventBadgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold', marginLeft: 4, letterSpacing: 0.5 },
+  finishedOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
+  finishedOverlayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', letterSpacing: 3, textTransform: 'uppercase' },
   textContainer: { marginBottom: 10 },
   desc: { fontSize: 14, color: '#4A627A', lineHeight: 20 },
   hashtag: { color: '#8A1C27', fontWeight: 'bold' },

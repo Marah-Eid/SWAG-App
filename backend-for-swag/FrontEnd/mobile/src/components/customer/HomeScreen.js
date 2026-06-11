@@ -52,9 +52,17 @@ const HomeScreen = () => {
     bgImage: v.bannerImage ? { uri: v.bannerImage } : defaultBg,
   }));
 
-  // Map event posts → EventsCarousel shape
+  // Map event posts → EventsCarousel shape (upcoming only)
   const eventsData = posts
     .filter((p) => p.type === 'event')
+    .filter((p) => {
+      if (!p.eventDate) return true;
+      const d = new Date(p.eventDate);
+      if (isNaN(d.getTime())) return true;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d >= today;
+    })
     .map((p) => ({
       id: p.id,
       vendorId: p.vendorId,

@@ -56,7 +56,7 @@ const SavedPostsScreen = () => {
                         </View>
                     </View>
 
-                    <View style={{ width: 44 }} /> {/* Spacer for centering */}
+                    <View style={{ width: 44 }} />
                 </View>
 
                 {/* CONTENT */}

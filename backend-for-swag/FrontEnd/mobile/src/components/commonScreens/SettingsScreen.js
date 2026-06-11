@@ -161,7 +161,7 @@ const SettingsScreen = () => {
                         <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Settings</Text>
-                    <View style={{ width: 44 }} /> {/* Spacer */}
+                    <View style={{ width: 44 }} />
                 </View>
 
                 {/* CONTENT */}

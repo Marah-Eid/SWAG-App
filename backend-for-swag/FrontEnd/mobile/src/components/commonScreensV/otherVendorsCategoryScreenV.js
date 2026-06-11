@@ -97,7 +97,7 @@ const OtherVendorsCategoryScreenV = () => {
           <Ionicons name="chevron-back" size={28} color="#2D3E5E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Categories</Text>
-        <View style={{ width: 44 }} /> {/* Spacer for perfect centering */}
+        <View style={{ width: 44 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

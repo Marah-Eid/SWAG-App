@@ -1,13 +1,85 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, Image, StyleSheet, SafeAreaView,
-  TouchableOpacity, Dimensions, Linking, TextInput, Platform, Alert, Share, Modal
+  TouchableOpacity, Dimensions, Linking, TextInput, Platform, Alert, Share, Modal,
+  FlatList, ActivityIndicator
 } from 'react-native';
 import { Ionicons, Entypo } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { WebView } from 'react-native-webview';
+
+const JORDAN_CITIES = [
+  "Amman", "Zarqa", "Irbid", "Ma'an", "Aqaba",
+  "Mafraq", "Balqa", "Karak", "Tafilah",
+  "Jerash", "Ajloun", "Madaba"
+];
+
+const LEAFLET_HTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #map { height: 100%; width: 100%; }
+    .confirm-btn {
+      position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+      background: #2D3E5E; color: #fff; border: none; border-radius: 30px;
+      padding: 14px 40px; font-size: 16px; font-weight: 700; cursor: pointer;
+      z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none;
+    }
+    .hint {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(45,62,94,0.85); color: #fff; border-radius: 20px;
+      padding: 8px 18px; font-size: 13px; font-weight: 600; z-index: 1000; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="hint" id="hint">Tap anywhere to drop a pin</div>
+  <button class="confirm-btn" id="confirmBtn" onclick="confirmLocation()">Confirm Location</button>
+  <script>
+    var map = L.map('map', { zoomControl: true }).setView([31.9, 35.93], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '\\u00a9 OpenStreetMap'
+    }).addTo(map);
+    var marker = null;
+    var pendingLat = null;
+    var pendingLng = null;
+    var redIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+    map.on('click', function(e) {
+      pendingLat = e.latlng.lat;
+      pendingLng = e.latlng.lng;
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng, { icon: redIcon, draggable: true }).addTo(map);
+        marker.on('dragend', function(ev) {
+          pendingLat = ev.target.getLatLng().lat;
+          pendingLng = ev.target.getLatLng().lng;
+        });
+      }
+      document.getElementById('hint').style.display = 'none';
+      document.getElementById('confirmBtn').style.display = 'block';
+    });
+    function confirmLocation() {
+      if (pendingLat === null) return;
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'confirm', lat: pendingLat, lng: pendingLng }));
+    }
+  </script>
+</body>
+</html>
+`;
 
 import BottomTabsVen from '../commonV/BottomTabsVen';
 import VendorPosts from '../commonV/VendorPosts';
@@ -35,6 +107,16 @@ const VendorProfileScreen = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [collections, setCollections] = useState([]);
   const [selectedCollectionId, setSelectedCollectionId] = useState(null);
+
+  // Location map picker (edit mode)
+  const [isLocationPickerVisible, setIsLocationPickerVisible] = useState(false);
+  const [mapPickerReady, setMapPickerReady] = useState(false);
+  const [pendingEditLat, setPendingEditLat] = useState(null);
+  const [pendingEditLng, setPendingEditLng] = useState(null);
+  const mapPickerRef = useRef(null);
+
+  // City picker (edit profile mode)
+  const [isCityPickerVisible, setIsCityPickerVisible] = useState(false);
 
   const isPending = !myProfile || myProfile.status !== 'active';
 
@@ -175,8 +257,13 @@ const VendorProfileScreen = () => {
   };
 
   const handleSaveDetails = async () => {
+    const profileUpdate = { phone: shopDetailsText[2] };
+    if (pendingEditLat !== null && pendingEditLng !== null) {
+      profileUpdate.locationLat = pendingEditLat;
+      profileUpdate.locationLng = pendingEditLng;
+    }
     await Promise.all([
-      dispatch(updateMyVendorProfile({ phone: shopDetailsText[2] })),
+      dispatch(updateMyVendorProfile(profileUpdate)),
       vendorAPI.updateProfileDetails({
         address: shopDetailsText[1],
         whatsapp: shopDetailsText[4],
@@ -185,6 +272,8 @@ const VendorProfileScreen = () => {
         closeTime: formatTimeForAPI(closeTime),
       }),
     ]);
+    setPendingEditLat(null);
+    setPendingEditLng(null);
     dispatch(fetchMyVendorProfile());
     setIsEditingDetails(false);
   };
@@ -274,14 +363,32 @@ const VendorProfileScreen = () => {
   };
 
   const openMap = (addressText) => {
+    // Prefer pinned coordinates if available
+    if (myProfile?.locationLat && myProfile?.locationLng) {
+      const lat = myProfile.locationLat;
+      const lng = myProfile.locationLng;
+      const nativeUrl = `geo:${lat},${lng}?q=${lat},${lng}`;
+      const webUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      Linking.canOpenURL(nativeUrl)
+        .then((supported) => Linking.openURL(supported ? nativeUrl : webUrl))
+        .catch(() => Linking.openURL(webUrl));
+      return;
+    }
+    // Fall back to location URL if set
+    if (myProfile?.locationUrl) {
+      const url = myProfile.locationUrl;
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        Linking.openURL(url).catch(() => alert("Couldn't open Maps."));
+        return;
+      }
+    }
+    // Fall back to address text search
+    if (!addressText?.trim()) return;
     const raw = addressText.trim();
-    if (!raw) return;
-    // If it's already a URL (e.g. pasted Google Maps link), open it directly
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
       Linking.openURL(raw).catch(() => alert("Couldn't open Maps."));
       return;
     }
-    // Otherwise search by place name
     const query = encodeURIComponent(raw.replace(/\n/g, ' '));
     const nativeUrl = `geo:0,0?q=${query}`;
     const webUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
@@ -317,8 +424,12 @@ const VendorProfileScreen = () => {
 
   const workHoursStatus = getWorkHoursStatus();
 
+  const hasLocation = !!(myProfile?.locationLat && myProfile?.locationLng);
+  const locationDisplayText = shopDetailsText[1] || (hasLocation ? 'View pinned location on map' : '');
+  const locationTextColor = !shopDetailsText[1] && hasLocation ? '#2D7DD2' : undefined;
+
   const DETAILS_LIST = [
-    { id: 1, label: 'Address', iconImage: require('../../../assets/images/locationVendor-icon.png'), action: () => openMap(shopDetailsText[1]) },
+    { id: 1, label: 'Address', iconImage: require('../../../assets/images/locationVendor-icon.png'), text: locationDisplayText, textColor: locationTextColor, action: (hasLocation || shopDetailsText[1]) ? () => openMap(shopDetailsText[1]) : undefined },
     { id: 2, label: 'Mobile', iconImage: require('../../../assets/images/phone-icon.png'), action: () => Linking.openURL(`tel:${shopDetailsText[2].replace(/\s/g, '')}`) },
     { id: 3, label: 'Email', iconName: 'mail', action: () => Linking.openURL(`mailto:${shopDetailsText[3]}`) },
     { id: 4, label: 'WhatsApp', iconImage: require('../../../assets/images/whatsapp-icon.png'), action: () => openWhatsApp(shopDetailsText[4]) },
@@ -383,7 +494,16 @@ const VendorProfileScreen = () => {
               <View style={styles.locationTag}>
                 <Ionicons name="location" size={14} color="#8391A1" />
                 {isEditing ? (
-                  <TextInput style={[styles.editableInput, { fontSize: 13, marginLeft: 4, flex: 1, marginBottom: 0, paddingBottom: 0, height: 20 }]} value={vendorData.location} onChangeText={(t) => setVendorData(prev => ({ ...prev, location: t }))} />
+                  <TouchableOpacity
+                    style={styles.cityPickerInline}
+                    onPress={() => setIsCityPickerVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.locationText, { color: vendorData.location ? '#2D3E5E' : '#8391A1' }]}>
+                      {vendorData.location || 'Select city'}
+                    </Text>
+                    <Ionicons name="chevron-down" size={14} color="#5B7896" style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
                 ) : (
                   <Text style={styles.locationText}>{vendorData.location}</Text>
                 )}
@@ -461,12 +581,24 @@ const VendorProfileScreen = () => {
                           <Text style={styles.timePickText}>Close: {formatTime(closeTime)}</Text>
                         </TouchableOpacity>
                       </View>
+                    ) : item.id === 1 ? (
+                      <TouchableOpacity
+                        style={styles.mapPickerBtn}
+                        onPress={() => { setMapPickerReady(false); setIsLocationPickerVisible(true); }}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name={pendingEditLat !== null ? 'checkmark-circle' : 'location-sharp'} size={16} color={pendingEditLat !== null ? '#10B981' : '#8A1C27'} />
+                        <Text style={[styles.mapPickerBtnText, pendingEditLat !== null && { color: '#10B981' }]}>
+                          {pendingEditLat !== null
+                            ? `Pinned (${pendingEditLat.toFixed(4)}, ${pendingEditLng.toFixed(4)})`
+                            : (myProfile?.locationLat ? 'Update pinned location' : 'Pin location on map')}
+                        </Text>
+                      </TouchableOpacity>
                     ) : (
                       <TextInput
                         style={[styles.editableInput, { fontSize: 14, paddingBottom: 2, marginBottom: 2 }]}
                         value={shopDetailsText[item.id]}
                         onChangeText={(t) => setShopDetailsText(prev => ({ ...prev, [item.id]: t }))}
-                        multiline={item.id === 1}
                       />
                     )
                   ) : (
@@ -623,6 +755,80 @@ const VendorProfileScreen = () => {
       </View>
 
       <CreatePostEventModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+
+      {/* --- CITY PICKER MODAL --- */}
+      <Modal visible={isCityPickerVisible} transparent={true} animationType="slide">
+        <View style={styles.pickerOverlay}>
+          <View style={styles.pickerContainer}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Select City</Text>
+              <TouchableOpacity onPress={() => setIsCityPickerVisible(false)} style={{ padding: 5 }}>
+                <Ionicons name="close" size={28} color="#8A1C27" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={JORDAN_CITIES}
+              keyExtractor={(item) => item}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.cityItem}
+                  onPress={() => {
+                    setVendorData(prev => ({ ...prev, location: item }));
+                    setIsCityPickerVisible(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.cityItemText, vendorData.location === item && { color: '#8A1C27', fontWeight: '700' }]}>{item}</Text>
+                  {vendorData.location === item && <Ionicons name="checkmark-circle" size={24} color="#8A1C27" />}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* --- LEAFLET LOCATION PICKER MODAL --- */}
+      <Modal visible={isLocationPickerVisible} transparent={false} animationType="slide">
+        <View style={styles.mapModalContainer}>
+          <View style={styles.mapModalHeader}>
+            <Text style={styles.pickerTitle}>Pin Your Location</Text>
+            <TouchableOpacity onPress={() => { setIsLocationPickerVisible(false); setMapPickerReady(false); }} style={{ padding: 5 }}>
+              <Ionicons name="close" size={28} color="#8A1C27" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.mapInstructions}>Tap the map to drop a pin, drag to fine-tune, then press Confirm.</Text>
+          <View style={{ flex: 1, position: 'relative' }}>
+            {!mapPickerReady && (
+              <View style={styles.mapLoading}>
+                <ActivityIndicator size="large" color="#2D3E5E" />
+                <Text style={styles.mapLoadingText}>Loading map...</Text>
+              </View>
+            )}
+            <WebView
+              ref={mapPickerRef}
+              source={{ html: LEAFLET_HTML }}
+              style={[{ flex: 1 }, !mapPickerReady && { opacity: 0 }]}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              originWhitelist={['*']}
+              mixedContentMode="always"
+              onLoad={() => setMapPickerReady(true)}
+              onMessage={(event) => {
+                try {
+                  const data = JSON.parse(event.nativeEvent.data);
+                  if (data.type === 'confirm') {
+                    setPendingEditLat(data.lat);
+                    setPendingEditLng(data.lng);
+                    setIsLocationPickerVisible(false);
+                    setMapPickerReady(false);
+                  }
+                } catch (_) {}
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -651,6 +857,24 @@ const styles = StyleSheet.create({
   vendorTitle: { fontSize: 26, fontWeight: '800', color: '#2D3E5E' },
   locationTag: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   locationText: { fontSize: 13, color: '#8391A1', marginLeft: 4, fontWeight: '600' },
+  cityPickerInline: { flexDirection: 'row', alignItems: 'center', marginLeft: 4 },
+
+  // Map picker button (inside shop details edit row)
+  mapPickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F4F9', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, borderWidth: 1, borderColor: '#E2E8F0' },
+  mapPickerBtnText: { fontSize: 13, color: '#2D3E5E', fontWeight: '600', marginLeft: 6, flex: 1 },
+
+  // City & map picker modals
+  pickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  pickerContainer: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '65%', padding: 25, paddingBottom: 40 },
+  pickerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#F1F4F9' },
+  pickerTitle: { fontSize: 22, fontWeight: '800', color: '#2D3E5E' },
+  cityItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F4F9' },
+  cityItemText: { fontSize: 16, color: '#2D3E5E', fontWeight: '500' },
+  mapModalContainer: { flex: 1, backgroundColor: '#FFFFFF', paddingTop: Platform.OS === 'ios' ? 55 : 30 },
+  mapModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 25, marginBottom: 8 },
+  mapInstructions: { color: '#8391A1', fontSize: 13, fontWeight: '500', paddingHorizontal: 25, marginBottom: 10 },
+  mapLoading: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F4F9', zIndex: 10 },
+  mapLoadingText: { color: '#5B7896', marginTop: 12, fontWeight: '600' },
   miniRating: { alignItems: 'flex-end' },
   miniRatingVal: { fontSize: 16, fontWeight: '800', color: '#2D3E5E' },
   starsImg: { width: 70, height: 14, resizeMode: 'contain', marginTop: 2 },

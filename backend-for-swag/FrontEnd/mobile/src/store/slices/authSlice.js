@@ -71,6 +71,16 @@ export const checkAuthStatus = createAsyncThunk(
       const userData = await AsyncStorage.getItem('userData');
 
       if (token && userData) {
+        try {
+          const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+          if (Date.now() >= payload.exp * 1000) {
+            await AsyncStorage.multiRemove(['userToken', 'userData']);
+            return null;
+          }
+        } catch {
+          await AsyncStorage.multiRemove(['userToken', 'userData']);
+          return null;
+        }
         return {
           token,
           user: JSON.parse(userData),
