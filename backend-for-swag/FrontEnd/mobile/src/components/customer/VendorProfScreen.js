@@ -124,13 +124,13 @@ const VendorProfScreen = () => {
   const workHours = v.openTime && v.closeTime ? `${v.openTime} - ${v.closeTime}` : null;
 
   const hasCoords = !!(v.locationLat && v.locationLng);
-  const locationText = v.address || (hasCoords ? 'View pinned location on map' : null);
+  const hasLocation = !!(v.address || hasCoords);
 
   const DETAILS_LIST = [
-    locationText && {
+    hasLocation && {
       id: 1, label: 'Address',
-      text: locationText,
-      textColor: !v.address && hasCoords ? '#2D7DD2' : undefined,
+      text: 'Pinned Location',
+      textColor: '#2D7DD2',
       iconImage: require('../../../assets/images/locationVendor-icon.png'),
       action: () => openMap(v.address)
     },

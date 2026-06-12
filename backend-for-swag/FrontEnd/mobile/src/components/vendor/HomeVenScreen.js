@@ -14,7 +14,7 @@ import BottomTabsVen from '../commonV/BottomTabsVen';
 import SideMenuV from '../commonV/SideMenuV';
 import { useFocusEffect } from 'expo-router';
 import { fetchMyVendorProfile, fetchMyFollowing } from '../../store/slices/vendorSlice';
-import { fetchPosts } from '../../store/slices/postsSlice';
+import { fetchPosts, fetchCarouselEvents } from '../../store/slices/postsSlice';
 import { fetchNotifications } from '../../store/slices/notificationsSlice';
 import { fetchConversations } from '../../store/slices/chatsSlice';
 
@@ -26,7 +26,7 @@ const HomeVenScreen = () => {
   const [isMenuVisible, setMenuVisible] = useState(false);
 
   const { myProfile } = useSelector((state) => state.vendor);
-  const { posts } = useSelector((state) => state.posts);
+  const { carouselEvents } = useSelector((state) => state.posts);
 
   const isPending = !myProfile || myProfile.status !== 'active';
 
@@ -35,6 +35,7 @@ const HomeVenScreen = () => {
       dispatch(fetchMyVendorProfile());
       dispatch(fetchMyFollowing());
       dispatch(fetchPosts());
+      dispatch(fetchCarouselEvents());
       dispatch(fetchNotifications());
       dispatch(fetchConversations());
     }, [dispatch])
@@ -52,15 +53,14 @@ const HomeVenScreen = () => {
     }
   };
 
-  const eventsData = posts
-    .filter((p) => p.type === 'event')
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const eventsData = carouselEvents
     .filter((p) => {
       if (!p.eventDate) return true;
       const d = new Date(p.eventDate);
-      if (isNaN(d.getTime())) return true;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return d >= today;
+      return isNaN(d.getTime()) || d >= today;
     })
     .map((p) => ({
       id: p.id,
@@ -112,10 +112,7 @@ const HomeVenScreen = () => {
 
       {/* Fixed Bottom Navigation */}
       <View style={styles.bottomTabsWrapper}>
-        <BottomTabsVen
-          isPending={isPending}
-          onRestrictedAction={handleRestrictedAction}
-        />
+        <BottomTabsVen onRestrictedAction={handleRestrictedAction} />
       </View>
 
       <SideMenuV

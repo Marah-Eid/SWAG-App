@@ -84,7 +84,7 @@ const ChattingScreenV = () => {
 
     const handleProfilePress = () => {
         if (userType === 'vendor') {
-            router.push({ pathname: '/commonScreensV/otherVendorProfile', params: { userName: userName } });
+            router.push({ pathname: '/vendor/otherVendorProfile', params: { vendorId: otherUserId } });
         } else {
             setProfileVisible(true);
         }

@@ -112,10 +112,20 @@ export const submitReview = createAsyncThunk(
   }
 );
 
+export const fetchCarouselEvents = createAsyncThunk(
+  'posts/fetchCarouselEvents',
+  async (_, { rejectWithValue }) => {
+    const result = await postsAPI.getPosts({ type: 'event', pageSize: 100 });
+    if (result.success) return result.data;
+    return rejectWithValue(result.error);
+  }
+);
+
 const postsSlice = createSlice({
   name: 'posts',
   initialState: {
     posts: [],
+    carouselEvents: [],
     selectedPost: null,
     comments: {},     // { [postId]: comment[] }
     likedPosts: [],
@@ -188,7 +198,8 @@ const postsSlice = createSlice({
         state.myComments = state.myComments.filter(c => c.id !== commentId);
       })
       .addCase(fetchMyLikes.fulfilled, (state, action) => { state.likedPosts = action.payload; })
-      .addCase(fetchMyComments.fulfilled, (state, action) => { state.myComments = action.payload; });
+      .addCase(fetchMyComments.fulfilled, (state, action) => { state.myComments = action.payload; })
+      .addCase(fetchCarouselEvents.fulfilled, (state, action) => { state.carouselEvents = action.payload; });
   },
 });
 

@@ -63,6 +63,24 @@ export const changePassword = createAsyncThunk(
   }
 );
 
+export const sendChangeContactOtp = createAsyncThunk(
+  'auth/sendChangeContactOtp',
+  async (newContact, { rejectWithValue }) => {
+    const result = await authAPI.sendChangeContactOtp(newContact);
+    if (result.success) return result.data;
+    return rejectWithValue(result.error);
+  }
+);
+
+export const changeContact = createAsyncThunk(
+  'auth/changeContact',
+  async ({ newContact, code }, { rejectWithValue }) => {
+    const result = await authAPI.changeContact(newContact, code);
+    if (result.success) return result.data;
+    return rejectWithValue(result.error);
+  }
+);
+
 export const checkAuthStatus = createAsyncThunk(
   'auth/checkStatus',
   async (_, { rejectWithValue }) => {

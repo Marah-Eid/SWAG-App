@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useDispatch } from 'react-redux';
-import { changePassword } from '../../store/slices/authSlice';
+import { changePassword, sendChangeContactOtp, changeContact } from '../../store/slices/authSlice';
 
 const SettingsScreenV = () => {
     const router = useRouter();
@@ -54,6 +54,9 @@ const SettingsScreenV = () => {
         router.replace('/auth/Login');
     };
 
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
+    const [isChangingContact, setIsChangingContact] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     const submitChangePassword = async () => {
@@ -77,19 +80,39 @@ const SettingsScreenV = () => {
         }
     };
 
-    const handleVerifyContact = () => {
-        if (!newContact) {
+    const handleVerifyContact = async () => {
+        if (!newContact.trim()) {
             Alert.alert("Error", "Please enter a valid email or mobile number.");
             return;
         }
-        setContactModalVisible(false);
-        setVerifyModalVisible(true);
+        setIsSendingOtp(true);
+        const result = await dispatch(sendChangeContactOtp(newContact.trim()));
+        setIsSendingOtp(false);
+        if (sendChangeContactOtp.fulfilled.match(result)) {
+            setContactModalVisible(false);
+            setOtpCode('');
+            setVerifyModalVisible(true);
+        } else {
+            Alert.alert("Error", result.payload || "Failed to send verification code.");
+        }
     };
 
-    const submitVerification = () => {
-        setVerifyModalVisible(false);
-        setNewContact('');
-        Alert.alert("Success", "Your shop contact information has been updated successfully.");
+    const submitVerification = async () => {
+        if (!otpCode.trim()) {
+            Alert.alert("Error", "Please enter the verification code.");
+            return;
+        }
+        setIsChangingContact(true);
+        const result = await dispatch(changeContact({ newContact: newContact.trim(), code: otpCode.trim() }));
+        setIsChangingContact(false);
+        if (changeContact.fulfilled.match(result)) {
+            setVerifyModalVisible(false);
+            setNewContact('');
+            setOtpCode('');
+            Alert.alert("Success", "Your shop contact information has been updated successfully.");
+        } else {
+            Alert.alert("Error", result.payload || "Failed to update contact.");
+        }
     };
 
     // --- COMPONENTS ---
@@ -185,7 +208,7 @@ const SettingsScreenV = () => {
                     <View style={styles.modalHeader}><Text style={styles.modalTitle}>Update Contact Info</Text><TouchableOpacity onPress={() => setContactModalVisible(false)}><Ionicons name="close" size={24} color="#333" /></TouchableOpacity></View>
                     <Text style={styles.inputLabel}>New Email or Mobile Number</Text>
                     <TextInput style={styles.input} placeholder="e.g. shop@email.com" value={newContact} onChangeText={setNewContact} placeholderTextColor="#aaa" />
-                    <TouchableOpacity style={styles.confirmBtn} onPress={handleVerifyContact}><Text style={styles.confirmBtnText}>Next (Verify)</Text></TouchableOpacity>
+                    <TouchableOpacity style={styles.confirmBtn} onPress={handleVerifyContact} disabled={isSendingOtp}>{isSendingOtp ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmBtnText}>Next (Verify)</Text>}</TouchableOpacity>
                 </KeyboardAvoidingView></View>
             </Modal>
 
@@ -193,8 +216,8 @@ const SettingsScreenV = () => {
                 <View style={styles.modalOverlay}><View style={styles.modalContent}>
                     <View style={styles.modalHeader}><Text style={styles.modalTitle}>Verification</Text><TouchableOpacity onPress={() => setVerifyModalVisible(false)}><Ionicons name="close" size={24} color="#333" /></TouchableOpacity></View>
                     <Text style={styles.modalText}>We sent a code to: {newContact}</Text>
-                    <TextInput style={[styles.input, { textAlign: 'center', letterSpacing: 5 }]} placeholder="000000" keyboardType="number-pad" maxLength={6} />
-                    <TouchableOpacity style={styles.confirmBtn} onPress={submitVerification}><Text style={styles.confirmBtnText}>Confirm</Text></TouchableOpacity>
+                    <TextInput style={[styles.input, { textAlign: 'center', letterSpacing: 5 }]} placeholder="000000" keyboardType="number-pad" maxLength={6} value={otpCode} onChangeText={setOtpCode} />
+                    <TouchableOpacity style={styles.confirmBtn} onPress={submitVerification} disabled={isChangingContact}>{isChangingContact ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmBtnText}>Confirm</Text>}</TouchableOpacity>
                 </View></View>
             </Modal>
 

@@ -89,6 +89,12 @@ public class ChangePasswordRequest
     public string NewPassword { get; set; } = string.Empty;
 }
 
+public class ChangeContactRequest
+{
+    public string NewContact { get; set; } = string.Empty; // new email or phone
+    public string Code { get; set; } = string.Empty;       // OTP
+}
+
 // ─── RESPONSES ──────────────────────────────────────────────────────────────
 
 public class AuthResponse

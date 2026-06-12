@@ -156,14 +156,14 @@ const VendorProfileScreen = () => {
     bgImage: defaultBg, profileImage: defaultLogo,
   });
 
-  // Fetch on focus
+  // Fetch on focus — use vendorId filter so only own posts are fetched (avoids page-1 truncation)
   useFocusEffect(
     useCallback(() => {
       dispatch(fetchMyVendorProfile());
       dispatch(fetchMyFollowing());
-      dispatch(fetchPosts());
+      if (user?.id) dispatch(fetchPosts({ vendorId: user.id, pageSize: 100 }));
       loadCollections();
-    }, [dispatch, loadCollections])
+    }, [dispatch, loadCollections, user?.id])
   );
 
   // Sync Redux profile → local vendorData
@@ -425,11 +425,10 @@ const VendorProfileScreen = () => {
   const workHoursStatus = getWorkHoursStatus();
 
   const hasLocation = !!(myProfile?.locationLat && myProfile?.locationLng);
-  const locationDisplayText = shopDetailsText[1] || (hasLocation ? 'View pinned location on map' : '');
-  const locationTextColor = !shopDetailsText[1] && hasLocation ? '#2D7DD2' : undefined;
+  const hasAddress = hasLocation || !!shopDetailsText[1];
 
   const DETAILS_LIST = [
-    { id: 1, label: 'Address', iconImage: require('../../../assets/images/locationVendor-icon.png'), text: locationDisplayText, textColor: locationTextColor, action: (hasLocation || shopDetailsText[1]) ? () => openMap(shopDetailsText[1]) : undefined },
+    { id: 1, label: 'Address', iconImage: require('../../../assets/images/locationVendor-icon.png'), text: hasAddress ? 'Pinned Location' : '', textColor: hasAddress ? '#2D7DD2' : undefined, action: hasAddress ? () => openMap(shopDetailsText[1]) : undefined },
     { id: 2, label: 'Mobile', iconImage: require('../../../assets/images/phone-icon.png'), action: () => Linking.openURL(`tel:${shopDetailsText[2].replace(/\s/g, '')}`) },
     { id: 3, label: 'Email', iconName: 'mail', action: () => Linking.openURL(`mailto:${shopDetailsText[3]}`) },
     { id: 4, label: 'WhatsApp', iconImage: require('../../../assets/images/whatsapp-icon.png'), action: () => openWhatsApp(shopDetailsText[4]) },
@@ -751,7 +750,7 @@ const VendorProfileScreen = () => {
       </Modal>
 
       <View style={styles.bottomTabsWrapper}>
-        <BottomTabsVen isPending={isPending} onRestrictedAction={handleRestrictedAction} />
+        <BottomTabsVen onRestrictedAction={handleRestrictedAction} />
       </View>
 
       <CreatePostEventModal visible={modalVisible} onClose={() => setModalVisible(false)} />

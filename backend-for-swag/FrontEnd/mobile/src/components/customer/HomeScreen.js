@@ -12,7 +12,7 @@ import NearbyShopsCarousel from '../common/NearbyShopsCarousel';
 import FollowingSection from '../common/FollowingSection';
 import SideMenu from '../common/SideMenu';
 import { fetchVendors } from '../../store/slices/vendorSlice';
-import { fetchPosts } from '../../store/slices/postsSlice';
+import { fetchPosts, fetchCarouselEvents } from '../../store/slices/postsSlice';
 import { fetchFollowing, fetchCustomerProfile } from '../../store/slices/customerSlice';
 import { fetchNotifications } from '../../store/slices/notificationsSlice';
 import { fetchConversations } from '../../store/slices/chatsSlice';
@@ -28,12 +28,13 @@ const HomeScreen = () => {
   const { user } = useSelector((state) => state.auth);
   const { profile } = useSelector((state) => state.customer);
   const { vendors } = useSelector((state) => state.vendor);
-  const { posts } = useSelector((state) => state.posts);
+  const { posts, carouselEvents } = useSelector((state) => state.posts);
 
   useFocusEffect(
     useCallback(() => {
       dispatch(fetchVendors());
       dispatch(fetchPosts());
+      dispatch(fetchCarouselEvents());
       dispatch(fetchFollowing());
       dispatch(fetchCustomerProfile());
       dispatch(fetchNotifications());
@@ -52,16 +53,14 @@ const HomeScreen = () => {
     bgImage: v.bannerImage ? { uri: v.bannerImage } : defaultBg,
   }));
 
-  // Map event posts → EventsCarousel shape (upcoming only)
-  const eventsData = posts
-    .filter((p) => p.type === 'event')
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const eventsData = carouselEvents
     .filter((p) => {
       if (!p.eventDate) return true;
       const d = new Date(p.eventDate);
-      if (isNaN(d.getTime())) return true;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return d >= today;
+      return isNaN(d.getTime()) || d >= today;
     })
     .map((p) => ({
       id: p.id,

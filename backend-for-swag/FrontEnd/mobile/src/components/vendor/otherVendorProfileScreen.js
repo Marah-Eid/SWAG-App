@@ -91,8 +91,25 @@ const OtherVendorProfileScreen = () => {
   };
 
   const openMap = (addressText) => {
-    const query = encodeURIComponent((addressText || '').replace(/\n/g, ' '));
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`).catch(() => {});
+    if (vendor.locationLat && vendor.locationLng) {
+      const lat = vendor.locationLat;
+      const lng = vendor.locationLng;
+      const nativeUrl = `geo:${lat},${lng}?q=${lat},${lng}`;
+      const webUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      Linking.canOpenURL(nativeUrl)
+        .then((supported) => Linking.openURL(supported ? nativeUrl : webUrl))
+        .catch(() => Linking.openURL(webUrl));
+      return;
+    }
+    if (addressText) {
+      const raw = addressText.trim();
+      if (raw.startsWith('http://') || raw.startsWith('https://')) {
+        Linking.openURL(raw).catch(() => {});
+        return;
+      }
+      const query = encodeURIComponent(raw.replace(/\n/g, ' '));
+      Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`).catch(() => {});
+    }
   };
 
   const openLink = (linkText) => {
@@ -102,8 +119,8 @@ const OtherVendorProfileScreen = () => {
   };
 
   const DETAILS_LIST = [
-    vendor.address && {
-      id: 1, label: 'Address', text: vendor.address,
+    (vendor.address || (vendor.locationLat && vendor.locationLng)) && {
+      id: 1, label: 'Address', text: 'Pinned Location', textColor: '#2D7DD2',
       iconImage: require('../../../assets/images/locationVendor-icon.png'),
       action: () => openMap(vendor.address)
     },

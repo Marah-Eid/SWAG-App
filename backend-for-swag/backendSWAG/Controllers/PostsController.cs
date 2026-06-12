@@ -146,15 +146,24 @@ public class PostsController : ControllerBase
             ? $"{vendor?.ShopName} posted a new event: {req.EventTitle}"
             : $"{vendor?.ShopName} shared a new post.";
 
-        await _db.SaveChangesAsync();
-
         foreach (var fId in followerIds)
         {
             await _notifier.SendAsync(fId, UserRole.Customer, notifType,
                 notifTitle, notifBody, $"post/{post.Id}");
         }
 
-        return CreatedAtAction(nameof(GetPost), new { id = post.Id }, new { post.Id });
+        // Re-load the post with all relations so the frontend gets the full object
+        var created = await _db.VendorPosts
+            .Include(p => p.Vendor)
+            .Include(p => p.Categories)
+            .Include(p => p.Likes)
+            .Include(p => p.Saves)
+            .Include(p => p.Comments)
+            .Include(p => p.EventTypes)
+            .Include(p => p.CollectionPosts)
+            .FirstAsync(p => p.Id == post.Id);
+
+        return CreatedAtAction(nameof(GetPost), new { id = post.Id }, MapPost(created, _currentUser.UserId, ParseRole(_currentUser.Role)));
     }
 
     // PUT /api/posts/{id}

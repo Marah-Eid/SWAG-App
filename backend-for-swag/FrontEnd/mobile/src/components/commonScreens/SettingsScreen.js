@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useDispatch } from 'react-redux';
-import { changePassword } from '../../store/slices/authSlice';
+import { changePassword, sendChangeContactOtp, changeContact } from '../../store/slices/authSlice';
 
 const SettingsScreen = () => {
     const router = useRouter();
@@ -54,6 +54,9 @@ const SettingsScreen = () => {
         router.replace('/auth/Login');
     };
 
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
+    const [isChangingContact, setIsChangingContact] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     const submitChangePassword = async () => {
@@ -77,19 +80,39 @@ const SettingsScreen = () => {
         }
     };
 
-    const handleVerifyContact = () => {
-        if (!newContact) {
+    const handleVerifyContact = async () => {
+        if (!newContact.trim()) {
             Alert.alert("Error", "Please enter a valid email or mobile number.");
             return;
         }
-        setContactModalVisible(false);
-        setVerifyModalVisible(true);
+        setIsSendingOtp(true);
+        const result = await dispatch(sendChangeContactOtp(newContact.trim()));
+        setIsSendingOtp(false);
+        if (sendChangeContactOtp.fulfilled.match(result)) {
+            setContactModalVisible(false);
+            setOtpCode('');
+            setVerifyModalVisible(true);
+        } else {
+            Alert.alert("Error", result.payload || "Failed to send verification code.");
+        }
     };
 
-    const submitVerification = () => {
-        setVerifyModalVisible(false);
-        setNewContact('');
-        Alert.alert("Success", "Your contact information has been updated successfully.");
+    const submitVerification = async () => {
+        if (!otpCode.trim()) {
+            Alert.alert("Error", "Please enter the verification code.");
+            return;
+        }
+        setIsChangingContact(true);
+        const result = await dispatch(changeContact({ newContact: newContact.trim(), code: otpCode.trim() }));
+        setIsChangingContact(false);
+        if (changeContact.fulfilled.match(result)) {
+            setVerifyModalVisible(false);
+            setNewContact('');
+            setOtpCode('');
+            Alert.alert("Success", "Your contact information has been updated successfully.");
+        } else {
+            Alert.alert("Error", result.payload || "Failed to update contact.");
+        }
     };
 
     // --- COMPONENTS ---
@@ -212,8 +235,8 @@ const SettingsScreen = () => {
                         <Text style={styles.inputLabel}>New Email or Mobile Number</Text>
                         <TextInput style={styles.input} placeholder="e.g. name@email.com" value={newContact} onChangeText={setNewContact} placeholderTextColor="#8391A1" />
 
-                        <TouchableOpacity style={styles.confirmBtn} onPress={handleVerifyContact} activeOpacity={0.8}>
-                            <Text style={styles.confirmBtnText}>Next (Verify)</Text>
+                        <TouchableOpacity style={styles.confirmBtn} onPress={handleVerifyContact} activeOpacity={0.8} disabled={isSendingOtp}>
+                            {isSendingOtp ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmBtnText}>Next (Verify)</Text>}
                         </TouchableOpacity>
                     </KeyboardAvoidingView>
                 </View>
@@ -232,10 +255,10 @@ const SettingsScreen = () => {
                         </View>
 
                         <Text style={styles.modalText}>We sent a code to: <Text style={{ fontWeight: '700', color: '#2D3E5E' }}>{newContact}</Text></Text>
-                        <TextInput style={[styles.input, { textAlign: 'center', letterSpacing: 8, fontSize: 24, fontWeight: '700' }]} placeholder="000000" keyboardType="number-pad" maxLength={6} placeholderTextColor="#CBD5E1" />
+                        <TextInput style={[styles.input, { textAlign: 'center', letterSpacing: 8, fontSize: 24, fontWeight: '700' }]} placeholder="000000" keyboardType="number-pad" maxLength={6} placeholderTextColor="#CBD5E1" value={otpCode} onChangeText={setOtpCode} />
 
-                        <TouchableOpacity style={styles.confirmBtn} onPress={submitVerification} activeOpacity={0.8}>
-                            <Text style={styles.confirmBtnText}>Confirm</Text>
+                        <TouchableOpacity style={styles.confirmBtn} onPress={submitVerification} activeOpacity={0.8} disabled={isChangingContact}>
+                            {isChangingContact ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmBtnText}>Confirm</Text>}
                         </TouchableOpacity>
                     </KeyboardAvoidingView>
                 </View>

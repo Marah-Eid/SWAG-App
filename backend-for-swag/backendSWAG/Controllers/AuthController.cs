@@ -438,6 +438,68 @@ public class AuthController : ControllerBase
         ProfileImage = c.ProfileImage
     };
 
+    // PUT /api/auth/change-contact
+    [HttpPut("change-contact")]
+    [Authorize]
+    public async Task<IActionResult> ChangeContact([FromBody] ChangeContactRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.NewContact) || string.IsNullOrWhiteSpace(req.Code))
+            return BadRequest(new { message = "New contact and verification code are required." });
+
+        var newContact = req.NewContact.Trim();
+        bool isEmail = newContact.Contains('@');
+        string normalized = isEmail ? newContact.ToLower() : newContact;
+
+        var myId = _currentUser.UserId;
+        var myRole = _currentUser.Role;
+
+        // Check uniqueness across both tables, excluding current user
+        if (isEmail)
+        {
+            bool takenByCustomer = await _db.Customers.AnyAsync(c => c.Email == normalized && c.Id != myId && !c.IsDeleted);
+            bool takenByVendor = await _db.Vendors.AnyAsync(v => v.Email == normalized && v.Id != myId && !v.IsDeleted);
+            if (takenByCustomer || takenByVendor)
+                return Conflict(new { message = "This email is already used by another account." });
+        }
+        else
+        {
+            bool takenByCustomer = await _db.Customers.AnyAsync(c => c.Phone == normalized && c.Id != myId && !c.IsDeleted);
+            bool takenByVendor = await _db.Vendors.AnyAsync(v => v.Phone == normalized && v.Id != myId && !v.IsDeleted);
+            if (takenByCustomer || takenByVendor)
+                return Conflict(new { message = "This phone number is already used by another account." });
+        }
+
+        // Verify OTP
+        bool valid = await _otpService.VerifyAsync(normalized, req.Code.Trim(), OtpPurpose.ChangeContact);
+        if (!valid)
+            return BadRequest(new { message = "Invalid or expired verification code." });
+
+        // Apply the change
+        if (myRole == "Customer")
+        {
+            var customer = await _db.Customers.FindAsync(myId);
+            if (customer == null) return NotFound();
+            if (isEmail) { customer.Email = normalized; customer.IsVerified = true; }
+            else customer.Phone = normalized;
+            customer.UpdatedAt = DateTime.UtcNow;
+        }
+        else if (myRole == "Vendor")
+        {
+            var vendor = await _db.Vendors.FindAsync(myId);
+            if (vendor == null) return NotFound();
+            if (isEmail) { vendor.Email = normalized; vendor.IsVerified = true; }
+            else vendor.Phone = normalized;
+            vendor.UpdatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            return Forbid();
+        }
+
+        await _db.SaveChangesAsync();
+        return Ok(new MessageResponse { Message = "Contact updated successfully." });
+    }
+
     // PUT /api/auth/heartbeat  — updates LastSeenAt for the current user
     [HttpPut("heartbeat")]
     [Authorize]

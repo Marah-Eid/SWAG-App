@@ -4,20 +4,19 @@ import { useRouter, usePathname } from 'expo-router';
 import { useSelector } from 'react-redux';
 import CreatePostEventModal from './CreatePostEventModal'; // <-- IMPORT MODAL
 
-// --- UPDATED: isPending defaults to true so it stays locked on other screens! ---
-const BottomTabsVen = ({ isPending = true, onRestrictedAction }) => {
+const BottomTabsVen = ({ onRestrictedAction }) => {
   const router = useRouter();
 
-  // --- NEW: Automatically get the current route ---
   const pathname = usePathname() || '';
   const isActive = (routeKeyword) => pathname.includes(routeKeyword);
 
-  // --- ADD STATE FOR MODAL ---
   const [modalVisible, setModalVisible] = useState(false);
   const unreadCount = useSelector((state) => state.notifications.unreadCount);
   const unreadChats = useSelector((state) =>
     state.chats.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
   );
+  const myProfile = useSelector((state) => state.vendor.myProfile);
+  const isPending = !myProfile || myProfile.status !== 'active';
 
   const handleAddPress = () => {
     if (isPending) {

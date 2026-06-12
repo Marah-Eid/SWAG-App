@@ -119,7 +119,7 @@ export default function NotificationsVenScreen() {
 
       {/* FIXED FOOTER */}
       <View style={styles.tabsWrapper}>
-        <BottomTabsVen isPending={false} />
+        <BottomTabsVen />
       </View>
     </SafeAreaView>
   );
