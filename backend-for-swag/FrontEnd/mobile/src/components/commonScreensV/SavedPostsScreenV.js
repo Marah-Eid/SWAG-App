@@ -26,7 +26,7 @@ const SavedPostsScreenV = () => {
         vendorId: p.vendorId,
         vendorName: p.vendorShopName || 'User Name',
         vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
-        location: p.location || '',
+        location: p.location || p.vendorCity || '',
         description: p.description || '',
         postImage: p.postImage ? { uri: p.postImage } : null,
         isLiked: p.isLiked,
@@ -69,9 +69,10 @@ const SavedPostsScreenV = () => {
                         renderItem={({ item }) => (
                             <VendorPosts
                                 postId={item.id}
+                                vendorId={item.vendorId}
                                 vendorName={item.vendorName}
                                 vendorLogo={item.vendorLogo}
-                                location={item.location}
+                                location={item.location || item.vendorCity || ''}
                                 description={item.description}
                                 postImage={item.postImage}
                                 initialLiked={item.isLiked}

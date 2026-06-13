@@ -513,6 +513,7 @@ public class PostsController : ControllerBase
         VendorId = p.VendorId,
         VendorShopName = p.Vendor.ShopName,
         VendorProfileImage = p.Vendor.ProfileImage,
+        VendorCity = p.Vendor.City,
         Description = p.Description,
         PostImage = p.PostImage,
         MediaType = p.MediaType.ToString().ToLower(),

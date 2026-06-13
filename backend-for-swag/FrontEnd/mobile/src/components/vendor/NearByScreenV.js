@@ -73,9 +73,11 @@ const NearByScreenV = () => {
               .map((p) => (
             <VendorPosts
               key={p.id}
+              postId={p.id}
+              vendorId={p.vendorId}
               vendorName={p.vendorShopName || 'User Name'}
               vendorLogo={p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo}
-              location={p.location || ''}
+              location={p.location || p.vendorCity || ''}
               description={p.description || ''}
               postImage={p.postImage ? { uri: p.postImage } : null}
               mediaType={p.mediaType}

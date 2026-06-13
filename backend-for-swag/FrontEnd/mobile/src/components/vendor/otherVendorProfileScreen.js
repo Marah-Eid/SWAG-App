@@ -166,7 +166,7 @@ const OtherVendorProfileScreen = () => {
     .map((p) => ({
       id: p.id,
       vendorName: p.vendorShopName || vendor.shopName || 'User Name',
-      location: p.location || '',
+      location: p.location || p.vendorCity || '',
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
       postImage: p.postImage ? { uri: p.postImage } : null,
@@ -334,8 +334,9 @@ const OtherVendorProfileScreen = () => {
             <VendorPosts
               key={post.id}
               postId={post.id}
+                vendorId={post.vendorId}
               vendorName={post.vendorName}
-              location={post.location}
+              location={post.location || post.vendorCity || ''}
               description={post.description}
               vendorLogo={post.vendorLogo}
               postImage={post.postImage}

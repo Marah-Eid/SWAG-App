@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Modal, Dimensions, Share, Alert } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { toggleLike as toggleLikeAction, toggleSave as toggleSaveAction } from '../../store/slices/postsSlice';
@@ -26,7 +26,7 @@ const isEventExpired = (dateStr) => {
 };
 
 const VendorPosts = ({
-  postId, vendorName, vendorLogo, location, description, postImage,
+  postId, vendorId, vendorName, vendorLogo, location, description, postImage,
   initialLiked = false, initialSaved = false, isEvent = false,
   likeCount: initialLikeCount = 0, commentCount = 0,
   date, time, mediaType = 'image',
@@ -34,6 +34,17 @@ const VendorPosts = ({
 }) => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const isVendorUser = user?.role === 'Vendor';
+
+  const handleVendorPress = () => {
+    if (!vendorId) return;
+    if (isVendorUser) {
+      router.push({ pathname: '/vendor/otherVendorProfile', params: { vendorId } });
+    } else {
+      router.push({ pathname: '/customer/VendorProfCust', params: { vendorId } });
+    }
+  };
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [currentLikeCount, setCurrentLikeCount] = useState(initialLikeCount || 0);
   const [showComments, setShowComments] = useState(false);
@@ -112,14 +123,16 @@ const VendorPosts = ({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.vendorInfo} onPress={() => router.push('/vendor/otherVendorProfile')}>
+        <TouchableOpacity style={styles.vendorInfo} onPress={handleVendorPress}>
           <ExpoImage source={vendorLogo} style={styles.logo} contentFit="cover" transition={200} />
           <View>
             <Text style={styles.vendorName}>{vendorName}</Text>
-            <View style={styles.locationRow}>
-              <Ionicons name="location-sharp" size={12} color="#800C1F" />
-              <Text style={styles.location}>{location}</Text>
-            </View>
+            {!!location && (
+              <View style={styles.locationRow}>
+                <Ionicons name="location-sharp" size={12} color="#800C1F" />
+                <Text style={styles.location}>{location}</Text>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
         <TouchableOpacity onPress={toggleSave} style={styles.saveBtn}>

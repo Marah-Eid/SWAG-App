@@ -65,7 +65,7 @@ const SearchResultsScreen = () => {
     id: p.id,
     vendorId: p.vendorId,
     vendorName: p.vendorShopName || 'User Name',
-    location: p.location || '',
+    location: p.location || p.vendorCity || '',
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
     postImage: p.postImage ? { uri: p.postImage } : null,
@@ -144,9 +144,10 @@ const SearchResultsScreen = () => {
                 <View key={post.id} style={styles.postSpacing}>
                   <CustomerPosts
                     postId={post.id}
+                vendorId={post.vendorId}
                     vendorName={post.vendorName}
                     vendorLogo={post.vendorLogo}
-                    location={post.location}
+                    location={post.location || post.vendorCity || ''}
                     description={post.description}
                     postImage={post.postImage}
                     initialLiked={post.isLiked}

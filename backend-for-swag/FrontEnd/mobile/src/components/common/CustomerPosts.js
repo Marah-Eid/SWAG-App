@@ -29,7 +29,7 @@ const isEventExpired = (dateStr) => {
 };
 
 const CustomerPosts = ({
-  postId, vendorName, vendorLogo, location, description, postImage,
+  postId, vendorId, vendorName, vendorLogo, location, description, postImage,
   initialLiked = false, initialSaved = false,
   likeCount: initialLikeCount = 0, commentCount = 0,
   isEvent = false, date, time, mediaType = 'image',
@@ -118,15 +118,17 @@ const CustomerPosts = ({
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.vendorInfo}
-          onPress={() => router.push('/customer/VendorProfCust')}
+          onPress={() => vendorId && router.push({ pathname: '/customer/VendorProfCust', params: { vendorId } })}
         >
           <ExpoImage source={vendorLogo} style={styles.logo} contentFit="cover" transition={200} />
           <View>
             <Text style={styles.vendorName}>{vendorName}</Text>
-            <View style={styles.locationRow}>
-              <Ionicons name="location-sharp" size={12} color="#800C1F" />
-              <Text style={styles.location}>{location}</Text>
-            </View>
+            {!!location && (
+              <View style={styles.locationRow}>
+                <Ionicons name="location-sharp" size={12} color="#800C1F" />
+                <Text style={styles.location}>{location}</Text>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
 

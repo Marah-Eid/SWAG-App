@@ -73,8 +73,9 @@ const AddCategoryVenScreen = () => {
     .filter((p) => myProfile && String(p.vendorId) === String(myProfile.id))
     .map((p) => ({
       id: p.id,
+      vendorId: p.vendorId,
       vendorName: p.vendorShopName || myProfile?.shopName || 'User Name',
-      location: p.location || '',
+      location: p.location || p.vendorCity || '',
       description: p.description || '',
       vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
       postImage: p.postImage ? { uri: p.postImage } : null,
@@ -265,6 +266,8 @@ const AddCategoryVenScreen = () => {
           <View style={styles.modalContent}>
             {previewPost && (
               <VendorPosts
+                postId={previewPost.id}
+                vendorId={previewPost.vendorId}
                 vendorName={previewPost.vendorName}
                 location={previewPost.location}
                 description={previewPost.description}

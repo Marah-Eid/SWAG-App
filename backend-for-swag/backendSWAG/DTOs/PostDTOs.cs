@@ -6,6 +6,7 @@ public class PostDto
     public Guid VendorId { get; set; }
     public string VendorShopName { get; set; } = string.Empty;
     public string? VendorProfileImage { get; set; }
+    public string? VendorCity { get; set; }
     public string? Description { get; set; }
     public string? PostImage { get; set; }
     public string MediaType { get; set; } = "image";

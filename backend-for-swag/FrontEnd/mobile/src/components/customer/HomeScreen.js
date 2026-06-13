@@ -66,7 +66,7 @@ const HomeScreen = () => {
       id: p.id,
       vendorId: p.vendorId,
       title: p.eventTitle || p.vendorShopName || 'User Name',
-      location: p.location || '',
+      location: p.location || p.vendorCity || '',
       date: p.eventDate || '',
       description: p.description || '',
       logo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,

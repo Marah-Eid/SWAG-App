@@ -72,7 +72,7 @@ const OtherVendorsCategoryCustScreen = () => {
     id: p.id,
     vendorId: p.vendorId,
     vendorName: p.vendorShopName || 'User Name',
-    location: p.location || '',
+    location: p.location || p.vendorCity || '',
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
     postImage: p.postImage ? { uri: p.postImage } : null,
@@ -141,8 +141,9 @@ const OtherVendorsCategoryCustScreen = () => {
             <CustomerPosts
               key={post.id}
               postId={post.id}
+                vendorId={post.vendorId}
               vendorName={post.vendorName}
-              location={post.location}
+              location={post.location || post.vendorCity || ''}
               description={post.description}
               vendorLogo={post.vendorLogo}
               postImage={post.postImage}

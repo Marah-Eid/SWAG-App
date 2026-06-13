@@ -677,7 +677,7 @@ const VendorProfileScreen = () => {
               <VendorPosts
                 postId={post.id}
                 vendorName={post.vendorShopName || post.vendorName || vendorData.name}
-                location={post.location || vendorData.location}
+                location={post.location || post.vendorCity || vendorData.location}
                 description={post.description}
                 vendorLogo={post.vendorProfileImage ? { uri: post.vendorProfileImage } : vendorData.profileImage}
                 postImage={post.postImage ? { uri: post.postImage } : null}

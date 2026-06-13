@@ -58,7 +58,8 @@ const EventsVenScreen = () => {
     id: p.id,
     vendorId: p.vendorId,
     vendorName: p.vendorShopName || 'User Name',
-    location: p.location || '',
+
+    location: p.location || p.vendorCity || '',
     description: p.description || '',
     vendorLogo: p.vendorProfileImage ? { uri: p.vendorProfileImage } : defaultLogo,
     postImage: p.postImage ? { uri: p.postImage } : null,
@@ -74,6 +75,7 @@ const EventsVenScreen = () => {
     <VendorPosts
       key={item.id}
       postId={item.id}
+      vendorId={item.vendorId}
       vendorName={item.vendorName}
       location={item.location}
       description={item.description}
