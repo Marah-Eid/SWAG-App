@@ -85,7 +85,7 @@ const ChattingScreenContent = ({ userName }) => {
 
     const handleHeaderPress = () => {
         if (userType === 'vendor') {
-            router.push({ pathname: '/customer/VendorProfCust', params: { vendorName: userName } });
+            router.push({ pathname: '/customer/VendorProfCust', params: { vendorId: otherUserId } });
         } else {
             setProfileVisible(true);
         }

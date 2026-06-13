@@ -28,7 +28,7 @@ const HomeVenScreen = () => {
   const { myProfile } = useSelector((state) => state.vendor);
   const { carouselEvents } = useSelector((state) => state.posts);
 
-  const isPending = !myProfile || myProfile.status !== 'active';
+  const isPending = !!myProfile && myProfile.status !== 'active';
 
   useFocusEffect(
     useCallback(() => {

@@ -6,9 +6,9 @@ import {
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Video, ResizeMode } from 'expo-av';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
-import { createPost } from '../../store/slices/postsSlice';
+import { createPost, updatePost } from '../../store/slices/postsSlice';
 import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 import categoriesAPI from '../../api/categoriesAPI';
 
@@ -21,14 +21,15 @@ const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 const CreatePostVenScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { postId, initialDescription, initialImage, initialCategoryIds } = useLocalSearchParams();
+  const isEditing = !!postId;
   const myProfile = useSelector((state) => state.vendor.myProfile);
   const [publishing, setPublishing] = useState(false);
-  // selectedItems: array of { id: number, name: string } — real DB items
   const [selectedItems, setSelectedItems] = useState([]);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
-  const [postText, setPostText] = useState('');
-  const [media, setMedia] = useState(null);
+  const [postText, setPostText] = useState(initialDescription || '');
+  const [media, setMedia] = useState(initialImage ? { uri: initialImage } : null);
   // sections fetched from the DB: [{ id, name, items: [{ id, name }] }]
   const [sections, setSections] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -97,18 +98,33 @@ const CreatePostVenScreen = () => {
     const hashtags = selectedItems.length > 0
       ? `${selectedItems.map(i => `#${i.name.replace(/\s+/g, '')}`).join(' ')}\n\n`
       : '';
-    const result = await dispatch(createPost({
-      description: `${hashtags}${postText}`,
-      postImage: mediaUrl,
-      mediaType: media?.type || 'text',
-      type: 'regular',
-      categoryIds: selectedItems.map((i) => i.id),
-    }));
+    const description = `${hashtags}${postText}`;
+
+    let result;
+    if (isEditing) {
+      result = await dispatch(updatePost({
+        id: postId,
+        data: {
+          description,
+          postImage: mediaUrl,
+          categoryIds: selectedItems.map((i) => i.id),
+        },
+      }));
+    } else {
+      result = await dispatch(createPost({
+        description,
+        postImage: mediaUrl,
+        mediaType: media?.type || 'text',
+        type: 'regular',
+        categoryIds: selectedItems.map((i) => i.id),
+      }));
+    }
+
     setPublishing(false);
     if (result.meta.requestStatus === 'fulfilled') {
       router.back();
     } else {
-      Alert.alert('Error', 'Failed to publish post. Please try again.');
+      Alert.alert('Error', isEditing ? 'Failed to update post.' : 'Failed to publish post. Please try again.');
     }
   };
 
@@ -123,14 +139,14 @@ const CreatePostVenScreen = () => {
         <TouchableOpacity onPress={() => router.back()} style={styles.navBtn} activeOpacity={0.7}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
-        <Text style={styles.navTitle}>New Post</Text>
+        <Text style={styles.navTitle}>{isEditing ? 'Edit Post' : 'New Post'}</Text>
         <TouchableOpacity
           style={[styles.publishBtn, (!postText.trim() && !media) && styles.publishBtnDisabled]}
           onPress={handlePublish}
           disabled={(!postText.trim() && !media) || publishing}
           activeOpacity={0.8}
         >
-          {publishing ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={styles.publishText}>Publish</Text>}
+          {publishing ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={styles.publishText}>{isEditing ? 'Update' : 'Publish'}</Text>}
         </TouchableOpacity>
       </View>
 

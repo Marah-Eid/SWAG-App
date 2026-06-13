@@ -35,14 +35,11 @@ export default function useNotificationSocket() {
             return t || '';
           },
         })
-        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-        .configureLogging(signalR.LogLevel.Warning)
+        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000, 60000])
+        .configureLogging(signalR.LogLevel.None)
         .build();
 
-      // Give the server 90 s to send any message before declaring a timeout.
-      // Must be > server KeepAliveInterval (10 s) so pings arrive in time.
       connection.serverTimeoutInMilliseconds = 90000;
-      // Send a ping every 30 s to keep NAT/proxy connections alive.
       connection.keepAliveIntervalInMilliseconds = 30000;
 
       connection.on('ReceiveNotification', (notification) => {
@@ -55,6 +52,10 @@ export default function useNotificationSocket() {
       });
 
       connection.onclose(() => {});
+      connection.onreconnecting(() => {});
+      connection.onreconnected(() => {
+        dispatch(fetchNotifications());
+      });
 
       try {
         await connection.start();

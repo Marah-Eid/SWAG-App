@@ -27,11 +27,10 @@ function AppContent({ onSplashFinish }) {
     dispatch(checkAuthStatus());
   }, [dispatch]);
 
-  // Send heartbeat whenever app becomes active (foreground)
+  // Keep backend alive: ping on foreground + every 10 minutes while app is open
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Send immediately on mount
     chatsAPI.heartbeat();
 
     const subscription = AppState.addEventListener('change', (nextState) => {
@@ -41,7 +40,16 @@ function AppContent({ onSplashFinish }) {
       appState.current = nextState;
     });
 
-    return () => subscription.remove();
+    const keepAlive = setInterval(() => {
+      if (appState.current === 'active') {
+        chatsAPI.heartbeat();
+      }
+    }, 10 * 60 * 1000);
+
+    return () => {
+      subscription.remove();
+      clearInterval(keepAlive);
+    };
   }, [isAuthenticated]);
 
   return (

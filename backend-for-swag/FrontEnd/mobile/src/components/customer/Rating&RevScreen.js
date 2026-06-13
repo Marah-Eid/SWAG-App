@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Modal, StatusBar, Platform } from 'react-native';
 import { Ionicons, Entypo } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 
 import RevCard from '../common/RevCard';
@@ -15,29 +15,19 @@ const RatingRevScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const { success, vendorId } = useLocalSearchParams();
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const { vendorId } = useLocalSearchParams();
 
   const reviews = useSelector((state) => state.vendor.reviews) || [];
   const selectedVendor = useSelector((state) => state.vendor.selectedVendor);
 
-  useEffect(() => {
-    if (vendorId) {
-      dispatch(fetchVendorReviews(vendorId));
-      dispatch(fetchVendorById(vendorId));
-    }
-  }, [dispatch, vendorId]);
-
-  useEffect(() => {
-    if (success === 'true') {
-      setShowSuccessModal(true);
-      const timer = setTimeout(() => {
-        setShowSuccessModal(false);
-        router.setParams({ success: undefined });
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
+  useFocusEffect(
+    useCallback(() => {
+      if (vendorId) {
+        dispatch(fetchVendorReviews(vendorId));
+        dispatch(fetchVendorById(vendorId));
+      }
+    }, [dispatch, vendorId])
+  );
 
   const reviewsList = reviews.map((r) => ({
     id: r.id,
@@ -121,23 +111,6 @@ const RatingRevScreen = () => {
         <BottomTabs />
       </View>
 
-      {/* SUCCESS POP-UP MODAL */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showSuccessModal}
-        onRequestClose={() => setShowSuccessModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.successBox}>
-            <View style={styles.successIconCircle}>
-              <Ionicons name="checkmark-sharp" size={40} color="#FFFFFF" />
-            </View>
-            <Text style={styles.successTitle}>Review Published!</Text>
-            <Text style={styles.successSub}>Thank you for sharing your experience with the community.</Text>
-          </View>
-        </View>
-      </Modal>
 
     </SafeAreaView>
   );

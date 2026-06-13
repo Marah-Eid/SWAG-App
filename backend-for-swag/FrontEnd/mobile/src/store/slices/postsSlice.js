@@ -37,6 +37,15 @@ export const deletePost = createAsyncThunk(
   }
 );
 
+export const updatePost = createAsyncThunk(
+  'posts/update',
+  async ({ id, data }, { rejectWithValue }) => {
+    const result = await postsAPI.updatePost(id, data);
+    if (result.success) return { id, data };
+    return rejectWithValue(result.error);
+  }
+);
+
 export const toggleLike = createAsyncThunk(
   'posts/toggleLike',
   async (postId, { rejectWithValue }) => {
@@ -154,6 +163,11 @@ const postsSlice = createSlice({
       .addCase(createPost.rejected, (state, action) => { state.creating = false; state.error = action.payload; })
       .addCase(deletePost.fulfilled, (state, action) => {
         state.posts = state.posts.filter(p => p.id !== action.payload);
+      })
+      .addCase(updatePost.fulfilled, (state, action) => {
+        const { id, data } = action.payload;
+        const post = state.posts.find(p => p.id === id);
+        if (post) Object.assign(post, data);
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
         const { postId } = action.payload;

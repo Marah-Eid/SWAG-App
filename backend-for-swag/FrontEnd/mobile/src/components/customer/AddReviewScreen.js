@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ const AddReviewScreen = () => {
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState(0);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reviews = useSelector((state) => state.vendor.reviews) || [];
@@ -82,10 +83,11 @@ const AddReviewScreen = () => {
     setIsSubmitting(false);
 
     if (submitReview.fulfilled.match(result)) {
-      router.push({
-        pathname: '/customer/Rating&RevCust',
-        params: { success: 'true', vendorId }
-      });
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        router.navigate({ pathname: '/customer/VendorProfCust', params: { vendorId } });
+      }, 2000);
     } else {
       setShowErrorModal(true);
     }
@@ -192,6 +194,23 @@ const AddReviewScreen = () => {
       <View style={styles.tabsWrapper}>
         <BottomTabs />
       </View>
+
+      {/* SUCCESS MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showSuccessModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.errorBox}>
+            <View style={[styles.errorIconBg, { backgroundColor: '#F0FFF4' }]}>
+              <Ionicons name="checkmark-circle" size={40} color="#38A169" />
+            </View>
+            <Text style={styles.errorTitle}>Review Published!</Text>
+            <Text style={styles.errorSubtext}>Thank you for sharing your experience with the community.</Text>
+          </View>
+        </View>
+      </Modal>
 
       {/* ERROR MODAL */}
       <Modal

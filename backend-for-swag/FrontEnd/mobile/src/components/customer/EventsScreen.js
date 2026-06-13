@@ -52,7 +52,7 @@ const EventsScreen = () => {
 
   const finished = eventPosts
     .filter((p) => isExpired(p.eventDate))
-    .sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate));
+    .sort((a, b) => new Date(b.eventDate || 0) - new Date(a.eventDate || 0));
 
   const mapEvent = (p) => ({
     id: p.id,

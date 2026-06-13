@@ -301,6 +301,9 @@ public class AuthController : ControllerBase
             {
                 var customer = await _db.Customers.FirstOrDefaultAsync(c => c.Phone == req.Recipient.Trim());
                 if (customer != null) { customer.IsVerified = true; await _db.SaveChangesAsync(); }
+
+                var vendor = await _db.Vendors.FirstOrDefaultAsync(v => v.Phone == req.Recipient.Trim());
+                if (vendor != null) { vendor.IsVerified = true; await _db.SaveChangesAsync(); }
             }
         }
 
@@ -431,7 +434,7 @@ public class AuthController : ControllerBase
         Id = c.Id,
         Email = c.Email ?? string.Empty,
         Phone = c.Phone,
-        FirstName = c.FullName.Split(' ')[0],
+        FirstName = c.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty,
         FullName = c.FullName,
         Role = "Customer",
         City = c.City,
@@ -535,7 +538,7 @@ public class AuthController : ControllerBase
         Id = v.Id,
         Email = v.Email ?? string.Empty,
         Phone = v.Phone,
-        FirstName = v.FullName.Split(' ')[0],
+        FirstName = v.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty,
         FullName = v.FullName,
         Role = "Vendor",
         Status = v.Status.ToString().ToLower(),

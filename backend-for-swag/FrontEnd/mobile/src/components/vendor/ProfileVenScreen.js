@@ -690,6 +690,9 @@ const VendorProfileScreen = () => {
                 likeCount={post.likeCount}
                 commentCount={post.commentCount}
               />
+              <TouchableOpacity style={styles.editIconButton} onPress={() => router.push({ pathname: '/vendor/CreatePostVen', params: { postId: post.id, initialDescription: post.description, initialImage: post.postImage || '' } })} activeOpacity={0.7}>
+                <Ionicons name="pencil" size={18} color="#2D3E5E" />
+              </TouchableOpacity>
               <TouchableOpacity style={styles.deleteIconButton} onPress={() => handleDeletePost(post.id)} activeOpacity={0.7}>
                 <Ionicons name="trash" size={18} color="#E53E3E" />
               </TouchableOpacity>
@@ -942,6 +945,7 @@ const styles = StyleSheet.create({
 
   feedContainer: { paddingHorizontal: 20 },
   postWrapper: { marginBottom: 20, position: 'relative' },
+  editIconButton: { position: 'absolute', top: 15, right: 65, zIndex: 10, backgroundColor: '#FFFFFF', padding: 10, borderRadius: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 4 },
   deleteIconButton: { position: 'absolute', top: 15, right: 15, zIndex: 10, backgroundColor: '#FFFFFF', padding: 10, borderRadius: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 4 },
 
   addNewCard: { backgroundColor: '#FFFFFF', marginHorizontal: 20, borderRadius: 20, padding: 30, marginTop: 10, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 4 },
