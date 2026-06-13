@@ -7,9 +7,9 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
-import { createPost } from '../../store/slices/postsSlice';
+import { createPost, updatePost } from '../../store/slices/postsSlice';
 import { fetchMyVendorProfile } from '../../store/slices/vendorSlice';
 import { isLocalUri, uploadMedia } from '../../api/uploadAPI';
 import categoriesAPI from '../../api/categoriesAPI';
@@ -20,26 +20,62 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const defaultAvatar = require('../../../assets/images/default-user-pfp.png');
 
+const parseTimeString = (timeStr) => {
+  if (!timeStr) return null;
+  try {
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+    if (!match) return null;
+    let [, h, m, period] = match;
+    h = parseInt(h);
+    m = parseInt(m);
+    if (period?.toUpperCase() === 'PM' && h !== 12) h += 12;
+    if (period?.toUpperCase() === 'AM' && h === 12) h = 0;
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return d;
+  } catch { return null; }
+};
+
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return new Date();
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const stripHashtagPrefix = (desc) => {
+  if (!desc) return null;
+  const idx = desc.indexOf('\n\n');
+  if (idx === -1) return null;
+  const firstPart = desc.substring(0, idx);
+  if (/^(#\S+\s*)+$/.test(firstPart.trim())) return desc.substring(idx + 2);
+  return null;
+};
+
 const CreateEventScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const {
+    postId, initialTitle, initialDescription, initialImage,
+    initialDate, initialStartTime, initialEndTime, initialLocation, initialEventTypeIds,
+  } = useLocalSearchParams();
+  const isEditing = !!postId;
+  const parsedEventTypeIds = initialEventTypeIds ? JSON.parse(initialEventTypeIds) : [];
+
   const [publishing, setPublishing] = useState(false);
 
-  // Real vendor data from Redux
   const { myProfile } = useSelector((state) => state.vendor);
 
-  // Event types fetched from backend
   const [eventTypesDB, setEventTypesDB] = useState([]);
 
   // --- Form States ---
-  const [media, setMedia] = useState(null);
-  const [eventTitle, setEventTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [selectedTypes, setSelectedTypes] = useState([]); // [{id, name}]
-  const [date, setDate] = useState(new Date());
-  const [startTime, setStartTime] = useState(null);
-  const [endTime, setEndTime] = useState(null);
+  const [media, setMedia] = useState(initialImage ? { uri: initialImage } : null);
+  const [eventTitle, setEventTitle] = useState(initialTitle || '');
+  const [description, setDescription] = useState(() => stripHashtagPrefix(isEditing ? initialDescription : null) || initialDescription || '');
+  const [location, setLocation] = useState(initialLocation || '');
+  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [date, setDate] = useState(parseLocalDate(initialDate));
+  const [startTime, setStartTime] = useState(parseTimeString(initialStartTime));
+  const [endTime, setEndTime] = useState(parseTimeString(initialEndTime));
 
   // --- UI States ---
   const [showPicker, setShowPicker] = useState(false);
@@ -50,12 +86,17 @@ const CreateEventScreen = () => {
   const webStartRef = useRef(null);
   const webEndRef = useRef(null);
 
-  // Fetch vendor profile and event types on mount
   useEffect(() => {
     if (!myProfile) dispatch(fetchMyVendorProfile());
     const loadEventTypes = async () => {
       const result = await categoriesAPI.getEventTypes();
-      if (result.success) setEventTypesDB(result.data);
+      if (result.success) {
+        setEventTypesDB(result.data);
+        if (parsedEventTypeIds.length > 0) {
+          const preSelected = result.data.filter((t) => parsedEventTypeIds.includes(t.id));
+          setSelectedTypes(preSelected);
+        }
+      }
     };
     loadEventTypes();
   }, []);
@@ -137,30 +178,52 @@ const CreateEventScreen = () => {
       mediaUrl = media.uri;
     }
 
-    const result = await dispatch(createPost({
-      type: 'event',
-      eventTitle: eventTitle.trim(),
-      description: description.trim(),
-      postImage: mediaUrl,
-      mediaType: media?.type || 'image',
-      mediaWidth: media?.width || null,
-      mediaHeight: media?.height || null,
-      eventDate: date.toISOString().split('T')[0],
-      eventTime: formatTime(startTime),
-      eventEndTime: formatTime(endTime),
-      location: location.trim(),
-      eventTypeIds: selectedTypes.map((t) => t.id),
-    }));
+    const hashtags = selectedTypes.length > 0
+      ? `${selectedTypes.map(t => `#${t.name.replace(/\s+/g, '')}`).join(' ')}\n\n`
+      : '';
+    const fullDescription = `${hashtags}${description.trim()}`;
+
+    let result;
+    if (isEditing) {
+      result = await dispatch(updatePost({
+        id: postId,
+        data: {
+          eventTitle: eventTitle.trim(),
+          description: fullDescription,
+          postImage: mediaUrl,
+          eventDate: date.toISOString().split('T')[0],
+          eventTime: formatTime(startTime),
+          eventEndTime: formatTime(endTime),
+          location: location.trim(),
+          eventTypeIds: selectedTypes.map((t) => t.id),
+        },
+      }));
+    } else {
+      result = await dispatch(createPost({
+        type: 'event',
+        eventTitle: eventTitle.trim(),
+        description: fullDescription,
+        postImage: mediaUrl,
+        mediaType: media?.type || 'image',
+        mediaWidth: media?.width || null,
+        mediaHeight: media?.height || null,
+        eventDate: date.toISOString().split('T')[0],
+        eventTime: formatTime(startTime),
+        eventEndTime: formatTime(endTime),
+        location: location.trim(),
+        eventTypeIds: selectedTypes.map((t) => t.id),
+      }));
+    }
     setPublishing(false);
 
     if (result.meta.requestStatus === 'fulfilled') {
       router.back();
     } else {
-      Alert.alert('Error', 'Failed to publish event. Please try again.');
+      Alert.alert('Error', isEditing ? 'Failed to update event.' : 'Failed to publish event. Please try again.');
     }
   };
 
-  const previewAspect = media ? Math.max(media.width / media.height, 0.75) : 4 / 3;
+  const previewAspect = (media?.width && media?.height) ? Math.max(media.width / media.height, 0.75) : 4 / 3;
 
   const getPickerValue = () => {
     if (activeTarget === 'date') return date;
@@ -174,7 +237,7 @@ const CreateEventScreen = () => {
   const vendorAvatar = myProfile?.profileImage ? { uri: myProfile.profileImage } : defaultAvatar;
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <StatusBar barStyle="dark-content" />
 
       {Platform.OS === 'web' && (
@@ -190,7 +253,7 @@ const CreateEventScreen = () => {
         <TouchableOpacity onPress={() => router.back()} style={styles.navBtn} activeOpacity={0.7}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
-        <Text style={styles.navTitle}>Event Planner</Text>
+        <Text style={styles.navTitle}>{isEditing ? 'Edit Event' : 'Event Planner'}</Text>
         <TouchableOpacity
           style={[styles.publishBtn, (!eventTitle.trim() || publishing) && styles.publishBtnDisabled]}
           onPress={handlePublish}
@@ -199,7 +262,7 @@ const CreateEventScreen = () => {
         >
           {publishing
             ? <ActivityIndicator size="small" color="#FFF" />
-            : <Text style={styles.publishText}>Publish</Text>
+            : <Text style={styles.publishText}>{isEditing ? 'Update' : 'Publish'}</Text>
           }
         </TouchableOpacity>
       </View>

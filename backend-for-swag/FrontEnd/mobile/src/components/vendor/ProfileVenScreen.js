@@ -690,7 +690,28 @@ const VendorProfileScreen = () => {
                 likeCount={post.likeCount}
                 commentCount={post.commentCount}
               />
-              <TouchableOpacity style={styles.editIconButton} onPress={() => router.push({ pathname: '/vendor/CreatePostVen', params: { postId: post.id, initialDescription: post.description, initialImage: post.postImage || '' } })} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.editIconButton} onPress={() => {
+                if (post.type === 'event') {
+                  router.push({ pathname: '/vendor/CreateEventVen', params: {
+                    postId: post.id,
+                    initialTitle: post.eventTitle || '',
+                    initialDescription: post.description || '',
+                    initialImage: post.postImage || '',
+                    initialDate: post.eventDate || '',
+                    initialStartTime: post.eventTime || '',
+                    initialEndTime: post.eventEndTime || '',
+                    initialLocation: post.location || '',
+                    initialEventTypeIds: JSON.stringify(post.eventTypeIds || []),
+                  }});
+                } else {
+                  router.push({ pathname: '/vendor/CreatePostVen', params: {
+                    postId: post.id,
+                    initialDescription: post.description || '',
+                    initialImage: post.postImage || '',
+                    initialCategoryIds: JSON.stringify(post.categoryIds || []),
+                  }});
+                }
+              }} activeOpacity={0.7}>
                 <Ionicons name="pencil" size={18} color="#2D3E5E" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.deleteIconButton} onPress={() => handleDeletePost(post.id)} activeOpacity={0.7}>

@@ -18,19 +18,28 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const defaultLogo = require('../../../assets/images/default-user-pfp.png');
 
+const stripHashtagPrefix = (desc) => {
+  if (!desc) return null;
+  const idx = desc.indexOf('\n\n');
+  if (idx === -1) return null;
+  const firstPart = desc.substring(0, idx);
+  if (/^(#\S+\s*)+$/.test(firstPart.trim())) return desc.substring(idx + 2);
+  return null;
+};
+
 const CreatePostVenScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const { postId, initialDescription, initialImage, initialCategoryIds } = useLocalSearchParams();
   const isEditing = !!postId;
+  const parsedCategoryIds = initialCategoryIds ? JSON.parse(initialCategoryIds) : [];
   const myProfile = useSelector((state) => state.vendor.myProfile);
   const [publishing, setPublishing] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState(null);
-  const [postText, setPostText] = useState(initialDescription || '');
+  const [postText, setPostText] = useState(() => stripHashtagPrefix(isEditing ? initialDescription : null) || initialDescription || '');
   const [media, setMedia] = useState(initialImage ? { uri: initialImage } : null);
-  // sections fetched from the DB: [{ id, name, items: [{ id, name }] }]
   const [sections, setSections] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
@@ -38,7 +47,14 @@ const CreatePostVenScreen = () => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
       const result = await categoriesAPI.getCategories();
-      if (result.success) setSections(result.data);
+      if (result.success) {
+        setSections(result.data);
+        if (parsedCategoryIds.length > 0) {
+          const allItems = result.data.flatMap((s) => s.items);
+          const preSelected = allItems.filter((item) => parsedCategoryIds.includes(item.id));
+          setSelectedItems(preSelected.map((item) => ({ id: item.id, name: item.name })));
+        }
+      }
       setLoadingCategories(false);
     };
     fetchCategories();
@@ -128,10 +144,10 @@ const CreatePostVenScreen = () => {
     }
   };
 
-  const previewAspect = media ? Math.max(media.width / media.height, 0.75) : 4 / 3;
+  const previewAspect = (media?.width && media?.height) ? Math.max(media.width / media.height, 0.75) : 4 / 3;
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <StatusBar barStyle="dark-content" />
 
       {/* HEADER */}
