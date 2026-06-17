@@ -9,7 +9,7 @@ const BASE_URL = 'https://swag-backend-api-e7awewcqgyfqewdc.uaenorth-01.azureweb
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -37,8 +37,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const config = error.config;
+    // Retry once on timeout or network error (handles Azure cold start)
+    if (!config._retried && (error.code === 'ECONNABORTED' || !error.response)) {
+      config._retried = true;
+      return apiClient(config);
+    }
     if (error.response?.status === 401) {
-      // Token expired or invalid - clear storage and redirect to login
       await AsyncStorage.multiRemove(['userToken', 'userData']);
     }
     return Promise.reject(error);
