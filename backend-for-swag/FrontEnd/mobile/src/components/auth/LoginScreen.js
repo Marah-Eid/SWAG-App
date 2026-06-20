@@ -58,7 +58,7 @@ const LoginScreen = () => {
         if (vendorStatus === 'active') {
           router.replace('/vendor/HomeVen');
         } else {
-          router.replace('/vendor/PendingApproval');
+          router.replace('/vendor/HomeVen');
         }
       } else if (role === 'Customer') {
         router.replace('/customer/HomeCust');
